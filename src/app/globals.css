@@ -30,6 +30,21 @@
     background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
   }
 
+  /*
+   * グラデーションテキスト
+   * background-clip: text は background ショートハンドで上書きされるため
+   * 全プロパティをひとつのクラスにまとめる。
+   * -webkit-text-fill-color は color より優先され webkit で確実に動作する。
+   */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    display: inline-block;
+  }
+
   /* ダークカードシャドウ */
   .shadow-card {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
