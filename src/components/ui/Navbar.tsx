@@ -36,18 +36,17 @@ export function Navbar() {
   return (
     <>
       {/* デスクトップ サイドバー */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-100 shadow-sm min-h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden lg:flex flex-col w-64 bg-zinc-900 border-r border-zinc-800 min-h-screen fixed left-0 top-0 z-40">
         {/* ロゴ */}
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-zinc-800">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
               <Users className="w-4 h-4 text-white" />
             </div>
             <div>
-              <span className="text-xl font-bold text-gray-800">
-                友<span className="text-primary-500">縁</span>
+              <span className="text-xl font-bold text-white tracking-wide">
+                ami<span className="text-teal-400">sta</span>
               </span>
-              <span className="text-xs text-gray-400 ml-1">ゆうえん</span>
             </div>
           </Link>
         </div>
@@ -64,19 +63,19 @@ export function Navbar() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
                   isActive
-                    ? "bg-primary-50 text-primary-600 font-medium"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-teal-950 text-teal-400 font-medium border border-teal-900"
+                    : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                 )}
               >
                 <Icon
                   className={cn(
                     "w-5 h-5 transition-colors",
-                    isActive ? "text-primary-500" : "text-gray-400 group-hover:text-gray-600"
+                    isActive ? "text-teal-400" : "text-zinc-500 group-hover:text-zinc-300"
                   )}
                 />
                 <span className="text-sm">{item.label}</span>
                 {isActive && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500" />
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-teal-400" />
                 )}
               </Link>
             );
@@ -84,10 +83,10 @@ export function Navbar() {
         </nav>
 
         {/* ログアウト */}
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-zinc-800">
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all w-full text-sm"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-500 hover:bg-red-950 hover:text-red-400 transition-all w-full text-sm"
           >
             <LogOut className="w-5 h-5" />
             ログアウト
@@ -96,7 +95,7 @@ export function Navbar() {
       </aside>
 
       {/* モバイル ボトムナビ */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-40 safe-area-inset-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-40 safe-area-inset-bottom">
         <div className="flex items-center justify-around py-2 px-4">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -107,7 +106,7 @@ export function Navbar() {
                 href={item.href}
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]",
-                  isActive ? "text-primary-500" : "text-gray-400"
+                  isActive ? "text-teal-400" : "text-zinc-500"
                 )}
               >
                 <Icon className="w-6 h-6" />

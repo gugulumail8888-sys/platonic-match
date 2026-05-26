@@ -164,13 +164,13 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
   if (isSaved) {
     return (
       <div className="text-center py-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-          <CheckCircle className="w-8 h-8 text-green-500" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-950 border border-teal-800 rounded-full mb-4">
+          <CheckCircle className="w-8 h-8 text-teal-400" />
         </div>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">
+        <h2 className="text-xl font-bold text-white mb-2">
           プロフィールを保存しました！
         </h2>
-        <p className="text-gray-500 text-sm">ホーム画面へ移動します...</p>
+        <p className="text-zinc-400 text-sm">ホーム画面へ移動します...</p>
       </div>
     );
   }
@@ -178,15 +178,15 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       {serverError && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">
+        <div className="bg-red-950 border border-red-800 rounded-xl p-4 text-sm text-red-400">
           {serverError}
         </div>
       )}
 
       {/* 基本情報 */}
       <section>
-        <h3 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+        <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
+          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             1
           </span>
           基本情報
@@ -239,8 +239,8 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
 
       {/* 詳細情報 */}
       <section>
-        <h3 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+        <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
+          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             2
           </span>
           詳細情報
@@ -284,8 +284,8 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
 
       {/* ライフスタイル */}
       <section>
-        <h3 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+        <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
+          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             3
           </span>
           ライフスタイル
@@ -319,30 +319,30 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
 
       {/* 自己紹介 */}
       <section>
-        <h3 className="text-base font-bold text-gray-700 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-primary-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+        <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
+          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             4
           </span>
           自己紹介
         </h3>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label className="block text-sm font-medium text-zinc-300 mb-1.5">
             自己紹介文
           </label>
           <textarea
             placeholder="趣味や休日の過ごし方、どんな人と出会いたいかなどを自由に書いてください（500文字以内）"
             rows={5}
             maxLength={500}
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 transition-all focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent hover:border-gray-300 resize-none"
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent hover:border-zinc-600 resize-none"
             {...register("about_me")}
           />
           {errors.about_me && (
-            <p className="mt-1.5 text-sm text-red-500">{errors.about_me.message}</p>
+            <p className="mt-1.5 text-sm text-red-400">{errors.about_me.message}</p>
           )}
         </div>
       </section>
 
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+      <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
         {!isNew && (
           <Button
             type="button"

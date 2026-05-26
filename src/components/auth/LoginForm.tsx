@@ -61,19 +61,18 @@ export function LoginForm() {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-lg">
           <Users className="w-8 h-8 text-white" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-1">
-          友<span className="text-primary-500">縁</span>
-          <span className="text-base font-normal text-gray-400 ml-1">ゆうえん</span>
+        <h1 className="text-3xl font-bold text-white mb-1 tracking-wide">
+          ami<span className="text-teal-400">sta</span>
         </h1>
-        <p className="text-gray-500 text-sm">友情から始まる、本物のパートナーシップ</p>
+        <p className="text-zinc-400 text-sm">友情から始まる、本物のパートナーシップ</p>
       </div>
 
       {/* フォームカード */}
-      <div className="bg-white rounded-3xl shadow-card p-8">
-        <h2 className="text-xl font-bold text-gray-800 mb-6">ログイン</h2>
+      <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-8">
+        <h2 className="text-xl font-bold text-white mb-6">ログイン</h2>
 
         {serverError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 text-sm text-red-600">
+          <div className="bg-red-950 border border-red-800 rounded-xl p-4 mb-6 text-sm text-red-400">
             {serverError}
           </div>
         )}
@@ -102,7 +101,7 @@ export function LoginForm() {
           <div className="flex justify-end">
             <Link
               href="/forgot-password"
-              className="text-sm text-primary-500 hover:text-primary-600 transition-colors"
+              className="text-sm text-teal-400 hover:text-teal-300 transition-colors"
             >
               パスワードを忘れた方はこちら
             </Link>
@@ -119,11 +118,11 @@ export function LoginForm() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-zinc-400">
             アカウントをお持ちでない方は{" "}
             <Link
               href="/register"
-              className="text-primary-500 hover:text-primary-600 font-medium transition-colors"
+              className="text-teal-400 hover:text-teal-300 font-medium transition-colors"
             >
               新規登録
             </Link>
@@ -132,13 +131,13 @@ export function LoginForm() {
       </div>
 
       {/* 注意書き */}
-      <p className="text-center text-xs text-gray-400 mt-6">
+      <p className="text-center text-xs text-zinc-600 mt-6">
         ログインすることで
-        <Link href="/terms" className="text-primary-400 hover:underline mx-1">
+        <Link href="/terms" className="text-teal-600 hover:underline mx-1">
           利用規約
         </Link>
         および
-        <Link href="/privacy" className="text-primary-400 hover:underline mx-1">
+        <Link href="/privacy" className="text-teal-600 hover:underline mx-1">
           プライバシーポリシー
         </Link>
         に同意したことになります

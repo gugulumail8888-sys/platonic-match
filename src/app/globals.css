@@ -15,13 +15,13 @@
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-zinc-950 text-zinc-50 antialiased;
     font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
   }
 }
 
 @layer utilities {
-  /* 友縁グラデーション */
+  /* amista グラデーション */
   .bg-gradient-primary {
     background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
   }
@@ -30,13 +30,13 @@
     background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
   }
 
-  /* カードシャドウ */
+  /* ダークカードシャドウ */
   .shadow-card {
-    box-shadow: 0 4px 24px rgba(13, 148, 136, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   }
 
   .shadow-card-hover {
-    box-shadow: 0 8px 32px rgba(13, 148, 136, 0.18);
+    box-shadow: 0 8px 32px rgba(13, 148, 136, 0.25);
   }
 
   /* テキストクランプ */
@@ -60,27 +60,27 @@
   }
 }
 
-/* スクロールバーのカスタマイズ */
+/* スクロールバー */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #18181b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #5eead4;
+  background: #3f3f46;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0d9488;
+  background: #14b8a6;
 }
 
 /* フォーカスリング */
 :focus-visible {
-  outline: 2px solid #0d9488;
+  outline: 2px solid #14b8a6;
   outline-offset: 2px;
 }

@@ -36,7 +36,7 @@ export function ProfileCard({
 
   if (variant === "featured") {
     return (
-      <div className="bg-white rounded-3xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden group">
+      <div className="bg-zinc-900 rounded-3xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden group border border-zinc-800">
         <div className="relative h-72">
           <Image
             src={avatarUrl}
@@ -44,17 +44,17 @@ export function ProfileCard({
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
           {profile.is_verified && (
-            <div className="absolute top-4 left-4 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+            <div className="absolute top-4 left-4 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
               <Star className="w-3 h-3" />
               認証済み
             </div>
           )}
 
           {profile.is_premium && (
-            <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2 py-1 rounded-full">
+            <div className="absolute top-4 right-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
               Premium
             </div>
           )}
@@ -64,7 +64,7 @@ export function ProfileCard({
               {profile.nickname}
               <span className="text-base font-normal ml-2">{age}歳</span>
             </h3>
-            <p className="text-sm text-white/80 flex items-center gap-1 mt-1">
+            <p className="text-sm text-white/70 flex items-center gap-1 mt-1">
               <MapPin className="w-3 h-3" />
               {profile.prefecture}
             </p>
@@ -76,8 +76,8 @@ export function ProfileCard({
               className={cn(
                 "absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
                 isLiked
-                  ? "bg-primary-500 text-white scale-110"
-                  : "bg-white text-gray-400 hover:bg-primary-50 hover:text-primary-500 hover:scale-110"
+                  ? "bg-teal-500 text-white scale-110"
+                  : "bg-zinc-900/80 text-zinc-400 hover:bg-teal-950 hover:text-teal-400 hover:scale-110"
               )}
             >
               <Heart className={cn("w-5 h-5", isLiked && "fill-current")} />
@@ -88,18 +88,18 @@ export function ProfileCard({
         <div className="p-5">
           <div className="flex flex-wrap gap-2">
             {profile.marriage_intention && (
-              <span className="text-xs bg-primary-50 text-primary-600 px-3 py-1 rounded-full font-medium">
+              <span className="text-xs bg-teal-950 text-teal-400 border border-teal-900 px-3 py-1 rounded-full font-medium">
                 💒 {MARRIAGE_INTENTION_LABELS[profile.marriage_intention]}
               </span>
             )}
             {profile.occupation && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+              <span className="text-xs bg-zinc-800 text-zinc-400 px-3 py-1 rounded-full">
                 {profile.occupation}
               </span>
             )}
           </div>
           {profile.about_me && (
-            <p className="mt-3 text-sm text-gray-600 line-clamp-2">
+            <p className="mt-3 text-sm text-zinc-400 line-clamp-2">
               {profile.about_me}
             </p>
           )}
@@ -110,7 +110,7 @@ export function ProfileCard({
 
   return (
     <Link href={`/members/${profile.user_id}`}>
-      <div className="bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden group cursor-pointer">
+      <div className="bg-zinc-900 rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden group cursor-pointer border border-zinc-800">
         <div className="relative h-48">
           <Image
             src={avatarUrl}
@@ -120,7 +120,7 @@ export function ProfileCard({
           />
 
           {profile.is_verified && (
-            <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+            <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
               <Star className="w-3 h-3" />
               認証
             </div>
@@ -135,8 +135,8 @@ export function ProfileCard({
               className={cn(
                 "absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow",
                 isLiked
-                  ? "bg-primary-500 text-white"
-                  : "bg-white/90 text-gray-400 hover:text-primary-500"
+                  ? "bg-teal-500 text-white"
+                  : "bg-zinc-900/80 text-zinc-400 hover:text-teal-400"
               )}
             >
               <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
@@ -146,11 +146,11 @@ export function ProfileCard({
 
         <div className="p-4">
           <div className="flex items-baseline justify-between mb-2">
-            <h3 className="font-bold text-gray-800">
+            <h3 className="font-bold text-zinc-100">
               {profile.nickname}
-              <span className="text-sm font-normal text-gray-500 ml-1">{age}歳</span>
+              <span className="text-sm font-normal text-zinc-400 ml-1">{age}歳</span>
             </h3>
-            <span className="text-xs text-gray-400 flex items-center gap-0.5">
+            <span className="text-xs text-zinc-500 flex items-center gap-0.5">
               <MapPin className="w-3 h-3" />
               {profile.prefecture}
             </span>
@@ -158,14 +158,14 @@ export function ProfileCard({
 
           <div className="space-y-1">
             {profile.occupation && (
-              <p className="text-xs text-gray-500 flex items-center gap-1">
-                <Briefcase className="w-3 h-3 text-gray-400" />
+              <p className="text-xs text-zinc-500 flex items-center gap-1">
+                <Briefcase className="w-3 h-3 text-zinc-600" />
                 {profile.occupation}
               </p>
             )}
             {profile.education && (
-              <p className="text-xs text-gray-500 flex items-center gap-1">
-                <GraduationCap className="w-3 h-3 text-gray-400" />
+              <p className="text-xs text-zinc-500 flex items-center gap-1">
+                <GraduationCap className="w-3 h-3 text-zinc-600" />
                 {EDUCATION_LABELS[profile.education]}
               </p>
             )}
@@ -173,7 +173,7 @@ export function ProfileCard({
 
           {profile.marriage_intention && (
             <div className="mt-3">
-              <span className="text-xs bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-teal-950 text-teal-400 border border-teal-900 px-2 py-0.5 rounded-full font-medium">
                 {MARRIAGE_INTENTION_LABELS[profile.marriage_intention]}
               </span>
             </div>

@@ -60,35 +60,35 @@ export default async function MembersPage({
     <div className="p-6 max-w-5xl mx-auto">
       {/* ヘッダー */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1 flex items-center gap-2">
-          <Users className="w-6 h-6 text-primary-500" />
+        <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+          <Users className="w-6 h-6 text-teal-400" />
           会員一覧
         </h1>
-        <p className="text-gray-500 text-sm">
+        <p className="text-zinc-400 text-sm">
           {count ?? 0}人の会員が登録しています
         </p>
       </div>
 
       {/* 検索・フィルター */}
-      <div className="bg-white rounded-2xl p-4 shadow-card mb-6">
+      <div className="bg-zinc-900 rounded-2xl p-4 shadow-card border border-zinc-800 mb-6">
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-2.5">
-            <Search className="w-4 h-4 text-gray-400" />
+          <div className="flex-1 flex items-center gap-2 bg-zinc-800 rounded-xl px-4 py-2.5">
+            <Search className="w-4 h-4 text-zinc-500" />
             <input
               type="text"
               placeholder="ニックネームで検索..."
-              className="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400"
+              className="flex-1 bg-transparent text-sm outline-none text-zinc-200 placeholder-zinc-600"
             />
           </div>
 
           <div className="flex gap-3">
-            <select className="flex-1 sm:flex-none bg-gray-50 rounded-xl px-4 py-2.5 text-sm text-gray-600 outline-none border-0 cursor-pointer">
+            <select className="flex-1 sm:flex-none bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-zinc-300 outline-none cursor-pointer">
               <option value="">性別を選択</option>
               <option value="male">男性</option>
               <option value="female">女性</option>
             </select>
 
-            <button className="flex items-center gap-2 bg-primary-50 text-primary-600 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary-100 transition-colors">
+            <button className="flex items-center gap-2 bg-teal-950 border border-teal-900 text-teal-400 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-900 transition-colors">
               <SlidersHorizontal className="w-4 h-4" />
               絞り込み
             </button>
@@ -120,7 +120,7 @@ export default async function MembersPage({
                   className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all ${
                     p === page
                       ? "bg-gradient-primary text-white shadow-sm"
-                      : "bg-white text-gray-600 hover:bg-gray-50 shadow-card"
+                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 shadow-card border border-zinc-700"
                   }`}
                 >
                   {p}
@@ -130,10 +130,10 @@ export default async function MembersPage({
           )}
         </>
       ) : (
-        <div className="text-center py-20 bg-white rounded-2xl">
-          <Users className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-400 font-medium">条件に合う会員が見つかりませんでした</p>
-          <p className="text-sm text-gray-300 mt-2">条件を変えて検索してみてください</p>
+        <div className="text-center py-20 bg-zinc-900 rounded-2xl border border-zinc-800">
+          <Users className="w-16 h-16 text-zinc-700 mx-auto mb-4" />
+          <p className="text-zinc-400 font-medium">条件に合う会員が見つかりませんでした</p>
+          <p className="text-sm text-zinc-600 mt-2">条件を変えて検索してみてください</p>
         </div>
       )}
     </div>

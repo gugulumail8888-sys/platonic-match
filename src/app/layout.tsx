@@ -3,17 +3,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | 友縁",
-    default: "友縁（ゆうえん） - 友情から始まる、本物のパートナーシップ",
+    template: "%s | amista",
+    default: "amista - 友情から始まる、本物のパートナーシップ",
   },
   description:
-    "友縁は、友情・信頼・パートナーシップを大切にする友情婚活マッチングサービスです。恋愛感情より深い絆で結ばれた、本物のライフパートナーを見つけましょう。",
-  keywords: ["友情婚活", "プラトニック", "パートナーシップ", "婚活", "マッチング", "友縁", "信頼", "絆"],
-  authors: [{ name: "友縁" }],
+    "amistaは、友情・信頼・パートナーシップを大切にする友情婚活マッチングサービスです。恋愛感情より深い絆で結ばれた、本物のライフパートナーを見つけましょう。",
+  keywords: ["友情婚活", "プラトニック", "パートナーシップ", "婚活", "マッチング", "amista", "信頼", "絆"],
+  authors: [{ name: "amista" }],
   openGraph: {
     type: "website",
     locale: "ja_JP",
-    siteName: "友縁（ゆうえん）",
+    siteName: "amista",
   },
 };
 

@@ -122,7 +122,7 @@ export default async function MemberProfilePage({ params }: Props) {
       {/* 戻るボタン */}
       <div className="p-4">
         <Link href="/members">
-          <button className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors">
+          <button className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">会員一覧へ戻る</span>
           </button>
@@ -130,7 +130,7 @@ export default async function MemberProfilePage({ params }: Props) {
       </div>
 
       {/* メインプロフィール */}
-      <div className="bg-white rounded-3xl shadow-card overflow-hidden mx-4 mb-4">
+      <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 overflow-hidden mx-4 mb-4">
         {/* アバター画像 */}
         <div className="relative h-72">
           <Image
@@ -139,18 +139,18 @@ export default async function MemberProfilePage({ params }: Props) {
             fill
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
           {/* バッジ */}
           <div className="absolute top-4 left-4 flex gap-2">
             {profile.is_verified && (
-              <span className="bg-blue-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+              <span className="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
                 <Star className="w-3 h-3" />
                 本人確認済み
               </span>
             )}
             {profile.is_premium && (
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+              <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
                 Premium
               </span>
             )}
@@ -162,7 +162,7 @@ export default async function MemberProfilePage({ params }: Props) {
               {profile.nickname}
               <span className="text-lg font-normal ml-2">{age}歳</span>
             </h1>
-            <p className="text-sm text-white/80 flex items-center gap-1 mt-1">
+            <p className="text-sm text-white/70 flex items-center gap-1 mt-1">
               <MapPin className="w-3 h-3" />
               {profile.prefecture}
             </p>
@@ -188,9 +188,9 @@ export default async function MemberProfilePage({ params }: Props) {
 
       {/* 自己紹介 */}
       {profile.about_me && (
-        <div className="bg-white rounded-3xl shadow-card p-6 mx-4 mb-4">
-          <h2 className="text-base font-bold text-gray-700 mb-3">自己紹介</h2>
-          <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-line">
+        <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 mx-4 mb-4">
+          <h2 className="text-base font-bold text-zinc-300 mb-3">自己紹介</h2>
+          <p className="text-zinc-400 leading-relaxed text-sm whitespace-pre-line">
             {profile.about_me}
           </p>
         </div>
@@ -198,13 +198,13 @@ export default async function MemberProfilePage({ params }: Props) {
 
       {/* 趣味・好み */}
       {profile.hobbies && profile.hobbies.length > 0 && (
-        <div className="bg-white rounded-3xl shadow-card p-6 mx-4 mb-4">
-          <h2 className="text-base font-bold text-gray-700 mb-3">趣味・興味</h2>
+        <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 mx-4 mb-4">
+          <h2 className="text-base font-bold text-zinc-300 mb-3">趣味・興味</h2>
           <div className="flex flex-wrap gap-2">
             {profile.hobbies.map((hobby) => (
               <span
                 key={hobby}
-                className="bg-primary-50 text-primary-600 px-3 py-1.5 rounded-full text-sm font-medium"
+                className="bg-teal-950 border border-teal-900 text-teal-400 px-3 py-1.5 rounded-full text-sm font-medium"
               >
                 {hobby}
               </span>
@@ -214,8 +214,8 @@ export default async function MemberProfilePage({ params }: Props) {
       )}
 
       {/* 詳細情報 */}
-      <div className="bg-white rounded-3xl shadow-card p-6 mx-4 mb-8">
-        <h2 className="text-base font-bold text-gray-700 mb-4">基本情報</h2>
+      <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 mx-4 mb-8">
+        <h2 className="text-base font-bold text-zinc-300 mb-4">基本情報</h2>
         <div className="space-y-3">
           {details.map((detail) => {
             if (!detail) return null;
@@ -223,15 +223,15 @@ export default async function MemberProfilePage({ params }: Props) {
             return (
               <div
                 key={detail.label}
-                className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0"
+                className="flex items-center gap-3 py-2 border-b border-zinc-800 last:border-0"
               >
-                <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4 h-4 text-gray-400" />
+                <div className="w-8 h-8 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-zinc-500" />
                 </div>
-                <span className="text-sm text-gray-500 w-24 flex-shrink-0">
+                <span className="text-sm text-zinc-500 w-24 flex-shrink-0">
                   {detail.label}
                 </span>
-                <span className="text-sm text-gray-800 font-medium">
+                <span className="text-sm text-zinc-200 font-medium">
                   {detail.value}
                 </span>
               </div>

@@ -19,7 +19,7 @@ services:
       - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
-      - NEXT_PUBLIC_APP_NAME=友縁
+      - NEXT_PUBLIC_APP_NAME=amista
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -182,8 +182,8 @@ services:
     environment:
       STUDIO_PG_META_URL: http://meta:8080
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DEFAULT_ORGANIZATION_NAME: 友縁
-      DEFAULT_PROJECT_NAME: yuen
+      DEFAULT_ORGANIZATION_NAME: amista
+      DEFAULT_PROJECT_NAME: amista
       SUPABASE_URL: http://proxy:8000
       SUPABASE_PUBLIC_URL: http://localhost:8000
       SUPABASE_ANON_KEY: ${ANON_KEY}

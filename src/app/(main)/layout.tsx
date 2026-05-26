@@ -18,7 +18,7 @@ export default async function MainLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-950">
       <Navbar />
       {/* デスクトップ：サイドバー分のmargin */}
       <main className="lg:ml-64 pb-20 lg:pb-0 min-h-screen">

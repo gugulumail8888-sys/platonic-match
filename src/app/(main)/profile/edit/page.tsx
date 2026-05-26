@@ -37,24 +37,24 @@ export default async function ProfileEditPage({ searchParams }: Props) {
       <div className="mb-8">
         {isNew ? (
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-50 rounded-2xl mb-4">
-              <Sparkles className="w-8 h-8 text-primary-500" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-950 border border-teal-800 rounded-2xl mb-4">
+              <Sparkles className="w-8 h-8 text-teal-400" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold text-white mb-2">
               プロフィールを作成しましょう！
             </h1>
-            <p className="text-gray-500 text-sm">
+            <p className="text-zinc-400 text-sm">
               詳しく入力するほど、マッチング率が上がります ✨
             </p>
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <UserCircle className="w-7 h-7 text-primary-500" />
+            <UserCircle className="w-7 h-7 text-teal-400" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">
+              <h1 className="text-2xl font-bold text-white">
                 プロフィール編集
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-zinc-400">
                 プロフィールを更新して魅力をアピールしましょう
               </p>
             </div>
@@ -63,7 +63,7 @@ export default async function ProfileEditPage({ searchParams }: Props) {
       </div>
 
       {/* フォーム */}
-      <div className="bg-white rounded-3xl shadow-card p-6 md:p-8">
+      <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 md:p-8">
         <ProfileForm
           initialData={profile as Profile | undefined}
           userId={user.id}

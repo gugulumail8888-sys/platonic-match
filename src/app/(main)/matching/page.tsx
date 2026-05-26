@@ -43,21 +43,21 @@ export default async function MatchingPage() {
     <div className="p-6 max-w-3xl mx-auto">
       {/* ヘッダー */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-1 flex items-center gap-2">
-          <Heart className="w-6 h-6 text-primary-500" />
+        <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+          <Heart className="w-6 h-6 text-teal-400" />
           マッチング
         </h1>
-        <p className="text-gray-500 text-sm">
+        <p className="text-zinc-400 text-sm">
           {matches?.length ?? 0}件のマッチングが成立しています
         </p>
       </div>
 
       {/* タブ */}
-      <div className="flex bg-gray-100 rounded-2xl p-1 mb-6">
-        <button className="flex-1 bg-white rounded-xl py-2.5 text-sm font-bold text-gray-800 shadow-sm">
+      <div className="flex bg-zinc-800 rounded-2xl p-1 mb-6 border border-zinc-700">
+        <button className="flex-1 bg-zinc-900 rounded-xl py-2.5 text-sm font-bold text-white shadow-sm border border-zinc-700">
           マッチング ({matches?.length ?? 0})
         </button>
-        <button className="flex-1 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+        <button className="flex-1 py-2.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
           もらったいいね ({receivedLikes?.length ?? 0})
         </button>
       </div>
@@ -76,7 +76,7 @@ export default async function MatchingPage() {
             return (
               <div
                 key={match.id}
-                className="bg-white rounded-2xl shadow-card p-4 flex items-center gap-4 hover:shadow-card-hover transition-all duration-200"
+                className="bg-zinc-900 rounded-2xl shadow-card border border-zinc-800 p-4 flex items-center gap-4 hover:shadow-card-hover transition-all duration-200"
               >
                 <Link href={`/members/${partner.user_id}`} className="flex-shrink-0">
                   <div className="relative">
@@ -89,24 +89,24 @@ export default async function MatchingPage() {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center shadow">
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-teal-500 rounded-full flex items-center justify-center shadow">
                       <Heart className="w-2.5 h-2.5 text-white fill-current" />
                     </div>
                   </div>
                 </Link>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-800 truncate">
+                  <h3 className="font-bold text-white truncate">
                     {partner.nickname}
-                    <span className="text-sm font-normal text-gray-500 ml-1">
+                    <span className="text-sm font-normal text-zinc-400 ml-1">
                       {age}歳
                     </span>
                   </h3>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-zinc-500 truncate">
                     {partner.prefecture} · {partner.occupation}
                   </p>
                   {partner.marriage_intention && (
-                    <span className="text-xs bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full font-medium mt-1 inline-block">
+                    <span className="text-xs bg-teal-950 text-teal-400 border border-teal-900 px-2 py-0.5 rounded-full font-medium mt-1 inline-block">
                       {MARRIAGE_INTENTION_LABELS[partner.marriage_intention]}
                     </span>
                   )}
@@ -125,14 +125,14 @@ export default async function MatchingPage() {
           })}
         </div>
       ) : (
-        <div className="text-center py-20 bg-white rounded-3xl shadow-card">
-          <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
-            <Heart className="w-10 h-10 text-primary-200" />
+        <div className="text-center py-20 bg-zinc-900 rounded-3xl shadow-card border border-zinc-800">
+          <div className="w-20 h-20 bg-teal-950 border border-teal-900 rounded-full flex items-center justify-center mx-auto mb-5">
+            <Heart className="w-10 h-10 text-teal-800" />
           </div>
-          <h2 className="text-xl font-bold text-gray-700 mb-3">
+          <h2 className="text-xl font-bold text-zinc-300 mb-3">
             まだマッチングがありません
           </h2>
-          <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+          <p className="text-zinc-500 text-sm mb-6 leading-relaxed">
             会員一覧でいいねを送って<br />マッチングを目指しましょう！
           </p>
           <Link href="/members">

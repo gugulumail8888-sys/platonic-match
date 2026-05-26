@@ -19,17 +19,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 mb-1.5"
+            className="block text-sm font-medium text-zinc-300 mb-1.5"
           >
             {label}
             {props.required && (
-              <span className="text-primary-500 ml-1">*</span>
+              <span className="text-teal-400 ml-1">*</span>
             )}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
               {leftIcon}
             </div>
           )}
@@ -37,11 +37,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              "w-full rounded-xl border bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 transition-all duration-200",
-              "focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent",
+              "w-full rounded-xl border bg-zinc-800 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 transition-all duration-200",
+              "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
               error
-                ? "border-red-400 focus:ring-red-400"
-                : "border-gray-200 hover:border-gray-300",
+                ? "border-red-600 focus:ring-red-500"
+                : "border-zinc-700 hover:border-zinc-600",
               leftIcon && "pl-10",
               className
             )}
@@ -49,13 +49,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
         </div>
         {error && (
-          <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
+          <p className="mt-1.5 text-sm text-red-400 flex items-center gap-1">
             <span>⚠</span>
             {error}
           </p>
         )}
         {hint && !error && (
-          <p className="mt-1.5 text-xs text-gray-400">{hint}</p>
+          <p className="mt-1.5 text-xs text-zinc-500">{hint}</p>
         )}
       </div>
     );
@@ -81,11 +81,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-sm font-medium text-gray-700 mb-1.5"
+            className="block text-sm font-medium text-zinc-300 mb-1.5"
           >
             {label}
             {props.required && (
-              <span className="text-primary-500 ml-1">*</span>
+              <span className="text-teal-400 ml-1">*</span>
             )}
           </label>
         )}
@@ -93,28 +93,28 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={cn(
-            "w-full rounded-xl border bg-white px-4 py-2.5 text-gray-900 transition-all duration-200 appearance-none cursor-pointer",
-            "focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent",
+            "w-full rounded-xl border bg-zinc-800 px-4 py-2.5 text-zinc-100 transition-all duration-200 appearance-none cursor-pointer",
+            "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
             error
-              ? "border-red-400 focus:ring-red-400"
-              : "border-gray-200 hover:border-gray-300",
+              ? "border-red-600 focus:ring-red-500"
+              : "border-zinc-700 hover:border-zinc-600",
             className
           )}
           {...props}
         >
           {placeholder && (
-            <option value="" disabled>
+            <option value="" disabled className="text-zinc-500 bg-zinc-800">
               {placeholder}
             </option>
           )}
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={opt.value} className="bg-zinc-800">
               {opt.label}
             </option>
           ))}
         </select>
         {error && (
-          <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1">
+          <p className="mt-1.5 text-sm text-red-400 flex items-center gap-1">
             <span>⚠</span>
             {error}
           </p>
