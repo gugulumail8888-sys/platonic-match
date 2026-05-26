@@ -1,0 +1,239 @@
+services:
+  # ==========================================
+  # Next.js アプリケーション
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: konkatsu_app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_SUPABASE_URL=http://localhost:8000
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}
+      - NEXT_PUBLIC_APP_NAME=友縁
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      proxy:
+        condition: service_started
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+
+  # ==========================================
+  # Nginx リバースプロキシ
+  # /auth/v1/* → auth:9999
+  # /rest/v1/* → rest:3000
+  # ==========================================
+  proxy:
+    image: nginx:alpine
+    container_name: konkatsu_proxy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - auth
+      - rest
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+
+  # ==========================================
+  # PostgreSQL データベース
+  # supabase/postgres には Supabase 用の初期化が内蔵
+  # ==========================================
+  db:
+    image: supabase/postgres:15.8.1.085
+    container_name: konkatsu_db
+    healthcheck:
+      test: pg_isready -U supabase_admin -h localhost
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "54322:5432"
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      PGPORT: 5432
+      POSTGRES_PORT: 5432
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: postgres
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - log_min_messages=fatal
+
+  # ==========================================
+  # DB マイグレーション（初回のみ実行）
+  # supabase/postgres の初期化完了後にアプリスキーマを適用
+  # ==========================================
+  db-migrate:
+    image: supabase/postgres:15.8.1.085
+    container_name: konkatsu_db_migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./supabase/migrations:/migrations:ro
+    entrypoint: >
+      bash -c "
+        echo '--- 内部ユーザーパスワード設定 ---';
+        psql -h db -U supabase_admin -d postgres -c \"ALTER USER supabase_auth_admin WITH PASSWORD '${POSTGRES_PASSWORD}'\";
+        psql -h db -U supabase_admin -d postgres -c \"ALTER USER authenticator WITH PASSWORD '${POSTGRES_PASSWORD}'\";
+        psql -h db -U supabase_admin -d postgres -c \"ALTER USER pgbouncer WITH PASSWORD '${POSTGRES_PASSWORD}'\";
+        echo '--- アプリ マイグレーション適用 ---';
+        psql -h db -U supabase_admin -d postgres -f /migrations/001_initial_schema.sql;
+        echo '--- 完了 ---';
+      "
+    networks:
+      - konkatsu_network
+    restart: "no"
+
+  # ==========================================
+  # GoTrue (認証サービス)
+  # ==========================================
+  auth:
+    image: supabase/gotrue:v2.186.0
+    container_name: konkatsu_auth
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:8000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD}@db:5432/postgres
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@example.com
+      GOTRUE_SMTP_HOST: inbucket
+      GOTRUE_SMTP_PORT: 2500
+      GOTRUE_SMTP_SENDER_NAME: 縁むすび
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+
+  # ==========================================
+  # PostgREST (データベース REST API)
+  # ==========================================
+  rest:
+    image: postgrest/postgrest:v14.8
+    container_name: konkatsu_rest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public,storage,graphql_public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+
+  # ==========================================
+  # Supabase Studio (管理ダッシュボード)
+  # http://localhost:54323
+  # ==========================================
+  studio:
+    image: supabase/studio:2026.04.27-sha-5f60601
+    container_name: konkatsu_studio
+    ports:
+      - "54323:3000"
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_ORGANIZATION_NAME: 友縁
+      DEFAULT_PROJECT_NAME: yuen
+      SUPABASE_URL: http://proxy:8000
+      SUPABASE_PUBLIC_URL: http://localhost:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      AUTH_JWT_SECRET: ${JWT_SECRET}
+      NEXT_PUBLIC_ENABLE_LOGS: "false"
+    depends_on:
+      - meta
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+
+  # ==========================================
+  # Postgres Meta (Studio用 DBメタデータAPI)
+  # ==========================================
+  meta:
+    image: supabase/postgres-meta:v0.96.3
+    container_name: konkatsu_meta
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: supabase_admin
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+
+  # ==========================================
+  # Inbucket (メール受信テスト)
+  # Web UI: http://localhost:54324
+  # ==========================================
+  inbucket:
+    image: inbucket/inbucket:stable
+    container_name: konkatsu_inbucket
+    ports:
+      - "54324:9000"
+      - "54325:2500"
+    networks:
+      - konkatsu_network
+    restart: unless-stopped
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  konkatsu_network:
+    driver: bridge

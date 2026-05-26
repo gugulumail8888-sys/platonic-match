@@ -1,0 +1,37 @@
+# 依存関係
+node_modules/
+.pnpm-store/
+
+# ビルド
+.next/
+out/
+dist/
+
+# 環境変数（機密情報 - 絶対にコミットしない）
+.env
+.env.local
+.env.*.local
+
+# Claude 内部設定
+.claude/
+
+# デバッグ
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# エディタ
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Supabase
+.supabase/
