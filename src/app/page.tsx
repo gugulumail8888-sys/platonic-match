@@ -9,21 +9,25 @@ export default function HomePage() {
       {/* スクロール対応ヘッダー（クライアントコンポーネント） */}
       <ScrollHeader />
 
-      {/* ヒーローセクション - カフェ風ウォームグラデーション */}
+      {/* ヒーローセクション */}
       <section
-        className="relative min-h-screen flex items-center justify-center px-4"
+        className="min-h-screen flex items-center justify-center px-4"
         style={{
           backgroundImage: 'url(/hero-bg.png)',
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'center top',
+          position: 'relative',
         }}
       >
-        {/* テキスト可読性向上オーバーレイ */}
-        {/* テキスト可読性オーバーレイ */}
-        <div style={{ background: 'rgba(0,0,0,0.45)', position: 'absolute', inset: 0 }} />
+        {/* 左暗く・右明るいオーバーレイ（テキスト可読性） */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)',
+        }} />
 
         {/* ヒーローコンテンツ */}
-        <div className="relative z-10 max-w-4xl mx-auto text-center pt-16">
+        <div style={{ position: 'relative', zIndex: 10 }} className="max-w-4xl mx-auto text-center pt-16">
           <div className="inline-flex items-center gap-2 bg-primary-950/80 text-primary-400 text-sm font-medium px-4 py-2 rounded-full mb-8 border border-primary-800/60 backdrop-blur-sm">
             <Star className="w-4 h-4 fill-current" />
             友情から始まる、新しい婚活のかたち
