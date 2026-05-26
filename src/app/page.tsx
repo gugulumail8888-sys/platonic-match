@@ -11,30 +11,18 @@ export default function HomePage() {
 
       {/* ヒーローセクション */}
       <section
-        className="flex items-start justify-center px-4"
+        className="min-h-screen flex items-center justify-center px-4"
         style={{
-          minHeight: '85vh',
-          backgroundImage: 'url(/hero-bg.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-          position: 'relative',
+          background: 'linear-gradient(135deg, #0f172a 0%, #0d1f1e 100%)',
         }}
       >
-        {/* 左暗く・右明るいオーバーレイ（テキスト可読性） */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)',
-        }} />
-
-        {/* ヒーローコンテンツ：上部に配置して指輪と重ならないようにする */}
-        <div style={{ position: 'relative', zIndex: 10 }} className="max-w-4xl mx-auto text-center pt-20 md:pt-24">
+        <div className="max-w-4xl mx-auto text-center pt-20 pb-10">
           <div className="inline-flex items-center gap-2 bg-primary-950/80 text-primary-400 text-sm font-medium px-4 py-2 rounded-full mb-8 border border-primary-800/60 backdrop-blur-sm">
             <Star className="w-4 h-4 fill-current" />
             友情から始まる、新しい婚活のかたち
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6 drop-shadow-lg">
+          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
             信頼できる友として、
             <br />
             <span style={{
@@ -48,11 +36,11 @@ export default function HomePage() {
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-4 leading-relaxed drop-shadow">
+          <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-4 leading-relaxed">
             amistaは、恋愛感情より深い「友情・信頼・パートナーシップ」を大切にする
             友情婚活マッチングサービスです。
           </p>
-          <p className="text-base text-zinc-400 max-w-xl mx-auto mb-12">
+          <p className="text-base text-zinc-400 max-w-xl mx-auto mb-10">
             外見や条件より、価値観や人柄が合うライフパートナーを見つけましょう。
           </p>
 
@@ -64,19 +52,16 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="lg" className="min-w-[200px] backdrop-blur-sm">
+              <Button variant="outline" size="lg" className="min-w-[200px]">
                 ログイン
               </Button>
             </Link>
           </div>
 
-          <p className="text-sm text-zinc-500 mt-8">
+          <p className="text-sm text-zinc-500 mt-6">
             登録無料・審査あり・プロフィール写真任意
           </p>
         </div>
-
-        {/* 下部グラデーションフェード（次セクションへの自然な接続） */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-900 to-transparent pointer-events-none" />
       </section>
 
       {/* 友情婚活とは */}

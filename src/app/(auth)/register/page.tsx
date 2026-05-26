@@ -1,23 +1,758 @@
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { RegisterForm } from "@/components/auth/RegisterForm";
+'use client';
 
-export const metadata: Metadata = {
-  title: "新規会員登録",
+import { useState } from 'react';
+import Link from 'next/link';
+import { Check, Heart } from 'lucide-react';
+import { ScrollHeader } from '@/components/ui/ScrollHeader';
+import { Button } from '@/components/ui/Button';
+
+// ============================================================
+// Constants
+// ============================================================
+
+const PREFECTURES = [
+  '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+  '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+  '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
+  '岐阜県', '静岡県', '愛知県', '三重県',
+  '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
+  '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+  '徳島県', '香川県', '愛媛県', '高知県',
+  '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
+];
+
+const CURRENT_YEAR = new Date().getFullYear();
+const BIRTH_YEARS = Array.from({ length: 65 }, (_, i) => CURRENT_YEAR - 18 - i);
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+
+const INCOME_OPTIONS = [
+  '100万未満', '100万〜200万未満', '200万〜300万未満', '300万〜400万未満',
+  '400万〜500万未満', '500万〜600万未満', '600万〜700万未満', '700万〜800万未満',
+  '800万〜900万未満', '900万〜1000万未満', '1000万以上',
+];
+
+// ============================================================
+// Types
+// ============================================================
+
+interface FormData {
+  // Step 1
+  lastName: string;
+  firstName: string;
+  lastNameKana: string;
+  firstNameKana: string;
+  nickname: string;
+  birthYear: string;
+  birthMonth: string;
+  birthDay: string;
+  gender: string;
+  phone: string;
+  email: string;
+  password: string;
+  prefecture: string;
+  addressDetail: string;
+  // Step 2
+  occupation: string;
+  height: string;
+  bodyType: string;
+  bloodType: string;
+  maritalHistory: string;
+  numberOfChildren: string;
+  smoking: string;
+  income: string;
+  siblings: string;
+  education: string;
+  marriageTiming: string;
+  childrenDesire: string;
+  sexuality: string;
+  livingArrangement: string;
+  externalPartner: string;
+  financeManagement: string;
+  hobbies: string;
+  pr: string;
+  desiredConditions: string;
+}
+
+type Errors = Partial<Record<keyof FormData, string>>;
+
+type AnyChangeEvent = React.ChangeEvent<
+  HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+>;
+
+const INITIAL_FORM: FormData = {
+  lastName: '', firstName: '', lastNameKana: '', firstNameKana: '',
+  nickname: '', birthYear: '', birthMonth: '', birthDay: '',
+  gender: '', phone: '', email: '', password: '',
+  prefecture: '', addressDetail: '',
+  occupation: '', height: '', bodyType: '', bloodType: '',
+  maritalHistory: '', numberOfChildren: '', smoking: '', income: '',
+  siblings: '', education: '', marriageTiming: '', childrenDesire: '',
+  sexuality: '', livingArrangement: '', externalPartner: '',
+  financeManagement: '', hobbies: '', pr: '', desiredConditions: '',
 };
 
-export default async function RegisterPage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+// ============================================================
+// UI Primitives
+// ============================================================
 
-  if (user) {
-    redirect("/dashboard");
-  }
+const baseCls =
+  'w-full bg-zinc-800 border rounded-lg px-3 py-2.5 text-white text-sm placeholder-zinc-500 ' +
+  'focus:outline-none focus:ring-1 transition-colors';
+const fieldCls = (err?: string) =>
+  `${baseCls} ${err
+    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+    : 'border-zinc-700 focus:border-teal-600 focus:ring-teal-600'}`;
+
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label className="block text-sm font-medium text-zinc-300 mb-1.5">
+      {children}
+      {required && <span className="text-red-400 ml-0.5">*</span>}
+    </label>
+  );
+}
+
+function FieldError({ msg }: { msg?: string }) {
+  return msg ? <p className="text-red-400 text-xs mt-1">{msg}</p> : null;
+}
+
+function Field({
+  label, required, error, children,
+}: {
+  label: string; required?: boolean; error?: string; children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <FieldLabel required={required}>{label}</FieldLabel>
+      {children}
+      <FieldError msg={error} />
+    </div>
+  );
+}
+
+function FInput({
+  name, value, onChange, type = 'text', placeholder, error,
+}: {
+  name: string; value: string; onChange: (e: AnyChangeEvent) => void;
+  type?: string; placeholder?: string; error?: string;
+}) {
+  return (
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
+      placeholder={placeholder}
+      className={fieldCls(error)}
+    />
+  );
+}
+
+function FSelect({
+  name, value, onChange, options, placeholder, error,
+}: {
+  name: string; value: string; onChange: (e: AnyChangeEvent) => void;
+  options: string[] | { value: string; label: string }[];
+  placeholder?: string; error?: string;
+}) {
+  const normalized = (options as (string | { value: string; label: string })[]).map((o) =>
+    typeof o === 'string' ? { value: o, label: o } : o
+  );
+  return (
+    <select
+      name={name}
+      value={value}
+      onChange={onChange as React.ChangeEventHandler<HTMLSelectElement>}
+      className={fieldCls(error)}
+    >
+      <option value="">{placeholder ?? '選択してください'}</option>
+      {normalized.map((o) => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
+function FRadioGroup({
+  name, value, options, onChange, error,
+}: {
+  name: string; value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void; error?: string;
+}) {
+  return (
+    <div>
+      <div className="flex gap-5 flex-wrap pt-0.5">
+        {options.map((o) => (
+          <label key={o.value} className="flex items-center gap-2 cursor-pointer group">
+            <div
+              onClick={() => onChange(o.value)}
+              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 ${
+                value === o.value
+                  ? 'border-teal-500 bg-teal-500'
+                  : 'border-zinc-600 group-hover:border-teal-700'
+              }`}
+            >
+              {value === o.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+            </div>
+            <span
+              className="text-zinc-300 text-sm select-none"
+              onClick={() => onChange(o.value)}
+            >
+              {o.label}
+            </span>
+          </label>
+        ))}
+      </div>
+      <FieldError msg={error} />
+    </div>
+  );
+}
+
+function FTextarea({
+  name, value, onChange, placeholder, maxLength, error,
+}: {
+  name: string; value: string; onChange: (e: AnyChangeEvent) => void;
+  placeholder?: string; maxLength?: number; error?: string;
+}) {
+  return (
+    <div>
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange as React.ChangeEventHandler<HTMLTextAreaElement>}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        rows={4}
+        className={`${fieldCls(error)} resize-vertical`}
+      />
+      {maxLength && (
+        <p className="text-zinc-500 text-xs mt-1 text-right">
+          {value.length.toLocaleString()} / {maxLength.toLocaleString()}文字
+        </p>
+      )}
+      <FieldError msg={error} />
+    </div>
+  );
+}
+
+// ============================================================
+// Step Indicator
+// ============================================================
+
+function StepIndicator({ step }: { step: number }) {
+  const steps = [
+    { n: 1, label: '基本情報' },
+    { n: 2, label: 'プロフィール' },
+    { n: 3, label: '完了' },
+  ];
+  return (
+    <div className="flex items-start justify-center mb-8">
+      {steps.map((s, i) => (
+        <div key={s.n} className="flex items-start">
+          <div className="flex flex-col items-center">
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                step > s.n
+                  ? 'bg-teal-600 text-white'
+                  : step === s.n
+                  ? 'bg-teal-600 text-white ring-4 ring-teal-950'
+                  : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
+              }`}
+            >
+              {step > s.n ? <Check className="w-4 h-4" /> : s.n}
+            </div>
+            <span
+              className={`text-xs mt-1.5 font-medium whitespace-nowrap ${
+                step >= s.n ? 'text-teal-400' : 'text-zinc-600'
+              }`}
+            >
+              {s.label}
+            </span>
+          </div>
+          {i < steps.length - 1 && (
+            <div
+              className={`w-16 md:w-24 h-0.5 mx-2 mt-5 transition-colors ${
+                step > s.n ? 'bg-teal-600' : 'bg-zinc-700'
+              }`}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// Step 1: Basic Info
+// ============================================================
+
+function Step1({
+  data, onChange, onRadio, errors,
+}: {
+  data: FormData;
+  onChange: (e: AnyChangeEvent) => void;
+  onRadio: (name: keyof FormData, val: string) => void;
+  errors: Errors;
+}) {
+  return (
+    <div className="space-y-5">
+      <h2 className="text-base font-bold text-white border-b border-zinc-700 pb-3 mb-5">
+        基本情報
+      </h2>
+
+      {/* 氏名 */}
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="お名前（氏）" required error={errors.lastName}>
+          <FInput name="lastName" value={data.lastName} onChange={onChange}
+            placeholder="例：山田" error={errors.lastName} />
+        </Field>
+        <Field label="お名前（名）" required error={errors.firstName}>
+          <FInput name="firstName" value={data.firstName} onChange={onChange}
+            placeholder="例：太郎" error={errors.firstName} />
+        </Field>
+      </div>
+
+      {/* フリガナ */}
+      <div className="grid grid-cols-2 gap-4">
+        <Field label="フリガナ（氏）" required error={errors.lastNameKana}>
+          <FInput name="lastNameKana" value={data.lastNameKana} onChange={onChange}
+            placeholder="例：ヤマダ" error={errors.lastNameKana} />
+        </Field>
+        <Field label="フリガナ（名）" required error={errors.firstNameKana}>
+          <FInput name="firstNameKana" value={data.firstNameKana} onChange={onChange}
+            placeholder="例：タロウ" error={errors.firstNameKana} />
+        </Field>
+      </div>
+
+      {/* ニックネーム */}
+      <Field label="ニックネーム" required error={errors.nickname}>
+        <FInput name="nickname" value={data.nickname} onChange={onChange}
+          placeholder="例：たろちゃん" error={errors.nickname} />
+      </Field>
+
+      {/* 生年月日 */}
+      <div>
+        <FieldLabel required>生年月日</FieldLabel>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <FSelect
+              name="birthYear" value={data.birthYear} onChange={onChange}
+              options={BIRTH_YEARS.map((y) => ({ value: String(y), label: `${y}年` }))}
+              placeholder="年" error={errors.birthYear}
+            />
+            <FieldError msg={errors.birthYear} />
+          </div>
+          <div>
+            <FSelect
+              name="birthMonth" value={data.birthMonth} onChange={onChange}
+              options={MONTHS.map((m) => ({ value: String(m), label: `${m}月` }))}
+              placeholder="月" error={errors.birthMonth}
+            />
+            <FieldError msg={errors.birthMonth} />
+          </div>
+          <div>
+            <FSelect
+              name="birthDay" value={data.birthDay} onChange={onChange}
+              options={DAYS.map((d) => ({ value: String(d), label: `${d}日` }))}
+              placeholder="日" error={errors.birthDay}
+            />
+            <FieldError msg={errors.birthDay} />
+          </div>
+        </div>
+      </div>
+
+      {/* 性別 */}
+      <Field label="性別" required error={errors.gender}>
+        <FRadioGroup
+          name="gender" value={data.gender}
+          options={[{ value: 'female', label: '女性' }, { value: 'male', label: '男性' }]}
+          onChange={(v) => onRadio('gender', v)} error={errors.gender}
+        />
+      </Field>
+
+      {/* 電話番号 */}
+      <Field label="電話番号" required error={errors.phone}>
+        <FInput name="phone" value={data.phone} onChange={onChange}
+          placeholder="例：090-0000-0000" type="tel" error={errors.phone} />
+      </Field>
+
+      {/* メールアドレス */}
+      <Field label="メールアドレス" required error={errors.email}>
+        <FInput name="email" value={data.email} onChange={onChange}
+          placeholder="例：example@email.com" type="email" error={errors.email} />
+      </Field>
+
+      {/* パスワード */}
+      <Field label="パスワード" required error={errors.password}>
+        <FInput name="password" value={data.password} onChange={onChange}
+          placeholder="8文字以上" type="password" error={errors.password} />
+      </Field>
+
+      {/* 都道府県 */}
+      <Field label="住所（都道府県）" required error={errors.prefecture}>
+        <FSelect name="prefecture" value={data.prefecture} onChange={onChange}
+          options={PREFECTURES} error={errors.prefecture} />
+      </Field>
+
+      {/* 住所詳細 */}
+      <Field label="住所（詳細）">
+        <FInput name="addressDetail" value={data.addressDetail} onChange={onChange}
+          placeholder="例：市区町村・番地・建物名" />
+      </Field>
+    </div>
+  );
+}
+
+// ============================================================
+// Step 2: Profile
+// ============================================================
+
+function Step2({
+  data, onChange, onRadio, errors,
+}: {
+  data: FormData;
+  onChange: (e: AnyChangeEvent) => void;
+  onRadio: (name: keyof FormData, val: string) => void;
+  errors: Errors;
+}) {
+  return (
+    <div className="space-y-5">
+      <h2 className="text-base font-bold text-white border-b border-zinc-700 pb-3 mb-5">
+        プロフィール
+      </h2>
+
+      {/* 職業 */}
+      <Field label="職業" required error={errors.occupation}>
+        <FInput name="occupation" value={data.occupation} onChange={onChange}
+          placeholder="例：会社員、自営業" error={errors.occupation} />
+      </Field>
+
+      {/* 身長 */}
+      <Field label="身長（cm）" required error={errors.height}>
+        <div className="flex items-center gap-2">
+          <FInput name="height" value={data.height} onChange={onChange}
+            type="number" placeholder="例：170" error={errors.height} />
+          <span className="text-zinc-400 text-sm whitespace-nowrap">cm</span>
+        </div>
+      </Field>
+
+      {/* 体型 */}
+      <Field label="体型" required error={errors.bodyType}>
+        <FSelect name="bodyType" value={data.bodyType} onChange={onChange}
+          options={['がっちり', 'ぽっちゃり', 'ややぽっちゃり', '普通', '細身']}
+          error={errors.bodyType} />
+      </Field>
+
+      {/* 血液型 */}
+      <Field label="血液型" required error={errors.bloodType}>
+        <FSelect name="bloodType" value={data.bloodType} onChange={onChange}
+          options={['A型', 'B型', 'AB型', 'O型', '不明']}
+          error={errors.bloodType} />
+      </Field>
+
+      {/* 結婚歴 */}
+      <Field label="結婚歴" required error={errors.maritalHistory}>
+        <FRadioGroup
+          name="maritalHistory" value={data.maritalHistory}
+          options={[{ value: 'yes', label: 'あり' }, { value: 'no', label: 'なし' }]}
+          onChange={(v) => onRadio('maritalHistory', v)} error={errors.maritalHistory}
+        />
+      </Field>
+
+      {/* お子様の人数 */}
+      <Field label="お子様の人数" required error={errors.numberOfChildren}>
+        <FSelect name="numberOfChildren" value={data.numberOfChildren} onChange={onChange}
+          options={['なし', '1人', '2人', '3人', '4人', '5人以上']}
+          error={errors.numberOfChildren} />
+      </Field>
+
+      {/* 喫煙 */}
+      <Field label="喫煙" required error={errors.smoking}>
+        <FRadioGroup
+          name="smoking" value={data.smoking}
+          options={[{ value: 'yes', label: 'あり' }, { value: 'no', label: 'なし' }]}
+          onChange={(v) => onRadio('smoking', v)} error={errors.smoking}
+        />
+      </Field>
+
+      {/* 収入 */}
+      <Field label="収入（年収）" required error={errors.income}>
+        <FSelect name="income" value={data.income} onChange={onChange}
+          options={INCOME_OPTIONS} error={errors.income} />
+      </Field>
+
+      {/* 兄弟姉妹 */}
+      <Field label="兄弟姉妹">
+        <FInput name="siblings" value={data.siblings} onChange={onChange}
+          placeholder="例：長男、次女など" />
+      </Field>
+
+      {/* 学歴 */}
+      <Field label="学歴" required error={errors.education}>
+        <FSelect name="education" value={data.education} onChange={onChange}
+          options={['中学卒', '高校卒', '専門卒', '短大卒', '大学卒', '大学院卒']}
+          error={errors.education} />
+      </Field>
+
+      {/* 結婚希望時期 */}
+      <Field label="結婚希望時期" required error={errors.marriageTiming}>
+        <FSelect name="marriageTiming" value={data.marriageTiming} onChange={onChange}
+          options={['すぐにでも', '1〜2年以内', '2〜3年以内', '未定']}
+          error={errors.marriageTiming} />
+      </Field>
+
+      {/* 子供の希望 */}
+      <Field label="子供の有無（希望）" required error={errors.childrenDesire}>
+        <FRadioGroup
+          name="childrenDesire" value={data.childrenDesire}
+          options={[
+            { value: 'want', label: 'ほしい' },
+            { value: 'notwant', label: 'ほしくない' },
+            { value: 'undecided', label: '未定' },
+          ]}
+          onChange={(v) => onRadio('childrenDesire', v)} error={errors.childrenDesire}
+        />
+      </Field>
+
+      {/* セクシュアリティ */}
+      <Field label="セクシュアリティ" required error={errors.sexuality}>
+        <FSelect name="sexuality" value={data.sexuality} onChange={onChange}
+          options={['ヘテロセクシュアル', '同性愛', 'バイセクシュアル', 'その他']}
+          error={errors.sexuality} />
+      </Field>
+
+      {/* 居住形態 */}
+      <Field label="居住形態" required error={errors.livingArrangement}>
+        <FSelect name="livingArrangement" value={data.livingArrangement} onChange={onChange}
+          options={['一人暮らし', '家族と同居', 'その他']}
+          error={errors.livingArrangement} />
+      </Field>
+
+      {/* 外部パートナー */}
+      <Field label="外部パートナー" required error={errors.externalPartner}>
+        <FRadioGroup
+          name="externalPartner" value={data.externalPartner}
+          options={[{ value: 'yes', label: 'あり' }, { value: 'no', label: 'なし' }]}
+          onChange={(v) => onRadio('externalPartner', v)} error={errors.externalPartner}
+        />
+      </Field>
+
+      {/* 家計の管理 */}
+      <Field label="家計の管理" required error={errors.financeManagement}>
+        <FSelect name="financeManagement" value={data.financeManagement} onChange={onChange}
+          options={['完全折半', '相談に応じて', '相談次第']}
+          error={errors.financeManagement} />
+      </Field>
+
+      {/* 趣味 */}
+      <Field label="趣味">
+        <FTextarea name="hobbies" value={data.hobbies} onChange={onChange}
+          placeholder="あなたの趣味や好きなことを自由に書いてください"
+          maxLength={1000} />
+      </Field>
+
+      {/* PR */}
+      <Field label="PR">
+        <FTextarea name="pr" value={data.pr} onChange={onChange}
+          placeholder="自己PRをご自由にどうぞ"
+          maxLength={1000} />
+      </Field>
+
+      {/* 希望条件 */}
+      <Field label="希望条件">
+        <FTextarea name="desiredConditions" value={data.desiredConditions} onChange={onChange}
+          placeholder="パートナーへの希望条件があれば記入してください"
+          maxLength={1000} />
+      </Field>
+    </div>
+  );
+}
+
+// ============================================================
+// Step 3: Complete
+// ============================================================
+
+function Step3() {
+  return (
+    <div className="text-center py-8">
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+        style={{
+          background: 'rgba(13,148,136,0.15)',
+          border: '2px solid rgba(13,148,136,0.3)',
+        }}
+      >
+        <Check className="w-10 h-10 text-teal-400" />
+      </div>
+      <h2 className="text-2xl font-bold text-white mb-3">登録が完了しました！</h2>
+      <p className="text-zinc-300 mb-2">amistaへようこそ。</p>
+      <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
+        ご登録いただいたメールアドレスに確認メールをお送りしました。<br />
+        プロフィールを充実させて、素敵なパートナーを見つけましょう。
+      </p>
+      <Link href="/dashboard">
+        <Button size="lg" className="min-w-[200px]">
+          <Heart className="w-4 h-4 fill-white" />
+          ダッシュボードへ
+        </Button>
+      </Link>
+      <p className="text-zinc-600 text-xs mt-6">
+        メールが届かない場合は迷惑メールフォルダをご確認ください。
+      </p>
+    </div>
+  );
+}
+
+// ============================================================
+// Main Page
+// ============================================================
+
+export default function RegisterPage() {
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState<FormData>(INITIAL_FORM);
+  const [errors, setErrors] = useState<Errors>({});
+
+  const onChange = (e: AnyChangeEvent) => {
+    const { name, value } = e.target;
+    setData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
+  };
+
+  const onRadio = (name: keyof FormData, val: string) => {
+    setData((prev) => ({ ...prev, [name]: val }));
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
+  };
+
+  const validateStep1 = (): boolean => {
+    const e: Errors = {};
+    if (!data.lastName.trim())      e.lastName      = '氏を入力してください';
+    if (!data.firstName.trim())     e.firstName     = '名を入力してください';
+    if (!data.lastNameKana.trim())  e.lastNameKana  = 'フリガナ（氏）を入力してください';
+    else if (!/^[ァ-ヶー\s　]+$/.test(data.lastNameKana))
+      e.lastNameKana = '全角カタカナで入力してください';
+    if (!data.firstNameKana.trim()) e.firstNameKana = 'フリガナ（名）を入力してください';
+    else if (!/^[ァ-ヶー\s　]+$/.test(data.firstNameKana))
+      e.firstNameKana = '全角カタカナで入力してください';
+    if (!data.nickname.trim())      e.nickname      = 'ニックネームを入力してください';
+    if (!data.birthYear)            e.birthYear     = '年を選択してください';
+    if (!data.birthMonth)           e.birthMonth    = '月を選択してください';
+    if (!data.birthDay)             e.birthDay      = '日を選択してください';
+    if (!data.gender)               e.gender        = '性別を選択してください';
+    if (!data.phone.trim())         e.phone         = '電話番号を入力してください';
+    if (!data.email.trim())         e.email         = 'メールアドレスを入力してください';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
+      e.email = '正しいメールアドレスを入力してください';
+    if (!data.password)             e.password      = 'パスワードを入力してください';
+    else if (data.password.length < 8)
+      e.password = '8文字以上で入力してください';
+    if (!data.prefecture)           e.prefecture    = '都道府県を選択してください';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const validateStep2 = (): boolean => {
+    const e: Errors = {};
+    if (!data.occupation.trim())     e.occupation        = '職業を入力してください';
+    if (!data.height)                e.height            = '身長を入力してください';
+    else if (Number(data.height) < 100 || Number(data.height) > 250)
+      e.height = '正しい身長を入力してください（100〜250cm）';
+    if (!data.bodyType)              e.bodyType          = '体型を選択してください';
+    if (!data.bloodType)             e.bloodType         = '血液型を選択してください';
+    if (!data.maritalHistory)        e.maritalHistory    = '結婚歴を選択してください';
+    if (!data.numberOfChildren)      e.numberOfChildren  = 'お子様の人数を選択してください';
+    if (!data.smoking)               e.smoking           = '喫煙を選択してください';
+    if (!data.income)                e.income            = '収入を選択してください';
+    if (!data.education)             e.education         = '学歴を選択してください';
+    if (!data.marriageTiming)        e.marriageTiming    = '結婚希望時期を選択してください';
+    if (!data.childrenDesire)        e.childrenDesire    = '子供の希望を選択してください';
+    if (!data.sexuality)             e.sexuality         = 'セクシュアリティを選択してください';
+    if (!data.livingArrangement)     e.livingArrangement = '居住形態を選択してください';
+    if (!data.externalPartner)       e.externalPartner   = '外部パートナーを選択してください';
+    if (!data.financeManagement)     e.financeManagement = '家計の管理を選択してください';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleNext = () => {
+    const ok = step === 1 ? validateStep1() : validateStep2();
+    if (ok) {
+      setStep((s) => s + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setTimeout(() => {
+        const el = document.querySelector('.border-red-500');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+  };
+
+  const handleBack = () => {
+    setStep((s) => s - 1);
+    setErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
-      <RegisterForm />
+    <div className="min-h-screen bg-zinc-950">
+      <ScrollHeader />
+
+      <div className="max-w-2xl mx-auto px-4 pt-24 pb-16">
+        {/* ページタイトル */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">会員登録</h1>
+          <p className="text-zinc-400 text-sm">
+            amistaへようこそ。以下のフォームをご入力ください。
+          </p>
+        </div>
+
+        {/* ステップインジケーター */}
+        <StepIndicator step={step} />
+
+        {/* フォームカード */}
+        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 md:p-8">
+          {step === 1 && (
+            <Step1 data={data} onChange={onChange} onRadio={onRadio} errors={errors} />
+          )}
+          {step === 2 && (
+            <Step2 data={data} onChange={onChange} onRadio={onRadio} errors={errors} />
+          )}
+          {step === 3 && <Step3 />}
+
+          {/* ナビゲーションボタン */}
+          {step < 3 && (
+            <div
+              className={`flex mt-8 pt-6 border-t border-zinc-800 ${
+                step > 1 ? 'justify-between' : 'justify-end'
+              }`}
+            >
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="px-5 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-colors"
+                >
+                  ← 戻る
+                </button>
+              )}
+              <Button type="button" onClick={handleNext}>
+                {step === 2 ? '登録する' : '次へ →'}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* ログインリンク */}
+        {step < 3 && (
+          <p className="text-center text-zinc-500 text-sm mt-6">
+            すでにアカウントをお持ちの方は{' '}
+            <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">
+              ログイン
+            </Link>
+          </p>
+        )}
+      </div>
     </div>
   );
 }
