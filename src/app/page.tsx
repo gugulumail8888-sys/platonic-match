@@ -11,8 +11,9 @@ export default function HomePage() {
 
       {/* ヒーローセクション */}
       <section
-        className="min-h-screen flex items-center justify-center px-4"
+        className="flex items-start justify-center px-4"
         style={{
+          minHeight: '85vh',
           backgroundImage: 'url(/hero-bg.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
@@ -26,8 +27,8 @@ export default function HomePage() {
           background: 'linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)',
         }} />
 
-        {/* ヒーローコンテンツ */}
-        <div style={{ position: 'relative', zIndex: 10 }} className="max-w-4xl mx-auto text-center pt-16">
+        {/* ヒーローコンテンツ：上部に配置して指輪と重ならないようにする */}
+        <div style={{ position: 'relative', zIndex: 10 }} className="max-w-4xl mx-auto text-center pt-20 md:pt-24">
           <div className="inline-flex items-center gap-2 bg-primary-950/80 text-primary-400 text-sm font-medium px-4 py-2 rounded-full mb-8 border border-primary-800/60 backdrop-blur-sm">
             <Star className="w-4 h-4 fill-current" />
             友情から始まる、新しい婚活のかたち
