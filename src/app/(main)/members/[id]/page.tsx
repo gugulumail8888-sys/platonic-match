@@ -204,7 +204,7 @@ export default async function MemberProfilePage({ params }: Props) {
             {profile.hobbies.map((hobby) => (
               <span
                 key={hobby}
-                className="bg-teal-950 border border-teal-900 text-teal-400 px-3 py-1.5 rounded-full text-sm font-medium"
+                className="bg-primary-950 border border-primary-900 text-primary-400 px-3 py-1.5 rounded-full text-sm font-medium"
               >
                 {hobby}
               </span>

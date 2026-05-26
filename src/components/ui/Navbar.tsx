@@ -45,7 +45,7 @@ export function Navbar() {
             </div>
             <div>
               <span className="text-xl font-bold text-white tracking-wide">
-                ami<span className="text-teal-400">sta</span>
+                ami<span className="text-primary-400">sta</span>
               </span>
             </div>
           </Link>
@@ -63,19 +63,19 @@ export function Navbar() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
                   isActive
-                    ? "bg-teal-950 text-teal-400 font-medium border border-teal-900"
+                    ? "bg-primary-950 text-primary-400 font-medium border border-primary-900"
                     : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                 )}
               >
                 <Icon
                   className={cn(
                     "w-5 h-5 transition-colors",
-                    isActive ? "text-teal-400" : "text-zinc-500 group-hover:text-zinc-300"
+                    isActive ? "text-primary-400" : "text-zinc-500 group-hover:text-zinc-300"
                   )}
                 />
                 <span className="text-sm">{item.label}</span>
                 {isActive && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-teal-400" />
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-400" />
                 )}
               </Link>
             );
@@ -106,7 +106,7 @@ export function Navbar() {
                 href={item.href}
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]",
-                  isActive ? "text-teal-400" : "text-zinc-500"
+                  isActive ? "text-primary-400" : "text-zinc-500"
                 )}
               >
                 <Icon className="w-6 h-6" />

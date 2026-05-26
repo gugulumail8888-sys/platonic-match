@@ -19,8 +19,8 @@ const variantStyles: Record<ButtonVariant, string> = {
   secondary:
     "bg-secondary-500 text-white hover:bg-secondary-600 shadow-sm hover:shadow-md",
   outline:
-    "border-2 border-teal-600 text-teal-400 hover:bg-teal-950 bg-transparent",
-  ghost: "text-teal-400 hover:bg-teal-950",
+    "border-2 border-primary-600 text-primary-400 hover:bg-primary-950 bg-transparent",
+  ghost: "text-primary-400 hover:bg-primary-950",
   danger: "bg-red-600 text-white hover:bg-red-700",
 };
 
@@ -49,7 +49,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed",
+          "inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed",
           variantStyles[variant],
           sizeStyles[size],
           fullWidth && "w-full",

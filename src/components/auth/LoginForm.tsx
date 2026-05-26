@@ -62,7 +62,7 @@ export function LoginForm() {
           <Users className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-white mb-1 tracking-wide">
-          ami<span className="text-teal-400">sta</span>
+          ami<span className="text-primary-400">sta</span>
         </h1>
         <p className="text-zinc-400 text-sm">友情から始まる、本物のパートナーシップ</p>
       </div>
@@ -101,7 +101,7 @@ export function LoginForm() {
           <div className="flex justify-end">
             <Link
               href="/forgot-password"
-              className="text-sm text-teal-400 hover:text-teal-300 transition-colors"
+              className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
             >
               パスワードを忘れた方はこちら
             </Link>
@@ -122,7 +122,7 @@ export function LoginForm() {
             アカウントをお持ちでない方は{" "}
             <Link
               href="/register"
-              className="text-teal-400 hover:text-teal-300 font-medium transition-colors"
+              className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
             >
               新規登録
             </Link>
@@ -133,11 +133,11 @@ export function LoginForm() {
       {/* 注意書き */}
       <p className="text-center text-xs text-zinc-600 mt-6">
         ログインすることで
-        <Link href="/terms" className="text-teal-600 hover:underline mx-1">
+        <Link href="/terms" className="text-primary-600 hover:underline mx-1">
           利用規約
         </Link>
         および
-        <Link href="/privacy" className="text-teal-600 hover:underline mx-1">
+        <Link href="/privacy" className="text-primary-600 hover:underline mx-1">
           プライバシーポリシー
         </Link>
         に同意したことになります

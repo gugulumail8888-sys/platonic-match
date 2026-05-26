@@ -61,7 +61,7 @@ export default async function MembersPage({
       {/* ヘッダー */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
-          <Users className="w-6 h-6 text-teal-400" />
+          <Users className="w-6 h-6 text-primary-400" />
           会員一覧
         </h1>
         <p className="text-zinc-400 text-sm">
@@ -88,7 +88,7 @@ export default async function MembersPage({
               <option value="female">女性</option>
             </select>
 
-            <button className="flex items-center gap-2 bg-teal-950 border border-teal-900 text-teal-400 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-teal-900 transition-colors">
+            <button className="flex items-center gap-2 bg-primary-950 border border-primary-900 text-primary-400 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary-900 transition-colors">
               <SlidersHorizontal className="w-4 h-4" />
               絞り込み
             </button>

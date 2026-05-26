@@ -23,11 +23,11 @@
 @layer utilities {
   /* amista グラデーション背景 */
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
+    background: linear-gradient(135deg, #f09270 0%, #ed7e5c 100%);
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
+    background: linear-gradient(135deg, #d4623e 0%, #af4b2c 100%);
   }
 
   /* ダークカードシャドウ */
@@ -36,7 +36,7 @@
   }
 
   .shadow-card-hover {
-    box-shadow: 0 8px 32px rgba(13, 148, 136, 0.25);
+    box-shadow: 0 8px 32px rgba(237, 126, 92, 0.25);
   }
 
   /* テキストクランプ */
@@ -61,17 +61,11 @@
 }
 
 /*
- * グラデーションテキスト — @layer の外に置く
- * @layer utilities 内では Tailwind/PostCSS が vendor prefix を
- * 削除・並べ替えする場合があるため、通常ルールとして定義する。
- *
- * - background shorthand の後に background-clip を宣言することで
- *   ショートハンドによるリセットを回避
- * - -webkit-text-fill-color は color より優先度が高く webkit で確実
- * - display: inline-block は background-clip: text の必須条件
+ * グラデーションテキスト
+ * @layer utilities 内では vendor prefix が除去される場合があるため外に置く。
  */
 .text-gradient-primary {
-  background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
+  background: linear-gradient(135deg, #f09270 0%, #ed7e5c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -95,11 +89,11 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #14b8a6;
+  background: #ed7e5c;
 }
 
 /* フォーカスリング */
 :focus-visible {
-  outline: 2px solid #14b8a6;
+  outline: 2px solid #ed7e5c;
   outline-offset: 2px;
 }

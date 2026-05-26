@@ -13,18 +13,18 @@ export default function HomePage() {
               <Users className="w-4 h-4 text-white" />
             </div>
             <span className="text-xl font-bold text-white tracking-wide">
-              ami<span className="text-teal-400">sta</span>
+              ami<span className="text-primary-400">sta</span>
             </span>
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-400">
-            <Link href="#about" className="hover:text-teal-400 transition-colors">
+            <Link href="#about" className="hover:text-primary-400 transition-colors">
               友情婚活とは
             </Link>
-            <Link href="#features" className="hover:text-teal-400 transition-colors">
+            <Link href="#features" className="hover:text-primary-400 transition-colors">
               特徴
             </Link>
-            <Link href="#voice" className="hover:text-teal-400 transition-colors">
+            <Link href="#voice" className="hover:text-primary-400 transition-colors">
               体験談
             </Link>
           </nav>
@@ -47,7 +47,7 @@ export default function HomePage() {
       {/* ヒーローセクション */}
       <section className="pt-32 pb-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-teal-950 text-teal-400 text-sm font-medium px-4 py-2 rounded-full mb-6 border border-teal-800">
+          <div className="inline-flex items-center gap-2 bg-primary-950 text-primary-400 text-sm font-medium px-4 py-2 rounded-full mb-6 border border-primary-800">
             <Star className="w-4 h-4 fill-current" />
             友情から始まる、新しい婚活のかたち
           </div>
@@ -56,7 +56,7 @@ export default function HomePage() {
             信頼できる友として、
             <br />
             <span style={{
-              background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+              background: 'linear-gradient(135deg, #f09270 0%, #ed7e5c 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -114,9 +114,9 @@ export default function HomePage() {
                 <li>・ 早期に交際・プレッシャー</li>
               </ul>
             </div>
-            <div className="bg-teal-950 rounded-2xl p-6 border border-teal-800">
-              <h3 className="font-bold text-teal-400 text-sm mb-3">✅ amistaの友情婚活</h3>
-              <ul className="space-y-2 text-sm text-teal-300">
+            <div className="bg-primary-950 rounded-2xl p-6 border border-primary-800">
+              <h3 className="font-bold text-primary-400 text-sm mb-3">✅ amistaの友情婚活</h3>
+              <ul className="space-y-2 text-sm text-primary-300">
                 <li>・ 価値観・人柄・考え方を重視</li>
                 <li>・ 友人として信頼関係を築く</li>
                 <li>・ 「この人と人生を歩みたい」から始まる</li>
@@ -138,7 +138,7 @@ export default function HomePage() {
             ].map((stat) => (
               <div key={stat.label}>
                 <div className="text-3xl md:text-4xl font-bold mb-2" style={{
-                  background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+                  background: 'linear-gradient(135deg, #f09270 0%, #ed7e5c 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -158,7 +158,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
-              amistaの<span className="text-teal-400">3つの特徴</span>
+              amistaの<span className="text-primary-400">3つの特徴</span>
             </h2>
             <p className="text-zinc-400">友情を基盤にした婚活を支えるために</p>
           </div>
@@ -177,9 +177,9 @@ export default function HomePage() {
                 icon: Users,
                 title: "価値観マッチング",
                 desc: "趣味・ライフスタイル・将来の価値観を詳しく入力。友人として相性の良い相手を見つけるための充実したプロフィール。",
-                color: "text-teal-400",
-                bg: "bg-teal-950",
-                border: "border-teal-900",
+                color: "text-primary-400",
+                bg: "bg-primary-950",
+                border: "border-primary-900",
               },
               {
                 icon: MessageCircle,
@@ -214,7 +214,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
-              パートナーシップ <span className="text-teal-400">成立体験談</span>
+              パートナーシップ <span className="text-primary-400">成立体験談</span>
             </h2>
           </div>
 
@@ -230,7 +230,7 @@ export default function HomePage() {
               },
             ].map((voice) => (
               <div key={voice.name} className="bg-zinc-800 rounded-2xl p-6 shadow-card border border-zinc-700">
-                <div className="text-teal-400 text-4xl font-serif mb-3">"</div>
+                <div className="text-primary-400 text-4xl font-serif mb-3">"</div>
                 <p className="text-zinc-300 text-sm leading-relaxed mb-4">{voice.text}</p>
                 <p className="text-xs text-zinc-500 font-medium">{voice.name}</p>
               </div>
@@ -251,7 +251,7 @@ export default function HomePage() {
           <Link href="/register">
             <Button
               size="lg"
-              className="bg-white text-teal-700 hover:bg-white/90 min-w-[200px]"
+              className="bg-white text-primary-700 hover:bg-white/90 min-w-[200px]"
             >
               <Users className="w-5 h-5" />
               無料で始める
@@ -269,7 +269,7 @@ export default function HomePage() {
                 <Users className="w-3 h-3 text-white" />
               </div>
               <span className="font-bold text-white tracking-wide">
-                ami<span className="text-teal-400">sta</span>
+                ami<span className="text-primary-400">sta</span>
               </span>
             </div>
 

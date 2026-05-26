@@ -62,7 +62,7 @@ export default async function DashboardPage() {
               <Link href="/profile/edit?new=true">
                 <Button
                   size="sm"
-                  className="bg-white text-teal-700 hover:bg-white/90"
+                  className="bg-white text-primary-700 hover:bg-white/90"
                 >
                   <Sparkles className="w-4 h-4" />
                   プロフィールを設定する
@@ -108,9 +108,9 @@ export default async function DashboardPage() {
             icon: Handshake,
             label: "もらったいいね",
             value: likeCount ?? 0,
-            color: "text-teal-400",
-            bg: "bg-teal-950",
-            border: "border-teal-900",
+            color: "text-primary-400",
+            bg: "bg-primary-950",
+            border: "border-primary-900",
             href: "/likes",
           },
           {
@@ -159,12 +159,12 @@ export default async function DashboardPage() {
       <section>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-teal-400" />
+            <Sparkles className="w-5 h-5 text-primary-400" />
             新着会員
           </h2>
           <Link
             href="/members"
-            className="text-sm text-teal-400 hover:text-teal-300 flex items-center gap-1 transition-colors"
+            className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors"
           >
             すべて見る
             <ChevronRight className="w-4 h-4" />

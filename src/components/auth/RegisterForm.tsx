@@ -73,14 +73,14 @@ export function RegisterForm() {
     return (
       <div className="w-full max-w-md text-center">
         <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-950 border border-teal-800 rounded-full mb-4">
-            <CheckCircle className="w-8 h-8 text-teal-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-950 border border-primary-800 rounded-full mb-4">
+            <CheckCircle className="w-8 h-8 text-primary-400" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">登録完了！</h2>
           <p className="text-zinc-400 text-sm mb-4">
             プロフィール設定画面へ移動します...
           </p>
-          <div className="w-8 h-8 border-4 border-teal-900 border-t-teal-400 rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-4 border-primary-900 border-t-primary-400 rounded-full animate-spin mx-auto" />
         </div>
       </div>
     );
@@ -94,7 +94,7 @@ export function RegisterForm() {
           <Users className="w-8 h-8 text-white" />
         </div>
         <h1 className="text-3xl font-bold text-white mb-1 tracking-wide">
-          ami<span className="text-teal-400">sta</span>
+          ami<span className="text-primary-400">sta</span>
         </h1>
         <p className="text-zinc-400 text-sm">友情から始まる、本物のパートナーシップ</p>
       </div>
@@ -162,7 +162,7 @@ export function RegisterForm() {
             すでにアカウントをお持ちの方は{" "}
             <Link
               href="/login"
-              className="text-teal-400 hover:text-teal-300 font-medium transition-colors"
+              className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
             >
               ログイン
             </Link>
@@ -172,11 +172,11 @@ export function RegisterForm() {
 
       <p className="text-center text-xs text-zinc-600 mt-6">
         登録することで
-        <Link href="/terms" className="text-teal-600 hover:underline mx-1">
+        <Link href="/terms" className="text-primary-600 hover:underline mx-1">
           利用規約
         </Link>
         および
-        <Link href="/privacy" className="text-teal-600 hover:underline mx-1">
+        <Link href="/privacy" className="text-primary-600 hover:underline mx-1">
           プライバシーポリシー
         </Link>
         に同意したことになります

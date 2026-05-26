@@ -164,8 +164,8 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
   if (isSaved) {
     return (
       <div className="text-center py-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-950 border border-teal-800 rounded-full mb-4">
-          <CheckCircle className="w-8 h-8 text-teal-400" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-950 border border-primary-800 rounded-full mb-4">
+          <CheckCircle className="w-8 h-8 text-primary-400" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">
           プロフィールを保存しました！
@@ -186,7 +186,7 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
       {/* 基本情報 */}
       <section>
         <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+          <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             1
           </span>
           基本情報
@@ -240,7 +240,7 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
       {/* 詳細情報 */}
       <section>
         <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+          <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             2
           </span>
           詳細情報
@@ -285,7 +285,7 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
       {/* ライフスタイル */}
       <section>
         <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+          <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             3
           </span>
           ライフスタイル
@@ -320,7 +320,7 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
       {/* 自己紹介 */}
       <section>
         <h3 className="text-base font-bold text-zinc-300 mb-4 flex items-center gap-2">
-          <span className="w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+          <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
             4
           </span>
           自己紹介
@@ -333,7 +333,7 @@ export function ProfileForm({ initialData, userId, isNew = false }: ProfileFormP
             placeholder="趣味や休日の過ごし方、どんな人と出会いたいかなどを自由に書いてください（500文字以内）"
             rows={5}
             maxLength={500}
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent hover:border-zinc-600 resize-none"
+            className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent hover:border-zinc-600 resize-none"
             {...register("about_me")}
           />
           {errors.about_me && (

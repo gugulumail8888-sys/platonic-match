@@ -23,7 +23,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           >
             {label}
             {props.required && (
-              <span className="text-teal-400 ml-1">*</span>
+              <span className="text-primary-400 ml-1">*</span>
             )}
           </label>
         )}
@@ -38,7 +38,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             className={cn(
               "w-full rounded-xl border bg-zinc-800 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 transition-all duration-200",
-              "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
+              "focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent",
               error
                 ? "border-red-600 focus:ring-red-500"
                 : "border-zinc-700 hover:border-zinc-600",
@@ -85,7 +85,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           >
             {label}
             {props.required && (
-              <span className="text-teal-400 ml-1">*</span>
+              <span className="text-primary-400 ml-1">*</span>
             )}
           </label>
         )}
@@ -94,7 +94,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           id={selectId}
           className={cn(
             "w-full rounded-xl border bg-zinc-800 px-4 py-2.5 text-zinc-100 transition-all duration-200 appearance-none cursor-pointer",
-            "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent",
+            "focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent",
             error
               ? "border-red-600 focus:ring-red-500"
               : "border-zinc-700 hover:border-zinc-600",

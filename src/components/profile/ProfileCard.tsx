@@ -76,8 +76,8 @@ export function ProfileCard({
               className={cn(
                 "absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg",
                 isLiked
-                  ? "bg-teal-500 text-white scale-110"
-                  : "bg-zinc-900/80 text-zinc-400 hover:bg-teal-950 hover:text-teal-400 hover:scale-110"
+                  ? "bg-primary-500 text-white scale-110"
+                  : "bg-zinc-900/80 text-zinc-400 hover:bg-primary-950 hover:text-primary-400 hover:scale-110"
               )}
             >
               <Heart className={cn("w-5 h-5", isLiked && "fill-current")} />
@@ -88,7 +88,7 @@ export function ProfileCard({
         <div className="p-5">
           <div className="flex flex-wrap gap-2">
             {profile.marriage_intention && (
-              <span className="text-xs bg-teal-950 text-teal-400 border border-teal-900 px-3 py-1 rounded-full font-medium">
+              <span className="text-xs bg-primary-950 text-primary-400 border border-primary-900 px-3 py-1 rounded-full font-medium">
                 💒 {MARRIAGE_INTENTION_LABELS[profile.marriage_intention]}
               </span>
             )}
@@ -135,8 +135,8 @@ export function ProfileCard({
               className={cn(
                 "absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow",
                 isLiked
-                  ? "bg-teal-500 text-white"
-                  : "bg-zinc-900/80 text-zinc-400 hover:text-teal-400"
+                  ? "bg-primary-500 text-white"
+                  : "bg-zinc-900/80 text-zinc-400 hover:text-primary-400"
               )}
             >
               <Heart className={cn("w-4 h-4", isLiked && "fill-current")} />
@@ -173,7 +173,7 @@ export function ProfileCard({
 
           {profile.marriage_intention && (
             <div className="mt-3">
-              <span className="text-xs bg-teal-950 text-teal-400 border border-teal-900 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-primary-950 text-primary-400 border border-primary-900 px-2 py-0.5 rounded-full font-medium">
                 {MARRIAGE_INTENTION_LABELS[profile.marriage_intention]}
               </span>
             </div>
