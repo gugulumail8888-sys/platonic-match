@@ -1,58 +1,37 @@
 import Link from "next/link";
-import { Users, Shield, MessageCircle, Star, HandshakeIcon, Heart } from "lucide-react";
+import { Users, Shield, MessageCircle, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ScrollHeader } from "@/components/ui/ScrollHeader";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-zinc-950">
-      {/* ヘッダー */}
-      <header className="fixed top-0 left-0 right-0 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-              <Users className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white tracking-wide">
-              ami<span className="text-primary-400">sta</span>
-            </span>
-          </div>
+      {/* スクロール対応ヘッダー（クライアントコンポーネント） */}
+      <ScrollHeader />
 
-          <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-400">
-            <Link href="#about" className="hover:text-primary-400 transition-colors">
-              友情婚活とは
-            </Link>
-            <Link href="#features" className="hover:text-primary-400 transition-colors">
-              特徴
-            </Link>
-            <Link href="#voice" className="hover:text-primary-400 transition-colors">
-              体験談
-            </Link>
-          </nav>
+      {/* ヒーローセクション - カフェ風ウォームグラデーション */}
+      <section
+        className="relative min-h-screen flex items-center justify-center px-4"
+        style={{
+          background: `
+            radial-gradient(ellipse at 20% 50%, rgba(180, 120, 80, 0.15) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 20%, rgba(237, 126, 92, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at 60% 80%, rgba(120, 80, 50, 0.12) 0%, transparent 50%),
+            linear-gradient(135deg, #0a0806 0%, #1a1008 40%, #0f0c08 100%)
+          `,
+        }}
+      >
+        {/* テキスト可読性向上オーバーレイ */}
+        <div className="absolute inset-0 bg-black/25 pointer-events-none" />
 
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                ログイン
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">
-                無料登録
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* ヒーローセクション */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-primary-950 text-primary-400 text-sm font-medium px-4 py-2 rounded-full mb-6 border border-primary-800">
+        {/* ヒーローコンテンツ */}
+        <div className="relative z-10 max-w-4xl mx-auto text-center pt-16">
+          <div className="inline-flex items-center gap-2 bg-primary-950/80 text-primary-400 text-sm font-medium px-4 py-2 rounded-full mb-8 border border-primary-800/60 backdrop-blur-sm">
             <Star className="w-4 h-4 fill-current" />
             友情から始まる、新しい婚活のかたち
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6 drop-shadow-lg">
             信頼できる友として、
             <br />
             <span style={{
@@ -66,32 +45,35 @@ export default function HomePage() {
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-4 leading-relaxed">
+          <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-4 leading-relaxed drop-shadow">
             amistaは、恋愛感情より深い「友情・信頼・パートナーシップ」を大切にする
             友情婚活マッチングサービスです。
           </p>
-          <p className="text-base text-zinc-500 max-w-xl mx-auto mb-10">
+          <p className="text-base text-zinc-400 max-w-xl mx-auto mb-12">
             外見や条件より、価値観や人柄が合うライフパートナーを見つけましょう。
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/register">
-              <Button size="lg" className="min-w-[200px]">
-                <Users className="w-5 h-5" />
+              <Button size="lg" className="min-w-[200px] shadow-lg">
+                <Heart className="w-5 h-5 fill-white" />
                 無料で始める
               </Button>
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="lg" className="min-w-[200px]">
+              <Button variant="outline" size="lg" className="min-w-[200px] backdrop-blur-sm">
                 ログイン
               </Button>
             </Link>
           </div>
 
-          <p className="text-sm text-zinc-600 mt-6">
+          <p className="text-sm text-zinc-500 mt-8">
             登録無料・審査あり・プロフィール写真任意
           </p>
         </div>
+
+        {/* 下部グラデーションフェード（次セクションへの自然な接続） */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-zinc-900 to-transparent pointer-events-none" />
       </section>
 
       {/* 友情婚活とは */}
@@ -253,7 +235,7 @@ export default function HomePage() {
               size="lg"
               className="bg-white text-primary-700 hover:bg-white/90 min-w-[200px]"
             >
-              <Users className="w-5 h-5" />
+              <Heart className="w-5 h-5 fill-current" />
               無料で始める
             </Button>
           </Link>
@@ -266,7 +248,7 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-gradient-primary rounded-full flex items-center justify-center">
-                <Users className="w-3 h-3 text-white" />
+                <Heart className="w-3 h-3 text-white fill-white" />
               </div>
               <span className="font-bold text-white tracking-wide">
                 ami<span className="text-primary-400">sta</span>

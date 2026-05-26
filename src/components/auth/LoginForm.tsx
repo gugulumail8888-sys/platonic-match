@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { translateAuthError } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Mail, Lock, Users } from "lucide-react";
+import { Mail, Lock, Heart } from "lucide-react";
 
 const loginSchema = z.object({
   email: z
@@ -59,7 +59,7 @@ export function LoginForm() {
       {/* ロゴ */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-lg">
-          <Users className="w-8 h-8 text-white" />
+          <Heart className="w-8 h-8 text-white fill-white" />
         </div>
         <h1 className="text-3xl font-bold text-white mb-1 tracking-wide">
           ami<span className="text-primary-400">sta</span>
