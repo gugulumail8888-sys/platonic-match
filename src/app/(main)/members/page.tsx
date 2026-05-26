@@ -4,101 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Search, RotateCcw, ChevronDown, ChevronUp, MapPin, Briefcase, User } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-
-// ============================================================
-// Types & Dummy Data
-// ============================================================
-
-interface Member {
-  id: number;
-  nickname: string;
-  gender: 'male' | 'female';
-  age: number;
-  prefecture: string;
-  occupation: string;
-  bodyType: string;
-  maritalHistory: 'なし' | 'あり';
-  numberOfChildren: string;
-  hobbies: string;
-  initials: string;
-  avatarColor: string;
-}
-
-const FEMALE_MEMBERS: Member[] = [
-  {
-    id: 1, nickname: 'さくら', gender: 'female', age: 30,
-    prefecture: '東京都', occupation: 'OL', bodyType: '普通',
-    maritalHistory: 'なし', numberOfChildren: 'なし',
-    hobbies: '読書、カフェ巡り、映画鑑賞',
-    initials: 'さ', avatarColor: '#0d9488',
-  },
-  {
-    id: 2, nickname: 'ゆり', gender: 'female', age: 27,
-    prefecture: '大阪府', occupation: '看護師', bodyType: '細身',
-    maritalHistory: 'なし', numberOfChildren: 'なし',
-    hobbies: 'ヨガ、料理、旅行',
-    initials: 'ゆ', avatarColor: '#0891b2',
-  },
-  {
-    id: 3, nickname: 'みらい', gender: 'female', age: 33,
-    prefecture: '神奈川県', occupation: '教師', bodyType: 'ややぽっちゃり',
-    maritalHistory: 'あり', numberOfChildren: '1人',
-    hobbies: 'ハイキング、写真撮影',
-    initials: 'み', avatarColor: '#7c3aed',
-  },
-  {
-    id: 4, nickname: 'あかね', gender: 'female', age: 29,
-    prefecture: '福岡県', occupation: 'IT企業', bodyType: '普通',
-    maritalHistory: 'なし', numberOfChildren: 'なし',
-    hobbies: '映画、旅行、アウトドア',
-    initials: 'あ', avatarColor: '#db2777',
-  },
-  {
-    id: 5, nickname: 'なな', gender: 'female', age: 35,
-    prefecture: '宮崎県', occupation: '自営業', bodyType: '普通',
-    maritalHistory: 'あり', numberOfChildren: 'なし',
-    hobbies: '料理、ガーデニング、温泉',
-    initials: 'な', avatarColor: '#d97706',
-  },
-];
-
-const MALE_MEMBERS: Member[] = [
-  {
-    id: 6, nickname: 'けんじ', gender: 'male', age: 32,
-    prefecture: '東京都', occupation: '会社員', bodyType: 'がっちり',
-    maritalHistory: 'なし', numberOfChildren: 'なし',
-    hobbies: 'サッカー、筋トレ、読書',
-    initials: 'け', avatarColor: '#0d9488',
-  },
-  {
-    id: 7, nickname: 'たける', gender: 'male', age: 28,
-    prefecture: '大阪府', occupation: 'エンジニア', bodyType: '普通',
-    maritalHistory: 'なし', numberOfChildren: 'なし',
-    hobbies: 'ゲーム、アニメ、ドライブ',
-    initials: 'た', avatarColor: '#2563eb',
-  },
-  {
-    id: 8, nickname: 'りょうた', gender: 'male', age: 35,
-    prefecture: '愛知県', occupation: '公務員', bodyType: 'ぽっちゃり',
-    maritalHistory: 'あり', numberOfChildren: '1人',
-    hobbies: '釣り、料理、キャンプ',
-    initials: 'り', avatarColor: '#059669',
-  },
-  {
-    id: 9, nickname: 'はると', gender: 'male', age: 30,
-    prefecture: '福岡県', occupation: '自営業', bodyType: '細身',
-    maritalHistory: 'なし', numberOfChildren: 'なし',
-    hobbies: '音楽、旅行、写真',
-    initials: 'は', avatarColor: '#7c3aed',
-  },
-  {
-    id: 10, nickname: 'だいき', gender: 'male', age: 38,
-    prefecture: '鹿児島県', occupation: '医師', bodyType: '普通',
-    maritalHistory: 'あり', numberOfChildren: '2人',
-    hobbies: 'ゴルフ、読書、料理',
-    initials: 'だ', avatarColor: '#b45309',
-  },
-];
+import { FEMALE_MEMBERS, MemberDetail } from './_data';
 
 // ============================================================
 // Constants
@@ -260,7 +166,7 @@ function FilterPanel({
   );
 }
 
-function MemberCard({ member }: { member: Member }) {
+function MemberCard({ member }: { member: MemberDetail }) {
   const shortHobbies =
     member.hobbies.length > 20 ? member.hobbies.slice(0, 20) + '…' : member.hobbies;
 
