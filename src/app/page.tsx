@@ -14,15 +14,15 @@ export default function HomePage() {
         className="relative min-h-screen flex items-center justify-center px-4"
         style={{
           background: `
-            radial-gradient(ellipse at 20% 50%, rgba(180, 120, 80, 0.15) 0%, transparent 60%),
-            radial-gradient(ellipse at 80% 20%, rgba(237, 126, 92, 0.1) 0%, transparent 50%),
-            radial-gradient(ellipse at 60% 80%, rgba(120, 80, 50, 0.12) 0%, transparent 50%),
-            linear-gradient(135deg, #0a0806 0%, #1a1008 40%, #0f0c08 100%)
+            radial-gradient(ellipse at 20% 50%, rgba(237, 126, 92, 0.25) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 20%, rgba(200, 140, 100, 0.2) 0%, transparent 50%),
+            radial-gradient(ellipse at 60% 80%, rgba(180, 120, 80, 0.2) 0%, transparent 50%),
+            linear-gradient(135deg, #1a0f08 0%, #2d1a0e 40%, #1f1208 100%)
           `,
         }}
       >
         {/* テキスト可読性向上オーバーレイ */}
-        <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+        <div className="absolute inset-0 bg-black/10 pointer-events-none" />
 
         {/* ヒーローコンテンツ */}
         <div className="relative z-10 max-w-4xl mx-auto text-center pt-16">
