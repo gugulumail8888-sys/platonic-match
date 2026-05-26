@@ -48,6 +48,9 @@ export function ScrollHeader() {
           <Link href="#voice" className="hover:text-primary-400 transition-colors">
             体験談
           </Link>
+          <Link href="/members" className="hover:text-primary-400 transition-colors">
+            メンバーを探す
+          </Link>
         </nav>
 
         {/* ボタン */}

@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 認証が必要なパス
-  const protectedPaths = ["/dashboard", "/members", "/matching", "/messages", "/profile"];
+  const protectedPaths = ["/dashboard", "/matching", "/messages", "/profile"];
   const isProtectedPath = protectedPaths.some((path) =>
     pathname.startsWith(path)
   );
