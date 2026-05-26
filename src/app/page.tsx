@@ -13,15 +13,14 @@ export default function HomePage() {
       <section
         className="relative min-h-screen flex items-center justify-center px-4"
         style={{
-          background: `
-            radial-gradient(ellipse at 30% 50%, rgba(237, 126, 92, 0.45) 0%, transparent 55%),
-            radial-gradient(ellipse at 75% 30%, rgba(220, 150, 100, 0.35) 0%, transparent 50%),
-            linear-gradient(135deg, #3d2010 0%, #5c2e15 35%, #3a1e0c 100%)
-          `,
+          backgroundImage: 'url(/hero-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }}
       >
         {/* テキスト可読性向上オーバーレイ */}
-        {/* オーバーレイなし — 背景の明るさをそのまま活かす */}
+        {/* テキスト可読性オーバーレイ */}
+        <div style={{ background: 'rgba(0,0,0,0.45)', position: 'absolute', inset: 0 }} />
 
         {/* ヒーローコンテンツ */}
         <div className="relative z-10 max-w-4xl mx-auto text-center pt-16">
@@ -34,7 +33,7 @@ export default function HomePage() {
             信頼できる友として、
             <br />
             <span style={{
-              background: 'linear-gradient(135deg, #f09270 0%, #ed7e5c 100%)',
+              background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -119,7 +118,7 @@ export default function HomePage() {
             ].map((stat) => (
               <div key={stat.label}>
                 <div className="text-3xl md:text-4xl font-bold mb-2" style={{
-                  background: 'linear-gradient(135deg, #f09270 0%, #ed7e5c 100%)',
+                  background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',

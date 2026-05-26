@@ -9,19 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // amista カラー: サーモンオレンジ × ダーク
+        // amista カラー: teal × ダーク
         primary: {
-          50:  "#fff4f1",
-          100: "#ffe5d9",
-          200: "#ffbfa0",
-          300: "#ffa07a",
-          400: "#f49070",
-          500: "#ed7e5c",  // メインカラー: Salmon Orange
-          600: "#d4623e",
-          700: "#af4b2c",
-          800: "#8c3c24",
-          900: "#6e3020",
-          950: "#3b1610",
+          50:  "#f0fdfa",
+          100: "#ccfbf1",
+          200: "#99f6e4",
+          300: "#5eead4",
+          400: "#2dd4bf",
+          500: "#14b8a6",  // メインカラー: Teal
+          600: "#0d9488",
+          700: "#0f766e",
+          800: "#115e59",
+          900: "#134e4a",
+          950: "#042f2e",
         },
         secondary: {
           50:  "#fffbeb",
@@ -55,14 +55,14 @@ const config: Config = {
         ],
       },
       backgroundImage: {
-        "gradient-primary": "linear-gradient(135deg, #f09270 0%, #ed7e5c 100%)",
-        "gradient-warm":    "linear-gradient(135deg, #ed7e5c 0%, #d4623e 50%, #af4b2c 100%)",
-        "gradient-soft":    "linear-gradient(135deg, #fff4f1 0%, #fffbeb 100%)",
-        "gradient-hero":    "linear-gradient(135deg, #d4623e 0%, #af4b2c 100%)",
+        "gradient-primary": "linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)",
+        "gradient-warm":    "linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%)",
+        "gradient-soft":    "linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%)",
+        "gradient-hero":    "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
       },
       boxShadow: {
-        card:       "0 4px 24px rgba(0, 0, 0, 0.4)",
-        "card-hover":"0 8px 32px rgba(237, 126, 92, 0.25)",
+        card:        "0 4px 24px rgba(0, 0, 0, 0.4)",
+        "card-hover":"0 8px 32px rgba(13, 148, 136, 0.25)",
       },
       animation: {
         "fade-in":  "fadeIn 0.5s ease-in-out",

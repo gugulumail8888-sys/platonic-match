@@ -23,11 +23,11 @@
 @layer utilities {
   /* amista グラデーション背景 */
   .bg-gradient-primary {
-    background: linear-gradient(135deg, #f09270 0%, #ed7e5c 100%);
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(135deg, #d4623e 0%, #af4b2c 100%);
+    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
   }
 
   /* ダークカードシャドウ */
@@ -36,7 +36,7 @@
   }
 
   .shadow-card-hover {
-    box-shadow: 0 8px 32px rgba(237, 126, 92, 0.25);
+    box-shadow: 0 8px 32px rgba(13, 148, 136, 0.25);
   }
 
   /* テキストクランプ */
@@ -65,7 +65,7 @@
  * @layer utilities 内では vendor prefix が除去される場合があるため外に置く。
  */
 .text-gradient-primary {
-  background: linear-gradient(135deg, #f09270 0%, #ed7e5c 100%);
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -89,11 +89,11 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ed7e5c;
+  background: #0d9488;
 }
 
 /* フォーカスリング */
 :focus-visible {
-  outline: 2px solid #ed7e5c;
+  outline: 2px solid #0d9488;
   outline-offset: 2px;
 }
