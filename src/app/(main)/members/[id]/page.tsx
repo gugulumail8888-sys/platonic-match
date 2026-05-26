@@ -1,243 +1,200 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/Button";
-import {
-  calculateAge,
-  getAvatarUrl,
-  formatDateJa,
-} from "@/lib/utils";
-import {
-  GENDER_LABELS,
-  ANNUAL_INCOME_LABELS,
-  EDUCATION_LABELS,
-  BODY_TYPE_LABELS,
-  DRINKING_LABELS,
-  SMOKING_LABELS,
-  MARRIAGE_INTENTION_LABELS,
-  type Profile,
-} from "@/types";
-import {
-  Heart,
-  MapPin,
-  Briefcase,
-  GraduationCap,
-  Star,
-  ArrowLeft,
-  MessageCircle,
-  Ruler,
-  Wine,
-  Cigarette,
-  CalendarHeart,
-} from "lucide-react";
-import Link from "next/link";
+'use client';
 
-export const metadata: Metadata = {
-  title: "会員プロフィール",
-};
+import { useState } from 'react';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import {
+  Heart, MessageCircle, ArrowLeft, MapPin, Briefcase,
+  Ruler, User, GraduationCap, Users, Cigarette,
+  Wallet, Home, GitMerge, Calendar, Baby, Sparkles, HeartHandshake,
+} from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { getMemberById } from '../_data';
 
-interface Props {
-  params: { id: string };
+// ============================================================
+// Info Row
+// ============================================================
+
+function InfoRow({ icon: Icon, label, value }: {
+  icon: React.ElementType; label: string; value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 py-2.5 border-b border-zinc-700/50 last:border-0">
+      <div className="w-8 h-8 bg-zinc-700/50 rounded-lg flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-teal-500" />
+      </div>
+      <span className="text-sm text-zinc-400 w-28 flex-shrink-0">{label}</span>
+      <span className="text-sm text-zinc-100 font-medium">{value}</span>
+    </div>
+  );
 }
 
-export default async function MemberProfilePage({ params }: Props) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+// ============================================================
+// Section Card
+// ============================================================
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", params.id)
-    .single();
+function SectionCard({ title, children }: {
+  title: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 md:p-6">
+      <h2 className="text-sm font-bold text-teal-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <span className="w-1 h-4 bg-teal-500 rounded-full inline-block" />
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
 
-  if (!profile) {
-    notFound();
-  }
+// ============================================================
+// Page
+// ============================================================
 
-  // いいね済みチェック
-  const { data: existingLike } = await supabase
-    .from("likes")
-    .select("id")
-    .eq("sender_id", user!.id)
-    .eq("receiver_id", params.id)
-    .single();
+export default function MemberProfilePage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const member = getMemberById(Number(params.id));
+  if (!member) notFound();
 
-  const isLiked = !!existingLike;
-  const age = calculateAge(profile.birth_date);
-  const avatarUrl = getAvatarUrl(profile.avatar_url, profile.nickname);
-
-  const details = [
-    {
-      icon: MapPin,
-      label: "居住地",
-      value: profile.prefecture,
-    },
-    {
-      icon: Briefcase,
-      label: "職業",
-      value: profile.occupation,
-    },
-    profile.annual_income && {
-      icon: Star,
-      label: "年収",
-      value: ANNUAL_INCOME_LABELS[profile.annual_income],
-    },
-    profile.education && {
-      icon: GraduationCap,
-      label: "最終学歴",
-      value: EDUCATION_LABELS[profile.education],
-    },
-    profile.height && {
-      icon: Ruler,
-      label: "身長",
-      value: `${profile.height}cm`,
-    },
-    profile.body_type && {
-      icon: Star,
-      label: "体型",
-      value: BODY_TYPE_LABELS[profile.body_type],
-    },
-    {
-      icon: Wine,
-      label: "飲酒",
-      value: DRINKING_LABELS[profile.alcohol],
-    },
-    {
-      icon: Cigarette,
-      label: "喫煙",
-      value: SMOKING_LABELS[profile.smoking],
-    },
-    {
-      icon: CalendarHeart,
-      label: "結婚への意思",
-      value: MARRIAGE_INTENTION_LABELS[profile.marriage_intention],
-    },
-  ].filter(Boolean);
+  const [liked, setLiked] = useState(false);
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* 戻るボタン */}
-      <div className="p-4">
-        <Link href="/members">
-          <button className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">会員一覧へ戻る</span>
-          </button>
-        </Link>
+    <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-4">
+      {/* 戻るリンク */}
+      <Link
+        href="/members"
+        className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-zinc-200 text-sm transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        メンバー一覧へ戻る
+      </Link>
+
+      {/* ===== ヘッダーエリア ===== */}
+      <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+        {/* イニシャルアバター */}
+        <div
+          className="w-24 h-24 rounded-full flex items-center justify-center text-white font-bold text-4xl flex-shrink-0 select-none shadow-lg"
+          style={{ background: member.avatarColor }}
+        >
+          {member.initials}
+        </div>
+
+        {/* 基本情報 */}
+        <div className="flex-1 text-center sm:text-left">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
+            {member.nickname}
+          </h1>
+          <p className="text-zinc-400 text-sm mb-3">{member.age}歳</p>
+          <div className="flex flex-wrap justify-center sm:justify-start gap-3 text-sm">
+            <span className="flex items-center gap-1.5 text-zinc-300">
+              <MapPin className="w-3.5 h-3.5 text-teal-500" />
+              {member.prefecture}
+            </span>
+            <span className="flex items-center gap-1.5 text-zinc-300">
+              <Briefcase className="w-3.5 h-3.5 text-teal-500" />
+              {member.occupation}
+            </span>
+            <span className="flex items-center gap-1.5 text-zinc-300">
+              <Ruler className="w-3.5 h-3.5 text-teal-500" />
+              {member.height}cm
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* メインプロフィール */}
-      <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 overflow-hidden mx-4 mb-4">
-        {/* アバター画像 */}
-        <div className="relative h-72">
-          <Image
-            src={avatarUrl}
-            alt={profile.nickname}
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+      {/* ===== 基本情報 ===== */}
+      <SectionCard title="基本情報">
+        <div className="space-y-0">
+          <InfoRow icon={Ruler}         label="身長"         value={`${member.height}cm`} />
+          <InfoRow icon={User}          label="体型"         value={member.bodyType} />
+          <InfoRow icon={Sparkles}      label="血液型"       value={member.bloodType} />
+          <InfoRow icon={HeartHandshake} label="結婚歴"      value={member.maritalHistory} />
+          <InfoRow icon={Baby}          label="お子様の人数" value={member.numberOfChildren} />
+          <InfoRow icon={GraduationCap} label="学歴"         value={member.education} />
+          <InfoRow icon={Users}         label="兄弟姉妹"     value={member.siblings} />
+        </div>
+      </SectionCard>
 
-          {/* バッジ */}
-          <div className="absolute top-4 left-4 flex gap-2">
-            {profile.is_verified && (
-              <span className="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                <Star className="w-3 h-3" />
-                本人確認済み
-              </span>
-            )}
-            {profile.is_premium && (
-              <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                Premium
-              </span>
-            )}
+      {/* ===== ライフスタイル ===== */}
+      <SectionCard title="ライフスタイル">
+        <div className="space-y-0">
+          <InfoRow icon={Cigarette}  label="喫煙"       value={member.smoking} />
+          <InfoRow icon={Wallet}     label="収入（年収）" value={member.income} />
+          <InfoRow icon={Home}       label="居住形態"    value={member.livingArrangement} />
+          <InfoRow icon={GitMerge}   label="家計の管理"  value={member.financeManagement} />
+          <InfoRow icon={Heart}      label="外部パートナー" value={member.externalPartner} />
+        </div>
+      </SectionCard>
+
+      {/* ===== パートナー希望 ===== */}
+      <SectionCard title="パートナー希望">
+        <div className="space-y-0">
+          <InfoRow icon={Calendar}   label="結婚希望時期"      value={member.marriageTiming} />
+          <InfoRow icon={Baby}       label="子供の有無（希望）" value={member.childrenDesire} />
+          <InfoRow icon={Sparkles}   label="セクシュアリティ"  value={member.sexuality} />
+        </div>
+      </SectionCard>
+
+      {/* ===== 自己紹介 ===== */}
+      <SectionCard title="自己紹介">
+        <div className="space-y-5">
+          {/* 趣味 */}
+          <div>
+            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">趣味</p>
+            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-line">
+              {member.hobbies}
+            </p>
           </div>
 
-          {/* 名前・基本情報 */}
-          <div className="absolute bottom-5 left-5 text-white">
-            <h1 className="text-2xl font-bold">
-              {profile.nickname}
-              <span className="text-lg font-normal ml-2">{age}歳</span>
-            </h1>
-            <p className="text-sm text-white/70 flex items-center gap-1 mt-1">
-              <MapPin className="w-3 h-3" />
-              {profile.prefecture}
+          {/* PR */}
+          <div>
+            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">PR</p>
+            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-line">
+              {member.pr}
+            </p>
+          </div>
+
+          {/* 希望条件 */}
+          <div>
+            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">
+              希望条件
+            </p>
+            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-line">
+              {member.desiredConditions}
             </p>
           </div>
         </div>
+      </SectionCard>
 
-        {/* アクションボタン */}
-        <div className="p-5 flex gap-3">
-          <Button
-            variant={isLiked ? "primary" : "outline"}
-            fullWidth
-            className="flex items-center gap-2"
-          >
-            <Heart className={isLiked ? "fill-current" : ""} size={18} />
-            {isLiked ? "いいね済み" : "いいね！"}
-          </Button>
-          <Button variant="secondary" fullWidth className="flex items-center gap-2">
-            <MessageCircle size={18} />
-            メッセージ
-          </Button>
-        </div>
+      {/* ===== アクションボタン ===== */}
+      <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 flex flex-col sm:flex-row gap-3">
+        <Button
+          onClick={() => setLiked((v) => !v)}
+          variant={liked ? 'primary' : 'primary'}
+          fullWidth
+          className={liked ? 'opacity-80' : ''}
+        >
+          <Heart className={`w-4 h-4 ${liked ? 'fill-white' : ''}`} />
+          {liked ? 'いいね済み ♥' : 'いいね！'}
+        </Button>
+        <Button variant="outline" fullWidth>
+          <MessageCircle className="w-4 h-4" />
+          メッセージを送る
+        </Button>
       </div>
 
-      {/* 自己紹介 */}
-      {profile.about_me && (
-        <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 mx-4 mb-4">
-          <h2 className="text-base font-bold text-zinc-300 mb-3">自己紹介</h2>
-          <p className="text-zinc-400 leading-relaxed text-sm whitespace-pre-line">
-            {profile.about_me}
-          </p>
-        </div>
-      )}
-
-      {/* 趣味・好み */}
-      {profile.hobbies && profile.hobbies.length > 0 && (
-        <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 mx-4 mb-4">
-          <h2 className="text-base font-bold text-zinc-300 mb-3">趣味・興味</h2>
-          <div className="flex flex-wrap gap-2">
-            {profile.hobbies.map((hobby) => (
-              <span
-                key={hobby}
-                className="bg-primary-950 border border-primary-900 text-primary-400 px-3 py-1.5 rounded-full text-sm font-medium"
-              >
-                {hobby}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 詳細情報 */}
-      <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 mx-4 mb-8">
-        <h2 className="text-base font-bold text-zinc-300 mb-4">基本情報</h2>
-        <div className="space-y-3">
-          {details.map((detail) => {
-            if (!detail) return null;
-            const Icon = detail.icon;
-            return (
-              <div
-                key={detail.label}
-                className="flex items-center gap-3 py-2 border-b border-zinc-800 last:border-0"
-              >
-                <div className="w-8 h-8 bg-zinc-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4 h-4 text-zinc-500" />
-                </div>
-                <span className="text-sm text-zinc-500 w-24 flex-shrink-0">
-                  {detail.label}
-                </span>
-                <span className="text-sm text-zinc-200 font-medium">
-                  {detail.value}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+      {/* 戻るリンク（下部） */}
+      <div className="text-center pb-4">
+        <Link
+          href="/members"
+          className="inline-flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          メンバー一覧へ戻る
+        </Link>
       </div>
     </div>
   );
