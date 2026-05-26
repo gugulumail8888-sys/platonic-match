@@ -55,7 +55,13 @@ export default function HomePage() {
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
             信頼できる友として、
             <br />
-            <span className="text-gradient-primary">
+            <span style={{
+              background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              display: 'inline-block',
+            }}>
               ともに歩もう。
             </span>
           </h1>
@@ -131,7 +137,13 @@ export default function HomePage() {
               { number: "96%", label: "「友人として信頼できる」回答率" },
             ].map((stat) => (
               <div key={stat.label}>
-                <div className="text-3xl md:text-4xl font-bold text-gradient-primary mb-2">
+                <div className="text-3xl md:text-4xl font-bold mb-2" style={{
+                  background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  display: 'inline-block',
+                }}>
                   {stat.number}
                 </div>
                 <div className="text-xs md:text-sm text-zinc-500">{stat.label}</div>
