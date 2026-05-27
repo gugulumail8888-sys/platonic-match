@@ -364,6 +364,9 @@ export default function HomePage() {
               <Link href="/privacy" className="hover:text-white transition-colors">
                 プライバシーポリシー
               </Link>
+              <Link href="/tokusho" className="hover:text-white transition-colors">
+                特定商取引法
+              </Link>
               <Link href="/contact" className="hover:text-white transition-colors">
                 お問い合わせ
               </Link>
