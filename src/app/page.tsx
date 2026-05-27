@@ -155,7 +155,7 @@ export default function HomePage() {
               {
                 icon: Shield,
                 title: "安心・安全な環境",
-                desc: "本人確認必須・審査制で誠実な方だけが参加。プロフィール写真は任意で、外見より内面を重視した出会いを実現。",
+                desc: "本人確認必須・審査制で誠実な方だけが参加。ZOOMお見合いで顔を確認するため、外見より内面・価値観を重視した出会いを実現。",
                 color: "text-blue-400",
                 bg: "bg-blue-950",
                 border: "border-blue-900",
@@ -170,8 +170,8 @@ export default function HomePage() {
               },
               {
                 icon: MessageCircle,
-                title: "じっくり交流",
-                desc: "マッチング後は焦らずメッセージで交流。友達として話すような感覚で、お互いをゆっくりと深く知り合えます。",
+                title: "ZOOMでじっくり対話",
+                desc: "テキストではなくZOOMで顔を見ながら対話。友人として話すような感覚で、お互いの人柄をじっくり確かめることができます。",
                 color: "text-amber-400",
                 bg: "bg-amber-950",
                 border: "border-amber-900",
@@ -250,6 +250,8 @@ export default function HomePage() {
 
               <div className="mb-6">
                 <p className="text-sm font-medium text-pink-400 mb-1">AIおすすめプラン</p>
+                {/* キャッチコピー */}
+                <p className="text-xs text-pink-300/80 mb-2">仕事や育児で忙しいあなたへ</p>
                 <div className="flex items-end gap-1">
                   <span className="text-4xl font-bold text-white">¥980</span>
                   <span className="text-zinc-400 text-sm mb-1">〜 / 月</span>
@@ -258,19 +260,37 @@ export default function HomePage() {
               </div>
 
               <ul className="space-y-3 mb-8">
+                {/* 基本機能 */}
                 {[
                   '会員登録・プロフィール作成',
                   'メンバー検索・閲覧',
                   'お見合い申請（1件 ¥3,000）',
                   'マイページ管理',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                    <span className="flex-shrink-0 mt-0.5 text-teal-400">✓</span>
+                    <span className="text-zinc-300">{item}</span>
+                  </li>
+                ))}
+
+                {/* AI機能 区切り */}
+                <li className="flex items-center gap-2 py-0.5">
+                  <span className="flex-1 h-px bg-pink-800/50" />
+                  <span className="text-xs text-pink-400/70 font-medium tracking-widest">AI 機能</span>
+                  <span className="flex-1 h-px bg-pink-800/50" />
+                </li>
+
+                {/* AI機能 */}
+                {[
                   'AIがあなたに合う相手を自動で選定',
                   '毎週おすすめメンバーをご提案',
-                  '忙しい方でも効率よく出会える',
+                  '仕事・育児で忙しくても婚活できる',
+                  'AIがあなたの代わりに相手を探す',
                   '優先サポート',
-                ].map((item, i) => (
+                ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
-                    <span className={`flex-shrink-0 mt-0.5 ${i >= 4 ? 'text-pink-400' : 'text-teal-400'}`}>✓</span>
-                    <span className={i >= 4 ? 'text-pink-200' : 'text-zinc-300'}>{item}</span>
+                    <span className="flex-shrink-0 mt-0.5 text-pink-400">✓</span>
+                    <span className="text-pink-200">{item}</span>
                   </li>
                 ))}
               </ul>
