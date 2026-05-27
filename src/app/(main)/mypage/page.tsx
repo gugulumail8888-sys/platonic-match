@@ -311,11 +311,28 @@ function ToggleSwitch({ checked, onChange, label, description }: ToggleSwitchPro
   );
 }
 
+const WITHDRAWAL_REASONS = [
+  { value: 'found_partner',    label: '良いパートナーが見つかった', emoji: '🎉' },
+  { value: 'pause',            label: '活動を休止したい',           emoji: '⏸️' },
+  { value: 'hard_to_use',      label: 'サービスが使いにくかった',   emoji: '😔' },
+  { value: 'no_match',         label: '希望に合う相手がいなかった', emoji: '🔍' },
+  { value: 'expensive',        label: '料金が高いと感じた',         emoji: '💸' },
+  { value: 'privacy_concern',  label: '個人情報が心配',             emoji: '🔒' },
+  { value: 'other',            label: 'その他',                     emoji: '📝' },
+] as const;
+
+type WithdrawalReasonValue = typeof WITHDRAWAL_REASONS[number]['value'];
+
 interface WithdrawalModalProps {
   onClose: () => void;
 }
 
 function WithdrawalModal({ onClose }: WithdrawalModalProps) {
+  const [selectedReason, setSelectedReason] = useState<WithdrawalReasonValue | ''>('');
+  const [otherText, setOtherText] = useState('');
+
+  const canSubmit = selectedReason !== '';
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -329,7 +346,7 @@ function WithdrawalModal({ onClose }: WithdrawalModalProps) {
       />
 
       {/* モーダル本体 */}
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+      <div className="relative bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
@@ -348,11 +365,69 @@ function WithdrawalModal({ onClose }: WithdrawalModalProps) {
         <p className="text-zinc-400 text-sm leading-relaxed mb-2">
           退会するとすべてのデータが削除され、元に戻すことはできません。
         </p>
-        <ul className="text-zinc-500 text-xs space-y-1 mb-6 list-disc list-inside">
+        <ul className="text-zinc-500 text-xs space-y-1 mb-5 list-disc list-inside">
           <li>プロフィール情報</li>
           <li>いいね・マッチング履歴</li>
           <li>メッセージ履歴</li>
         </ul>
+
+        {/* 退会理由アンケート */}
+        <div className="mb-5">
+          <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">
+            退会理由を教えてください
+            <span className="ml-1.5 text-red-400 normal-case font-normal">※必須</span>
+          </p>
+          <div className="space-y-2">
+            {WITHDRAWAL_REASONS.map(({ value, label, emoji }) => {
+              const isSelected = selectedReason === value;
+              return (
+                <label
+                  key={value}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl border cursor-pointer transition-all duration-150 ${
+                    isSelected
+                      ? 'border-teal-500 bg-teal-900/30 text-teal-300'
+                      : 'border-zinc-700 bg-zinc-800/60 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-700/50'
+                  }`}
+                >
+                  {/* カスタムラジオボタン */}
+                  <span
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      isSelected ? 'border-teal-400' : 'border-zinc-500'
+                    }`}
+                  >
+                    {isSelected && (
+                      <span className="w-2 h-2 rounded-full bg-teal-400 block" />
+                    )}
+                  </span>
+                  <input
+                    type="radio"
+                    name="withdrawal_reason"
+                    value={value}
+                    checked={isSelected}
+                    onChange={() => {
+                      setSelectedReason(value);
+                      if (value !== 'other') setOtherText('');
+                    }}
+                    className="sr-only"
+                  />
+                  <span className="text-base leading-none">{emoji}</span>
+                  <span className="text-sm">{label}</span>
+                </label>
+              );
+            })}
+          </div>
+
+          {/* その他テキストエリア */}
+          {selectedReason === 'other' && (
+            <textarea
+              value={otherText}
+              onChange={(e) => setOtherText(e.target.value)}
+              rows={3}
+              placeholder="理由を教えてください（任意）"
+              className="mt-3 w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-white text-sm placeholder-zinc-500 focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors resize-none"
+            />
+          )}
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
           <button
@@ -364,7 +439,12 @@ function WithdrawalModal({ onClose }: WithdrawalModalProps) {
           </button>
           <button
             type="button"
-            className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors"
+            disabled={!canSubmit}
+            className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+              canSubmit
+                ? 'bg-red-600 hover:bg-red-700 text-white'
+                : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+            }`}
           >
             退会する
           </button>
