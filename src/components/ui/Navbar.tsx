@@ -12,14 +12,16 @@ import {
   Home,
   Handshake,
   Users,
+  Bot,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "ホーム", icon: Home },
   { href: "/members", label: "会員一覧", icon: Users },
   { href: "/matching", label: "マッチング", icon: Handshake },
+  { href: "/recommend", label: "AIおすすめ", icon: Bot },
   { href: "/messages", label: "メッセージ", icon: MessageCircle },
-  { href: "/profile", label: "マイページ", icon: User },
+  { href: "/mypage", label: "マイページ", icon: User },
 ];
 
 export function Navbar() {

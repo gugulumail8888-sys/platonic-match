@@ -31,35 +31,39 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // セッション更新
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // TODO: 本番環境では認証チェックを有効にする
+  //       現在は開発中のため認証チェックをスキップしています
+  if (process.env.NODE_ENV !== "development") {
+    // セッション更新
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
+    const { pathname } = request.nextUrl;
 
-  // 認証が必要なパス
-  const protectedPaths = ["/dashboard", "/matching", "/messages", "/profile"];
-  const isProtectedPath = protectedPaths.some((path) =>
-    pathname.startsWith(path)
-  );
+    // 認証が必要なパス
+    const protectedPaths = ["/dashboard", "/matching", "/messages", "/profile"];
+    const isProtectedPath = protectedPaths.some((path) =>
+      pathname.startsWith(path)
+    );
 
-  // 未認証 + 保護パス → ログインへリダイレクト
-  if (!user && isProtectedPath) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(url);
-  }
+    // 未認証 + 保護パス → ログインへリダイレクト
+    if (!user && isProtectedPath) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirectTo", pathname);
+      return NextResponse.redirect(url);
+    }
 
-  // ログイン済み + 認証ページ → ダッシュボードへリダイレクト
-  const authPaths = ["/login", "/register"];
-  const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
+    // ログイン済み + 認証ページ → ダッシュボードへリダイレクト
+    const authPaths = ["/login", "/register"];
+    const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
 
-  if (user && isAuthPath) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    if (user && isAuthPath) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;
