@@ -168,13 +168,27 @@ function ApplicationCard({ app }: { app: Application }) {
         </div>
       </div>
 
-      {/* プロフィールリンク */}
-      <Link
-        href={`/members/${app.member.id}`}
-        className="mt-4 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-zinc-600 text-zinc-400 text-xs hover:bg-zinc-700 hover:text-zinc-200 transition-colors"
-      >
-        プロフィールを見る
-      </Link>
+      {/* ボタンエリア */}
+      <div className={`mt-4 ${app.status === 'scheduling' ? 'flex flex-col gap-2' : ''}`}>
+        {/* 日程調整ボタン（日程調整中のみ表示） */}
+        {app.status === 'scheduling' && (
+          <Link
+            href={`/schedule/request?id=${app.id}&name=${encodeURIComponent(app.member.nickname)}`}
+            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md hover:scale-[1.02]"
+            style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
+          >
+            📅 日程を調整する
+          </Link>
+        )}
+
+        {/* プロフィールリンク */}
+        <Link
+          href={`/members/${app.member.id}`}
+          className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-zinc-600 text-zinc-400 text-xs hover:bg-zinc-700 hover:text-zinc-200 transition-colors"
+        >
+          プロフィールを見る
+        </Link>
+      </div>
     </div>
   );
 }
