@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { Check, Heart } from 'lucide-react';
+import { Check, Upload, X, ShieldCheck, Mail, CheckCircle2 } from 'lucide-react';
 import { ScrollHeader } from '@/components/ui/ScrollHeader';
 import { Button } from '@/components/ui/Button';
 
@@ -238,14 +238,15 @@ function FTextarea({
 }
 
 // ============================================================
-// Step Indicator
+// Step Indicator（4段階）
 // ============================================================
 
 function StepIndicator({ step }: { step: number }) {
   const steps = [
     { n: 1, label: '基本情報' },
     { n: 2, label: 'プロフィール' },
-    { n: 3, label: '完了' },
+    { n: 3, label: '本人確認' },
+    { n: 4, label: '完了' },
   ];
   return (
     <div className="flex items-start justify-center mb-8">
@@ -253,7 +254,7 @@ function StepIndicator({ step }: { step: number }) {
         <div key={s.n} className="flex items-start">
           <div className="flex flex-col items-center">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+              className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
                 step > s.n
                   ? 'bg-teal-600 text-white'
                   : step === s.n
@@ -273,7 +274,7 @@ function StepIndicator({ step }: { step: number }) {
           </div>
           {i < steps.length - 1 && (
             <div
-              className={`w-16 md:w-24 h-0.5 mx-2 mt-5 transition-colors ${
+              className={`w-10 md:w-16 h-0.5 mx-1.5 mt-[18px] transition-colors ${
                 step > s.n ? 'bg-teal-600' : 'bg-zinc-700'
               }`}
             />
@@ -571,10 +572,195 @@ function Step2({
 }
 
 // ============================================================
-// Step 3: Complete
+// Step 3: 本人確認書類アップロード
 // ============================================================
 
-function Step3() {
+type DocType = 'license' | 'mynumber' | 'passport' | '';
+
+const DOC_OPTIONS: { value: DocType; label: string; note?: string }[] = [
+  { value: 'license',  label: '運転免許証',        note: '推奨' },
+  { value: 'mynumber', label: 'マイナンバーカード' },
+  { value: 'passport', label: 'パスポート',          note: '上記2つをお持ちでない方' },
+];
+
+function UploadArea({
+  label,
+  preview,
+  onFile,
+  onClear,
+}: {
+  label: string;
+  preview: string | null;
+  onFile: (file: File) => void;
+  onClear: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) onFile(file);
+  };
+
+  return (
+    <div>
+      <p className="text-sm font-medium text-zinc-300 mb-2">{label}</p>
+      {preview ? (
+        <div className="relative rounded-xl overflow-hidden border border-zinc-600 bg-zinc-800">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt={label} className="w-full h-40 object-cover" />
+          <button
+            type="button"
+            onClick={onClear}
+            className="absolute top-2 right-2 w-7 h-7 bg-zinc-900/80 rounded-full flex items-center justify-center text-zinc-300 hover:bg-red-900/80 hover:text-red-300 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="absolute bottom-0 inset-x-0 bg-teal-900/80 py-1 text-center text-xs text-teal-300">
+            ✓ アップロード済み
+          </div>
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          className="border-2 border-dashed border-zinc-600 rounded-xl p-6 text-center cursor-pointer hover:border-teal-600 hover:bg-teal-950/20 transition-all"
+        >
+          <Upload className="w-8 h-8 text-zinc-500 mx-auto mb-2" />
+          <p className="text-zinc-400 text-sm">クリックまたはドラッグ&amp;ドロップ</p>
+          <p className="text-zinc-600 text-xs mt-1">JPG・PNG・HEIC（最大10MB）</p>
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFile(file);
+        }}
+      />
+    </div>
+  );
+}
+
+function Step3({
+  docType, setDocType, frontPreview, backPreview,
+  onFrontFile, onBackFile, onFrontClear, onBackClear,
+  isSameFile,
+}: {
+  docType: DocType;
+  setDocType: (v: DocType) => void;
+  frontPreview: string | null;
+  backPreview: string | null;
+  onFrontFile: (f: File) => void;
+  onBackFile: (f: File) => void;
+  onFrontClear: () => void;
+  onBackClear: () => void;
+  isSameFile: boolean;
+}) {
+  const isPassport = docType === 'passport';
+  const frontLabel = isPassport ? '顔写真ページ' : '表面';
+  const backLabel  = isPassport ? '個人情報ページ' : '裏面';
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-base font-bold text-white border-b border-zinc-700 pb-3">
+        本人確認書類のアップロード
+      </h2>
+
+      <p className="text-zinc-400 text-sm leading-relaxed">
+        以下の書類のいずれかを選択し、{isPassport ? '顔写真ページ・個人情報ページ' : '表面・裏面'}をアップロードしてください。
+      </p>
+
+      {/* 書類選択 */}
+      <div>
+        <p className="text-sm font-medium text-zinc-300 mb-3">書類の種類を選択</p>
+        <div className="space-y-2">
+          {DOC_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { setDocType(opt.value); }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                docType === opt.value
+                  ? 'border-teal-500 bg-teal-950/40'
+                  : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  docType === opt.value ? 'border-teal-500 bg-teal-500' : 'border-zinc-500'
+                }`}>
+                  {docType === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                </div>
+                <span className={`text-sm font-medium ${docType === opt.value ? 'text-teal-300' : 'text-zinc-300'}`}>
+                  {opt.label}
+                </span>
+              </div>
+              {opt.note && (
+                <span className="text-xs text-zinc-500">{opt.note}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* アップロードエリア（書類選択後に表示） */}
+      {docType && (
+        <div className="space-y-4">
+          <UploadArea
+            label={frontLabel}
+            preview={frontPreview}
+            onFile={onFrontFile}
+            onClear={onFrontClear}
+          />
+          <UploadArea
+            label={backLabel}
+            preview={backPreview}
+            onFile={onBackFile}
+            onClear={onBackClear}
+          />
+          {/* 同一画像エラー */}
+          {isSameFile && (
+            <div className="flex items-start gap-2 bg-red-950/50 border border-red-800 rounded-xl px-3 py-2.5 mt-1">
+              <span className="text-red-400 flex-shrink-0 mt-0.5">⚠</span>
+              <p className="text-red-400 text-xs leading-relaxed">
+                表面と裏面に同じ画像が選択されています。別々の画像をアップロードしてください。
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 注意事項 */}
+      <div className="bg-zinc-800 rounded-xl p-4 border border-zinc-700">
+        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">注意事項</p>
+        <ul className="space-y-2">
+          {[
+            '画像は鮮明に撮影してください',
+            '有効期限内の書類をご使用ください',
+            '四隅が全て写るようにしてください',
+            '光の反射にご注意ください',
+          ].map((item) => (
+            <li key={item} className="flex items-start gap-2 text-xs text-zinc-400">
+              <span className="text-teal-500 flex-shrink-0 mt-0.5">•</span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Step 4: Complete（審査待ち）
+// ============================================================
+
+function Step4() {
   return (
     <div className="text-center py-8">
       <div
@@ -584,21 +770,43 @@ function Step3() {
           border: '2px solid rgba(13,148,136,0.3)',
         }}
       >
-        <Check className="w-10 h-10 text-teal-400" />
+        <ShieldCheck className="w-10 h-10 text-teal-400" />
       </div>
-      <h2 className="text-2xl font-bold text-white mb-3">登録が完了しました！</h2>
-      <p className="text-zinc-300 mb-2">amistaへようこそ。</p>
+      <h2 className="text-2xl font-bold text-white mb-3">書類を受け付けました！</h2>
+      <p className="text-zinc-300 mb-1">審査完了までお待ちください。</p>
       <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
-        ご登録いただいたメールアドレスに確認メールをお送りしました。<br />
-        プロフィールを充実させて、素敵なパートナーを見つけましょう。
+        通常1〜3営業日以内に審査結果をメールでお送りします。<br />
+        承認後、すべての機能をご利用いただけます。
       </p>
-      <Link href="/dashboard">
-        <Button size="lg" className="min-w-[200px]">
-          <Heart className="w-4 h-4 fill-white" />
-          ダッシュボードへ
-        </Button>
-      </Link>
-      <p className="text-zinc-600 text-xs mt-6">
+
+      {/* 審査の流れ */}
+      <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 text-left mb-6">
+        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">審査の流れ</p>
+        <div className="space-y-4">
+          {[
+            { icon: ShieldCheck, label: '書類確認中',  desc: '提出いただいた書類を確認しています',         done: true },
+            { icon: Mail,        label: '承認メール',  desc: '審査完了後、登録メールアドレスにご連絡します', done: false },
+            { icon: CheckCircle2, label: '利用開始',  desc: '承認後、すべての機能をご利用いただけます',    done: false },
+          ].map(({ icon: Icon, label, desc, done }, i) => (
+            <div key={i} className="flex gap-4">
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
+                done ? 'bg-teal-900/60 border border-teal-700' : 'bg-zinc-700 border border-zinc-600'
+              }`}>
+                <Icon className={`w-4 h-4 ${done ? 'text-teal-400' : 'text-zinc-500'}`} />
+              </div>
+              <div className="flex-1 min-w-0 pt-1">
+                <p className={`text-sm font-semibold ${done ? 'text-teal-300' : 'text-zinc-400'}`}>
+                  {label}
+                  {done && <span className="ml-2 text-xs text-teal-500">（処理中）</span>}
+                </p>
+                <p className="text-xs text-zinc-500 mt-0.5">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <p className="text-zinc-600 text-xs">
         メールが届かない場合は迷惑メールフォルダをご確認ください。
       </p>
     </div>
@@ -614,6 +822,20 @@ export default function RegisterPage() {
   const [data, setData] = useState<FormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Errors>({});
 
+  // Step3 用
+  const [docType, setDocType]           = useState<DocType>('');
+  const [frontPreview, setFrontPreview] = useState<string | null>(null);
+  const [backPreview, setBackPreview]   = useState<string | null>(null);
+  const [frontFile, setFrontFile]       = useState<File | null>(null);
+  const [backFile, setBackFile]         = useState<File | null>(null);
+
+  const isSameFile = !!(
+    frontFile && backFile &&
+    frontFile.name         === backFile.name &&
+    frontFile.size         === backFile.size &&
+    frontFile.lastModified === backFile.lastModified
+  );
+
   const onChange = (e: AnyChangeEvent) => {
     const { name, value } = e.target;
     setData((prev) => ({ ...prev, [name]: value }));
@@ -623,6 +845,17 @@ export default function RegisterPage() {
   const onRadio = (name: keyof FormData, val: string) => {
     setData((prev) => ({ ...prev, [name]: val }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
+  };
+
+  const handleFile = (side: 'front' | 'back') => (file: File) => {
+    const url = URL.createObjectURL(file);
+    if (side === 'front') { setFrontPreview(url); setFrontFile(file); }
+    else                  { setBackPreview(url);  setBackFile(file); }
+  };
+
+  const handleClear = (side: 'front' | 'back') => () => {
+    if (side === 'front') { setFrontPreview(null); setFrontFile(null); }
+    else                  { setBackPreview(null);  setBackFile(null); }
   };
 
   const validateStep1 = (): boolean => {
@@ -675,17 +908,31 @@ export default function RegisterPage() {
     return Object.keys(e).length === 0;
   };
 
+  // Step3: 書類選択 + 両面アップロード済み + 同一画像でないことで有効
+  const step3Valid = !!docType && !!frontPreview && !!backPreview && !isSameFile;
+
   const handleNext = () => {
-    const ok = step === 1 ? validateStep1() : validateStep2();
-    if (ok) {
-      setStep((s) => s + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      setTimeout(() => {
-        const el = document.querySelector('.border-red-500');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 50);
+    if (step === 1) {
+      if (!validateStep1()) {
+        setTimeout(() => {
+          const el = document.querySelector('.border-red-500');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
+        return;
+      }
+    } else if (step === 2) {
+      if (!validateStep2()) {
+        setTimeout(() => {
+          const el = document.querySelector('.border-red-500');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
+        return;
+      }
+    } else if (step === 3) {
+      if (!step3Valid) return;
     }
+    setStep((s) => s + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
@@ -693,6 +940,11 @@ export default function RegisterPage() {
     setErrors({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const nextLabel =
+    step === 2 ? 'プロフィールを保存 →' :
+    step === 3 ? '書類を提出する' :
+    '次へ →';
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -718,10 +970,23 @@ export default function RegisterPage() {
           {step === 2 && (
             <Step2 data={data} onChange={onChange} onRadio={onRadio} errors={errors} />
           )}
-          {step === 3 && <Step3 />}
+          {step === 3 && (
+            <Step3
+              docType={docType}
+              setDocType={setDocType}
+              frontPreview={frontPreview}
+              backPreview={backPreview}
+              onFrontFile={handleFile('front')}
+              onBackFile={handleFile('back')}
+              onFrontClear={handleClear('front')}
+              onBackClear={handleClear('back')}
+              isSameFile={isSameFile}
+            />
+          )}
+          {step === 4 && <Step4 />}
 
           {/* ナビゲーションボタン */}
-          {step < 3 && (
+          {step < 4 && (
             <div
               className={`flex mt-8 pt-6 border-t border-zinc-800 ${
                 step > 1 ? 'justify-between' : 'justify-end'
@@ -736,15 +1001,19 @@ export default function RegisterPage() {
                   ← 戻る
                 </button>
               )}
-              <Button type="button" onClick={handleNext}>
-                {step === 2 ? '登録する' : '次へ →'}
+              <Button
+                type="button"
+                onClick={handleNext}
+                disabled={step === 3 && !step3Valid}
+              >
+                {nextLabel}
               </Button>
             </div>
           )}
         </div>
 
         {/* ログインリンク */}
-        {step < 3 && (
+        {step < 4 && (
           <p className="text-center text-zinc-500 text-sm mt-6">
             すでにアカウントをお持ちの方は{' '}
             <Link href="/login" className="text-teal-400 hover:text-teal-300 transition-colors">

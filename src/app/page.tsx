@@ -179,6 +179,103 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 料金プラン */}
+      <section id="pricing" className="py-20 px-4 bg-zinc-900">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-3">
+              シンプルな<span className="text-primary-400">料金プラン</span>
+            </h2>
+            <p className="text-zinc-400">まずは無料で始めて、必要な時にアップグレード</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 items-start">
+
+            {/* 無料プラン */}
+            <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-8">
+              <div className="mb-6">
+                <p className="text-sm font-medium text-zinc-400 mb-1">無料プラン</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-bold text-white">¥0</span>
+                </div>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  '会員登録・プロフィール作成',
+                  'メンバー検索・閲覧',
+                  'お見合い申請（1件 ¥3,000）',
+                  'マイページ管理',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-zinc-300">
+                    <span className="text-teal-400 flex-shrink-0 mt-0.5">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <Link href="/register">
+                <Button variant="outline" fullWidth>
+                  無料で始める
+                </Button>
+              </Link>
+            </div>
+
+            {/* AIおすすめプラン */}
+            <div className="bg-zinc-800 rounded-2xl border-2 border-pink-500/60 p-8 shadow-lg shadow-pink-950/30 relative">
+              {/* おすすめバッジ */}
+              <div
+                className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-white text-xs font-bold px-4 py-1 rounded-full"
+                style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
+              >
+                おすすめ
+              </div>
+
+              <div className="mb-6">
+                <p className="text-sm font-medium text-pink-400 mb-1">AIおすすめプラン</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-bold text-white">¥980</span>
+                  <span className="text-zinc-400 text-sm mb-1">〜 / 月</span>
+                </div>
+                <p className="text-zinc-600 text-xs mt-1">※ 料金は変更予定</p>
+              </div>
+
+              <ul className="space-y-3 mb-8">
+                {[
+                  '会員登録・プロフィール作成',
+                  'メンバー検索・閲覧',
+                  'お見合い申請（1件 ¥3,000）',
+                  'マイページ管理',
+                  'AIがあなたに合う相手を自動で選定',
+                  '毎週おすすめメンバーをご提案',
+                  '忙しい方でも効率よく出会える',
+                  '優先サポート',
+                ].map((item, i) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm">
+                    <span className={`flex-shrink-0 mt-0.5 ${i >= 4 ? 'text-pink-400' : 'text-teal-400'}`}>✓</span>
+                    <span className={i >= 4 ? 'text-pink-200' : 'text-zinc-300'}>{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link href="/register">
+                <button
+                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 hover:shadow-lg"
+                  style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
+                >
+                  プランを選ぶ
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* 注意書き */}
+          <p className="text-center text-xs text-zinc-500 mt-6">
+            ※ お見合い申請料（¥3,000 / 件）は両プラン共通です
+          </p>
+        </div>
+      </section>
+
       {/* 体験談 */}
       <section id="voice" className="py-20 px-4 bg-zinc-950">
         <div className="max-w-4xl mx-auto">
