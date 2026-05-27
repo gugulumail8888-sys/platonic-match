@@ -53,7 +53,7 @@ export default function AdminSchedulePage() {
               value={zoomLink}
               onChange={(e) => setZoomLink(e.target.value)}
               placeholder="https://zoom.us/j/xxxxxxxxxx"
-              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2
+              className={`w-full border rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2
                 ${isValid ? 'border-green-300 focus:ring-green-200' : 'border-gray-200 focus:ring-pink-200'}`}
             />
             {zoomLink && !isValid && (
@@ -70,7 +70,7 @@ export default function AdminSchedulePage() {
               type="text"
               value={zoomDate}
               onChange={(e) => setZoomDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-200"
             />
           </div>
 
@@ -81,7 +81,7 @@ export default function AdminSchedulePage() {
               onChange={(e) => setMemo(e.target.value)}
               placeholder="特記事項があれば入力"
               rows={3}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200 resize-none"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-pink-200 resize-none"
             />
           </div>
         </div>
