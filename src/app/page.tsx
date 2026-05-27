@@ -23,7 +23,7 @@ export default function HomePage() {
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
-            信頼できる友として、
+            「結婚しなきゃ」から
             <br />
             <span style={{
               background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
@@ -32,17 +32,34 @@ export default function HomePage() {
               backgroundClip: 'text',
               display: 'inline-block',
             }}>
-              ともに歩もう。
+              解放される、新しい選択。
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-4 leading-relaxed">
-            amistaは、恋愛感情より深い「友情・信頼・パートナーシップ」を大切にする
-            友情婚活マッチングサービスです。
+          <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-2 leading-relaxed">
+            親や周囲からの結婚プレッシャー、感じていませんか？
           </p>
-          <p className="text-base text-zinc-400 max-w-xl mx-auto mb-10">
-            外見や条件より、価値観や人柄が合うライフパートナーを見つけましょう。
+          <p className="text-base text-zinc-400 max-w-xl mx-auto mb-8 leading-relaxed">
+            amistaは「恋愛なし・価値観が合う生涯のパートナー」と出会える<br className="hidden sm:block" />
+            友情婚活サービスです。
           </p>
+
+          {/* 3つのポイント */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-10">
+            {[
+              { emoji: '😮‍💨', text: '「結婚しなきゃ」のプレッシャーから解放' },
+              { emoji: '🤝',   text: '恋愛感情なしで一緒に生きるパートナーを探す' },
+              { emoji: '✨',   text: '自分らしい人生の形を、自分で選ぶ' },
+            ].map(({ emoji, text }) => (
+              <div
+                key={text}
+                className="flex items-center gap-2 bg-zinc-900/60 border border-zinc-700/60 rounded-full px-4 py-2 text-sm text-zinc-300 backdrop-blur-sm"
+              >
+                <span>{emoji}</span>
+                <span>{text}</span>
+              </div>
+            ))}
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/register">
@@ -59,7 +76,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-sm text-zinc-500 mt-6">
-            登録無料・審査あり・プロフィール写真任意
+            登録無料・本人確認審査あり・ZOOMでお見合い
           </p>
         </div>
       </section>
