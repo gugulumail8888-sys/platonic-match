@@ -13,8 +13,11 @@ import {
   Handshake,
   Users,
   Bot,
+  HelpCircle,
+  Mail,
 } from "lucide-react";
 
+// メインナビ（デスクトップ + モバイルボトムナビ）
 const navItems = [
   { href: "/dashboard", label: "ホーム", icon: Home },
   { href: "/members", label: "会員一覧", icon: Users },
@@ -22,6 +25,12 @@ const navItems = [
   { href: "/recommend", label: "AIおすすめ", icon: Bot },
   { href: "/messages", label: "メッセージ", icon: MessageCircle },
   { href: "/mypage", label: "マイページ", icon: User },
+];
+
+// サポートナビ（デスクトップサイドバーのみ）
+const supportNavItems = [
+  { href: "/help", label: "ヘルプ", icon: HelpCircle },
+  { href: "/contact", label: "お問い合わせ", icon: Mail },
 ];
 
 export function Navbar() {
@@ -54,7 +63,7 @@ export function Navbar() {
         </div>
 
         {/* ナビゲーション */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -82,6 +91,37 @@ export function Navbar() {
               </Link>
             );
           })}
+
+          {/* サポートリンク */}
+          <div className="pt-2 mt-2 border-t border-zinc-800">
+            {supportNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                    isActive
+                      ? "bg-primary-950 text-primary-400 font-medium border border-primary-900"
+                      : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 transition-colors",
+                      isActive ? "text-primary-400" : "text-zinc-500 group-hover:text-zinc-300"
+                    )}
+                  />
+                  <span className="text-sm">{item.label}</span>
+                  {isActive && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-400" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         {/* ログアウト */}
