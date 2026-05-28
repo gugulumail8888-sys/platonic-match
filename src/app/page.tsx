@@ -11,10 +11,7 @@ export default function HomePage() {
 
       {/* ヒーローセクション */}
       <section
-        className="min-h-screen flex items-center justify-center px-4"
-        style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #0d1f1e 100%)',
-        }}
+        className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-slate-900 via-slate-900 to-teal-950"
       >
         <div className="max-w-4xl mx-auto text-center pt-20 pb-10">
           <div className="inline-flex items-center gap-2 bg-primary-950/80 text-primary-400 text-sm font-medium px-4 py-2 rounded-full mb-8 border border-primary-800/60 backdrop-blur-sm">
