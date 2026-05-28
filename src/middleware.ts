@@ -1,72 +1,54 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// ==========================================
-// 認証ミドルウェア
-// 未認証ユーザーをログインページへリダイレクト
-// ==========================================
-export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/terms",
+  "/privacy",
+  "/tokusho",
+  "/how-it-works",
+  "/help",
+  "/contact",
+];
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  const isPublic = PUBLIC_PATHS.some((path) => {
+    if (path === "/") return pathname === "/";
+    return pathname === path || pathname.startsWith(path + "/");
   });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
+  if (isPublic) {
+    return NextResponse.next();
+  }
 
-  // TODO: 本番環境では認証チェックを有効にする
-  //       現在は開発中のため認証チェックをスキップしています
-  if (process.env.NODE_ENV !== "development") {
-    // セッション更新
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const authCookie = request.cookies.get("auth");
+  let auth: { role: string; email: string } | null = null;
 
-    const { pathname } = request.nextUrl;
-
-    // 認証が必要なパス
-    const protectedPaths = ["/dashboard", "/matching", "/messages", "/profile"];
-    const isProtectedPath = protectedPaths.some((path) =>
-      pathname.startsWith(path)
-    );
-
-    // 未認証 + 保護パス → ログインへリダイレクト
-    if (!user && isProtectedPath) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirectTo", pathname);
-      return NextResponse.redirect(url);
-    }
-
-    // ログイン済み + 認証ページ → ダッシュボードへリダイレクト
-    const authPaths = ["/login", "/register"];
-    const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
-
-    if (user && isAuthPath) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
+  if (authCookie) {
+    try {
+      auth = JSON.parse(authCookie.value);
+    } catch {
+      // 不正なCookieは無視
     }
   }
 
-  return supabaseResponse;
+  if (!auth) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirectTo", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname.startsWith("/admin") && auth.role !== "admin") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
@@ -8,12 +8,17 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const cookieStore = cookies();
+  const authCookie = cookieStore.get("auth");
 
-  // ログイン済みの場合はダッシュボードへ
-  if (user) {
-    redirect("/dashboard");
+  if (authCookie) {
+    try {
+      const auth = JSON.parse(authCookie.value);
+      if (auth.role === "admin") redirect("/admin");
+      if (auth.role === "user") redirect("/members");
+    } catch {
+      // 不正なCookieは無視
+    }
   }
 
   return (

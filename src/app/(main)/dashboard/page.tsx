@@ -1,193 +1,89 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
-import { Handshake, Users, MessageCircle, Bell, ChevronRight, Sparkles } from "lucide-react";
+import { cookies } from "next/headers";
+import { Handshake, Users, MessageCircle, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { ProfileCard } from "@/components/profile/ProfileCard";
-import { getAvatarUrl, calculateAge } from "@/lib/utils";
-import type { Profile } from "@/types";
 
 export const metadata: Metadata = {
   title: "ホーム",
 };
 
+function getAuthFromCookie() {
+  const cookieStore = cookies();
+  const authCookie = cookieStore.get("auth");
+  if (!authCookie) return null;
+  try { return JSON.parse(authCookie.value); } catch { return null; }
+}
+
+const DUMMY_NEW_MEMBERS = [
+  { id: 1, nickname: "さくら", age: 30, prefecture: "東京都", occupation: "OL", initials: "さ", avatarColor: "#0d9488" },
+  { id: 2, nickname: "ゆり", age: 27, prefecture: "大阪府", occupation: "看護師", initials: "ゆ", avatarColor: "#7c3aed" },
+  { id: 3, nickname: "みらい", age: 33, prefecture: "神奈川県", occupation: "教師", initials: "み", avatarColor: "#db2777" },
+  { id: 4, nickname: "あかね", age: 29, prefecture: "愛知県", occupation: "会社員", initials: "あ", avatarColor: "#ea580c" },
+  { id: 5, nickname: "ひより", age: 25, prefecture: "福岡県", occupation: "デザイナー", initials: "ひ", avatarColor: "#65a30d" },
+  { id: 6, nickname: "なつき", age: 31, prefecture: "北海道", occupation: "エンジニア", initials: "な", avatarColor: "#0284c7" },
+];
+
 export default async function DashboardPage() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // マイプロフィール取得
-  const { data: myProfile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user!.id)
-    .single();
-
-  // 新着会員（最新6件）
-  const { data: newMembers } = await supabase
-    .from("profiles")
-    .select("*")
-    .neq("user_id", user!.id)
-    .order("created_at", { ascending: false })
-    .limit(6);
-
-  // いいね数
-  const { count: likeCount } = await supabase
-    .from("likes")
-    .select("*", { count: "exact", head: true })
-    .eq("receiver_id", user!.id);
-
-  // マッチング数
-  const { count: matchCount } = await supabase
-    .from("matches")
-    .select("*", { count: "exact", head: true })
-    .or(`user1_id.eq.${user!.id},user2_id.eq.${user!.id}`)
-    .eq("status", "active");
-
-  const hasProfile = !!myProfile;
+  const auth = getAuthFromCookie();
+  const nickname = auth?.email?.split("@")[0] ?? "ゲスト";
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 md:p-8 max-w-4xl mx-auto">
       {/* ウェルカムバナー */}
-      <div className="bg-gradient-primary rounded-3xl p-6 md:p-8 text-white mb-8 shadow-lg">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-white/70 text-sm mb-1">amistaへようこそ 🤝</p>
-            <h1 className="text-2xl font-bold mb-4">
-              {myProfile?.nickname ?? "会員"}さん、こんにちは！
-            </h1>
-            {!hasProfile && (
-              <Link href="/profile/edit?new=true">
-                <Button
-                  size="sm"
-                  className="bg-white text-primary-700 hover:bg-white/90"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  プロフィールを設定する
-                </Button>
-              </Link>
-            )}
-          </div>
-          <div className="hidden md:block">
-            <div className="w-20 h-20 rounded-full bg-white/20 overflow-hidden">
-              <Image
-                src={getAvatarUrl(myProfile?.avatar_url, myProfile?.nickname)}
-                alt="マイアバター"
-                width={80}
-                height={80}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
+      <div className="bg-gradient-to-r from-teal-900/50 to-zinc-900 border border-teal-800/50 rounded-2xl p-6 mb-8">
+        <p className="text-zinc-400 text-sm mb-1">おかえりなさい</p>
+        <h1 className="text-2xl font-bold text-white mb-4">{nickname} さん 👋</h1>
+        <Link href="/members">
+          <Button size="sm">
+            <Users className="w-4 h-4" />
+            会員を探す
+          </Button>
+        </Link>
       </div>
 
-      {/* プロフィール未設定の警告 */}
-      {!hasProfile && (
-        <div className="bg-amber-950 border border-amber-800 rounded-2xl p-4 mb-6 flex items-center gap-3">
-          <Bell className="w-5 h-5 text-amber-400 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm text-amber-300 font-medium">
-              プロフィールを設定すると会員一覧に表示されます
-            </p>
-          </div>
-          <Link href="/profile/edit?new=true">
-            <Button variant="outline" size="sm" className="border-amber-700 text-amber-400 hover:bg-amber-950 whitespace-nowrap">
-              設定する
-            </Button>
-          </Link>
-        </div>
-      )}
-
       {/* 統計カード */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          {
-            icon: Handshake,
-            label: "もらったいいね",
-            value: likeCount ?? 0,
-            color: "text-primary-400",
-            bg: "bg-primary-950",
-            border: "border-primary-900",
-            href: "/likes",
-          },
-          {
-            icon: Users,
-            label: "マッチング",
-            value: matchCount ?? 0,
-            color: "text-blue-400",
-            bg: "bg-blue-950",
-            border: "border-blue-900",
-            href: "/matching",
-          },
-          {
-            icon: MessageCircle,
-            label: "メッセージ",
-            value: 0,
-            color: "text-purple-400",
-            bg: "bg-purple-950",
-            border: "border-purple-900",
-            href: "/messages",
-          },
-          {
-            icon: Bell,
-            label: "お知らせ",
-            value: 0,
-            color: "text-orange-400",
-            bg: "bg-orange-950",
-            border: "border-orange-900",
-            href: "/notifications",
-          },
-        ].map((item) => (
-          <Link key={item.label} href={item.href}>
-            <div className="bg-zinc-900 rounded-2xl p-4 shadow-card hover:shadow-card-hover transition-all duration-200 cursor-pointer border border-zinc-800">
-              <div className={`w-10 h-10 ${item.bg} border ${item.border} rounded-xl flex items-center justify-center mb-3`}>
-                <item.icon className={`w-5 h-5 ${item.color}`} />
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {item.value}
-              </div>
-              <div className="text-xs text-zinc-500">{item.label}</div>
-            </div>
-          </Link>
-        ))}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
+          <Handshake className="w-6 h-6 text-teal-400 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-white">0</p>
+          <p className="text-xs text-zinc-500 mt-1">マッチング</p>
+        </div>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
+          <Sparkles className="w-6 h-6 text-amber-400 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-white">0</p>
+          <p className="text-xs text-zinc-500 mt-1">いいね</p>
+        </div>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
+          <MessageCircle className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+          <p className="text-2xl font-bold text-white">0</p>
+          <p className="text-xs text-zinc-500 mt-1">メッセージ</p>
+        </div>
       </div>
 
       {/* 新着会員 */}
-      <section>
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary-400" />
-            新着会員
-          </h2>
-          <Link
-            href="/members"
-            className="text-sm text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors"
-          >
-            すべて見る
-            <ChevronRight className="w-4 h-4" />
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-white">新着会員</h2>
+          <Link href="/members" className="flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300 transition-colors">
+            すべて見る <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
-
-        {newMembers && newMembers.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {(newMembers as Profile[]).map((profile) => (
-              <ProfileCard
-                key={profile.id}
-                profile={profile}
-                showLikeButton={false}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-zinc-900 rounded-2xl border border-zinc-800">
-            <Users className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
-            <p className="text-zinc-500 text-sm">まだ会員がいません</p>
-          </div>
-        )}
-      </section>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {DUMMY_NEW_MEMBERS.map((member) => (
+            <Link key={member.id} href={`/members/${member.id}`}>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 transition-all">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg mb-3" style={{ background: member.avatarColor }}>
+                  {member.initials}
+                </div>
+                <p className="text-white font-medium text-sm">{member.nickname}</p>
+                <p className="text-zinc-500 text-xs">{member.age}歳・{member.prefecture}</p>
+                <p className="text-zinc-600 text-xs mt-1">{member.occupation}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

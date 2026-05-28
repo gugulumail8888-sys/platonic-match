@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 
 export const maxDuration = 60;
 
@@ -81,9 +80,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ── 本番: Anthropic API を呼び出す ──
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
+    // ── 本番: Anthropic API を直接呼び出す ──
     const candidatesText = candidates
       .map(
         (c) =>
@@ -95,14 +92,21 @@ export async function POST(req: NextRequest) {
       )
       .join('\n');
 
-    const response = await client.messages.create({
-      model: 'claude-opus-4-7',
-      max_tokens: 2048,
-      thinking: { type: 'adaptive' },
-      messages: [
-        {
-          role: 'user',
-          content: `あなたは友情婚活マッチングサービス「amista」のAIマッチングアドバイザーです。
+    const apiResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-7',
+        max_tokens: 2048,
+        thinking: { type: 'enabled', budget_tokens: 1024 },
+        messages: [
+          {
+            role: 'user',
+            content: `あなたは友情婚活マッチングサービス「amista」のAIマッチングアドバイザーです。
 ユーザーのプロフィールと候補者リストを詳しく分析して、各候補者との相性スコア（0〜100）と
 100文字以内の具体的な理由を日本語で提示してください。
 
@@ -124,13 +128,24 @@ ${candidatesText}
     {"id": 候補者ID, "score": スコア(0-100の整数), "reason": "理由(100文字以内の日本語)"}
   ]
 }`,
-        },
-      ],
+          },
+        ],
+      }),
     });
 
-    const text = response.content
-      .filter((c): c is Anthropic.TextBlock => c.type === 'text')
-      .map((c) => c.text)
+    if (!apiResponse.ok) {
+      const errBody = await apiResponse.text();
+      console.error('Anthropic API error:', apiResponse.status, errBody);
+      throw new Error(`Anthropic API returned ${apiResponse.status}`);
+    }
+
+    const data = await apiResponse.json() as {
+      content: { type: string; text?: string }[];
+    };
+
+    const text = data.content
+      .filter((c) => c.type === 'text')
+      .map((c) => c.text ?? '')
       .join('');
 
     const match = text.match(/\{[\s\S]*\}/);

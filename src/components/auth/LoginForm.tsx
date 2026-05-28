@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/client";
-import { translateAuthError } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Mail, Lock, Heart } from "lucide-react";
@@ -27,7 +25,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
-  const supabase = createClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -40,24 +37,29 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
 
-    if (error) {
-      setServerError(translateAuthError(error.message));
-      return;
+    const maxAge = 60 * 60 * 24; // 24時間
+    if (data.email === "test@amista.jp" && data.password === "test1234") {
+      document.cookie = `auth=${JSON.stringify({ role: "user", email: data.email })}; path=/; max-age=${maxAge}`;
+      router.push("/members");
+    } else if (data.email === "test2@amista.jp" && data.password === "test5678") {
+      document.cookie = `auth=${JSON.stringify({ role: "user", email: data.email, hasAiOption: true })}; path=/; max-age=${maxAge}`;
+      router.push("/members");
+    } else if (data.email === "admin@amista.jp" && data.password === "admin1234") {
+      document.cookie = `auth=${JSON.stringify({ role: "admin", email: data.email })}; path=/; max-age=${maxAge}`;
+      router.push("/admin");
+    } else {
+      setServerError("メールアドレスまたはパスワードが正しくありません");
     }
-
-    router.push("/dashboard");
-    router.refresh();
   };
 
   return (
     <div className="w-full max-w-md">
       {/* ロゴ */}
       <div className="text-center mb-8">
+        <Link href="/" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mb-4">
+          ← トップページへ
+        </Link>
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-lg">
           <Heart className="w-8 h-8 text-white fill-white" />
         </div>
@@ -130,8 +132,15 @@ export function LoginForm() {
         </div>
       </div>
 
+      {/* デモアカウント情報 */}
+      <div className="text-center text-xs text-zinc-600 mt-6 space-y-1">
+        <p>デモ用アカウント：test@amista.jp / test1234</p>
+        <p>AIオプション付き：test2@amista.jp / test5678</p>
+        <p>管理者アカウント：admin@amista.jp / admin1234</p>
+      </div>
+
       {/* 注意書き */}
-      <p className="text-center text-xs text-zinc-600 mt-6">
+      <p className="text-center text-xs text-zinc-600 mt-4">
         ログインすることで
         <Link href="/terms" className="text-primary-600 hover:underline mx-1">
           利用規約
