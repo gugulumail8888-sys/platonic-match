@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   User, Heart, Settings, MapPin, Briefcase,
   Ruler, Sparkles, GraduationCap, Users, Cigarette,
@@ -328,10 +329,21 @@ interface WithdrawalModalProps {
 }
 
 function WithdrawalModal({ onClose }: WithdrawalModalProps) {
+  const router = useRouter();
   const [selectedReason, setSelectedReason] = useState<WithdrawalReasonValue | ''>('');
   const [otherText, setOtherText] = useState('');
 
   const canSubmit = selectedReason !== '';
+
+  const handleWithdraw = () => {
+    if (selectedReason === 'found_partner') {
+      router.push('/withdrawal-survey');
+      return;
+    }
+    // TODO: Supabase連携後に実際の退会処理
+    console.log('退会処理:', { reason: selectedReason, otherText });
+    onClose();
+  };
 
   return (
     <div
@@ -440,13 +452,14 @@ function WithdrawalModal({ onClose }: WithdrawalModalProps) {
           <button
             type="button"
             disabled={!canSubmit}
+            onClick={handleWithdraw}
             className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
               canSubmit
                 ? 'bg-red-600 hover:bg-red-700 text-white'
                 : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
             }`}
           >
-            退会する
+            {selectedReason === 'found_partner' ? '次へ' : '退会する'}
           </button>
         </div>
       </div>
