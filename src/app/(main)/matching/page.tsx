@@ -191,8 +191,8 @@ function ApplicationCard({ app }: { app: Application }) {
           プロフィールを見る
         </Link>
 
-        {/* キャンセル・変更ボタン（完了済みのみ） */}
-        {app.status === 'completed' && (
+        {/* キャンセル・変更ボタン（申請中・完了済み） */}
+        {(app.status === 'completed' || app.status === 'pending') && (
           <button
             onClick={() => router.push('/cancel-policy')}
             className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-900 text-red-500 text-xs hover:bg-red-950/50 hover:border-red-800 transition-colors w-full"
