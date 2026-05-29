@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   Heart,
@@ -47,7 +48,12 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const auth = getAuthFromCookie();
+  const [auth, setAuth] = useState<{ role: string; email: string; hasAiOption?: boolean } | null>(null);
+
+  useEffect(() => {
+    setAuth(getAuthFromCookie());
+  }, []);
+
   const hasAiOption = auth?.hasAiOption === true;
 
   const handleSignOut = () => {
