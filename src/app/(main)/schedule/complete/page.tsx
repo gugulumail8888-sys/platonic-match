@@ -49,6 +49,17 @@ function ScheduleCompleteContent() {
             📧 確認メールをご登録のアドレスにお送りしました
           </div>
 
+          <p className="text-xs text-zinc-500 mb-4">
+            キャンセル・変更をご希望の方は
+            <button
+              onClick={() => router.push('/cancel-policy')}
+              className="text-teal-500 hover:underline mx-1"
+            >
+              キャンセルポリシー
+            </button>
+            をご確認ください
+          </p>
+
           <button
             onClick={() => router.push('/matching')}
             className="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-2xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all"

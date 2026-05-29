@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, ClipboardList, Users, HeartHandshake } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -111,6 +112,7 @@ function StatusBadge({ status }: { status: ApplicationStatus }) {
 // ============================================================
 
 function ApplicationCard({ app }: { app: Application }) {
+  const router = useRouter();
   return (
     <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 hover:border-zinc-600 transition-all">
       {/* 上段: アバター + メンバー情報 + ステータス */}
@@ -188,6 +190,16 @@ function ApplicationCard({ app }: { app: Application }) {
         >
           プロフィールを見る
         </Link>
+
+        {/* キャンセル・変更ボタン（完了済みのみ） */}
+        {app.status === 'completed' && (
+          <button
+            onClick={() => router.push('/cancel-policy')}
+            className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-900 text-red-500 text-xs hover:bg-red-950/50 hover:border-red-800 transition-colors w-full"
+          >
+            キャンセル・変更を申請する
+          </button>
+        )}
       </div>
     </div>
   );
