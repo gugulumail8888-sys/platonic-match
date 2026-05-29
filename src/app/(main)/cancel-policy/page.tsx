@@ -92,15 +92,15 @@ export default function CancelPolicyPage() {
             <div key={i} className={`border rounded-2xl overflow-hidden ${policy.bg}`}>
               <button
                 onClick={() => setExpanded(isOpen ? null : i)}
-                className="w-full p-5 flex items-center gap-4 text-left"
+                className="w-full p-4 flex items-center gap-3 text-left"
               >
-                <Icon className={`w-6 h-6 flex-shrink-0 ${policy.color}`} />
-                <div className="flex-1">
-                  <p className="text-white font-bold text-sm mb-0.5">{policy.title}</p>
-                  <p className="text-zinc-400 text-xs">{policy.timing}</p>
-                </div>
-                <div className="text-right flex items-center gap-2">
+                <Icon className={`w-5 h-5 flex-shrink-0 ${policy.color}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-bold text-sm leading-snug mb-0.5">{policy.title}</p>
+                  <p className="text-zinc-400 text-xs mb-1">{policy.timing}</p>
                   <span className={`text-xs font-medium ${policy.color}`}>{policy.penalty}</span>
+                </div>
+                <div className="flex-shrink-0 ml-1">
                   {isOpen ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
                 </div>
               </button>

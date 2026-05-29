@@ -158,15 +158,15 @@ export default function ZoomGuidePage() {
                 </div>
               </div>
               {/* 内容 */}
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl">{s.icon}</span>
-                  <h3 className="text-white font-semibold text-sm">{s.title}</h3>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-base flex-shrink-0">{s.icon}</span>
+                  <h3 className="text-white font-semibold text-xs sm:text-sm leading-snug">{s.title}</h3>
                 </div>
-                <p className="text-zinc-400 text-sm leading-relaxed mb-2">{s.desc}</p>
-                <div className="flex items-start gap-1.5 bg-teal-950/30 border border-teal-900/50 rounded-lg px-3 py-2">
-                  <span className="text-teal-400 text-xs mt-0.5">💡</span>
-                  <p className="text-teal-400 text-xs leading-relaxed">{s.tip}</p>
+                <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-2">{s.desc}</p>
+                <div className="flex items-start gap-1.5 bg-teal-950/30 border border-teal-900/50 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2">
+                  <span className="text-teal-400 text-xs flex-shrink-0">💡</span>
+                  <p className="text-teal-400 text-[11px] sm:text-xs leading-relaxed">{s.tip}</p>
                 </div>
               </div>
             </div>

@@ -69,23 +69,23 @@ export function Navbar() {
 
     if (mobileMode) {
       return (
-        <div key={item.href} className="relative">
+        <div key={item.href} className="relative flex-1">
           {isLocked ? (
-            <div className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl min-w-[56px] text-zinc-700 cursor-not-allowed relative">
-              <Icon className="w-6 h-6" />
-              <span className="text-[10px] font-medium">{item.label}</span>
-              <Lock className="w-2.5 h-2.5 absolute top-1 right-1 text-zinc-600" />
+            <div className="flex flex-col items-center gap-0.5 px-1 py-1.5 text-zinc-700 cursor-not-allowed relative">
+              <Icon className="w-5 h-5" />
+              <span className="text-[9px] font-medium leading-tight">{item.label}</span>
+              <Lock className="w-2 h-2 absolute top-0.5 right-0.5 text-zinc-600" />
             </div>
           ) : (
             <Link
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px]",
+                "flex flex-col items-center gap-0.5 px-1 py-1.5 transition-all duration-200",
                 isActive ? "text-primary-400" : "text-zinc-500"
               )}
             >
-              <Icon className="w-6 h-6" />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <Icon className="w-5 h-5" />
+              <span className="text-[9px] font-medium leading-tight">{item.label}</span>
             </Link>
           )}
         </div>
@@ -176,8 +176,11 @@ export function Navbar() {
       </aside>
 
       {/* モバイル ボトムナビ */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-40 safe-area-inset-bottom">
-        <div className="flex items-center justify-around py-2 px-4">
+      <nav
+        className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50"
+        style={{ transform: 'translateZ(0)' }}
+      >
+        <div className="flex items-center py-2 px-1" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
           {navItems.map((item) => renderNavItem(item, true))}
         </div>
       </nav>

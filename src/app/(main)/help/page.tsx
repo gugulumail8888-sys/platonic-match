@@ -223,12 +223,12 @@ export default function HelpPage() {
       </div>
 
       {/* ZOOMガイドリンク */}
-      <div className="mt-3 bg-zinc-800 rounded-2xl border border-zinc-700 p-5 flex items-center justify-between gap-4">
+      <div className="mt-3 bg-zinc-800 rounded-2xl border border-zinc-700 p-4 flex flex-col gap-3">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 bg-blue-900/50 border border-blue-700/50 rounded-xl flex items-center justify-center flex-shrink-0 text-base">
             📱
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-white mb-0.5">
               ZOOMお見合い準備ガイド
             </p>
@@ -239,9 +239,9 @@ export default function HelpPage() {
         </div>
         <Link
           href="/zoom-guide"
-          className="flex items-center gap-1.5 px-5 py-2.5 bg-blue-900 hover:bg-blue-800 text-blue-300 text-sm font-medium rounded-xl transition-colors flex-shrink-0"
+          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-blue-300 text-sm font-medium rounded-xl transition-colors"
         >
-          📱 ZOOMお見合い準備ガイドを見る
+          ZOOMお見合い準備ガイドを見る
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
@@ -269,6 +269,9 @@ export default function HelpPage() {
           <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
+
+      {/* モバイル下部ナビ用スペーサー */}
+      <div className="h-24 lg:hidden" aria-hidden="true" />
 
     </div>
   );

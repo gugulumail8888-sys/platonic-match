@@ -156,7 +156,7 @@ export default function OptionApplyPage() {
           <Bot className="w-5 h-5 text-teal-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">AIおすすめオプション申し込み</h1>
+          <h1 className="text-lg font-bold text-white leading-tight">AIおすすめオプション申し込み</h1>
           <p className="text-xs text-zinc-400">あなたの希望をもとにAIが最適なマッチを提案します</p>
         </div>
       </div>
@@ -170,13 +170,14 @@ export default function OptionApplyPage() {
           {/* 年齢範囲 */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
             <h2 className="text-white font-bold text-sm mb-4">希望する相手の年齢範囲</h2>
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
+            <div className="grid grid-cols-2 gap-3">
+              {/* 最小年齢 */}
+              <div>
                 <p className="text-zinc-400 text-xs mb-2 text-center">最小年齢</p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => adjustAge('ageMin', -1)}
-                    className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
+                    className="w-9 h-9 shrink-0 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
@@ -186,23 +187,23 @@ export default function OptionApplyPage() {
                     max={70}
                     value={form.ageMin}
                     onChange={e => setForm(prev => ({ ...prev, ageMin: Number(e.target.value) }))}
-                    className="flex-1 text-center bg-zinc-800 border border-zinc-700 rounded-xl py-2 text-white text-xl font-bold focus:outline-none focus:border-teal-600"
+                    className="w-full min-w-0 text-center bg-zinc-800 border border-zinc-700 rounded-xl py-2 text-white text-xl font-bold focus:outline-none focus:border-teal-600"
                   />
                   <button
                     onClick={() => adjustAge('ageMin', 1)}
-                    className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
+                    className="w-9 h-9 shrink-0 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
-              <span className="text-zinc-500 text-sm pb-2.5">〜</span>
-              <div className="flex-1">
+              {/* 最大年齢 */}
+              <div>
                 <p className="text-zinc-400 text-xs mb-2 text-center">最大年齢</p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => adjustAge('ageMax', -1)}
-                    className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
+                    className="w-9 h-9 shrink-0 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
@@ -212,11 +213,11 @@ export default function OptionApplyPage() {
                     max={70}
                     value={form.ageMax}
                     onChange={e => setForm(prev => ({ ...prev, ageMax: Number(e.target.value) }))}
-                    className="flex-1 text-center bg-zinc-800 border border-zinc-700 rounded-xl py-2 text-white text-xl font-bold focus:outline-none focus:border-teal-600"
+                    className="w-full min-w-0 text-center bg-zinc-800 border border-zinc-700 rounded-xl py-2 text-white text-xl font-bold focus:outline-none focus:border-teal-600"
                   />
                   <button
                     onClick={() => adjustAge('ageMax', 1)}
-                    className="w-9 h-9 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
+                    className="w-9 h-9 shrink-0 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 flex items-center justify-center hover:bg-zinc-700 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>

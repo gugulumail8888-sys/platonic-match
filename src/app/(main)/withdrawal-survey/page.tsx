@@ -109,7 +109,7 @@ export default function WithdrawalSurveyPage() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-2xl mx-auto">
+    <div className="p-6 md:p-8 max-w-2xl mx-auto pb-24 md:pb-8">
       {/* ヘッダー */}
       <div className="text-center mb-8">
         <div className="w-16 h-16 bg-rose-900/40 border border-rose-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -133,12 +133,12 @@ export default function WithdrawalSurveyPage() {
         {/* AI おすすめ機能 */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
           <h2 className="text-white font-bold text-sm mb-4">AIおすすめ機能は役に立ちましたか？</h2>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             {AI_OPTIONS.map(opt => (
               <button
                 key={opt.value}
                 onClick={() => setAiUseful(opt.value)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-medium border transition-all whitespace-nowrap ${
                   aiUseful === opt.value
                     ? 'bg-teal-800 border-teal-600 text-white'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:border-zinc-500'
