@@ -144,7 +144,7 @@ export default async function ProfilePage() {
               </span>
               <span className="flex items-center gap-1">
                 <Heart className="w-3.5 h-3.5 text-primary-400" />
-                {GENDER_LABELS[profile.gender]}
+                {GENDER_LABELS[profile.gender as keyof typeof GENDER_LABELS]}
               </span>
             </div>
           </div>
@@ -168,7 +168,7 @@ export default async function ProfilePage() {
           {/* 結婚意思タグ */}
           <div className="flex flex-wrap gap-2">
             <span className="bg-primary-950 border border-primary-900 text-primary-400 text-sm px-3 py-1 rounded-full font-medium">
-              💒 {MARRIAGE_INTENTION_LABELS[profile.marriage_intention]}
+              💒 {MARRIAGE_INTENTION_LABELS[profile.marriage_intention as keyof typeof MARRIAGE_INTENTION_LABELS]}
             </span>
             {profile.is_premium && (
               <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm px-3 py-1 rounded-full font-medium">
@@ -196,11 +196,11 @@ export default async function ProfilePage() {
           {[
             profile.annual_income && {
               label: "年収",
-              value: ANNUAL_INCOME_LABELS[profile.annual_income],
+              value: ANNUAL_INCOME_LABELS[profile.annual_income as keyof typeof ANNUAL_INCOME_LABELS],
             },
             profile.education && {
               label: "最終学歴",
-              value: EDUCATION_LABELS[profile.education],
+              value: EDUCATION_LABELS[profile.education as keyof typeof EDUCATION_LABELS],
             },
             profile.height && {
               label: "身長",
@@ -208,10 +208,10 @@ export default async function ProfilePage() {
             },
             profile.body_type && {
               label: "体型",
-              value: BODY_TYPE_LABELS[profile.body_type],
+              value: BODY_TYPE_LABELS[profile.body_type as keyof typeof BODY_TYPE_LABELS],
             },
-            { label: "飲酒", value: DRINKING_LABELS[profile.alcohol] },
-            { label: "喫煙", value: SMOKING_LABELS[profile.smoking] },
+            { label: "飲酒", value: DRINKING_LABELS[profile.alcohol as keyof typeof DRINKING_LABELS] },
+            { label: "喫煙", value: SMOKING_LABELS[profile.smoking as keyof typeof SMOKING_LABELS] },
           ]
             .filter(Boolean)
             .map((item) => (
