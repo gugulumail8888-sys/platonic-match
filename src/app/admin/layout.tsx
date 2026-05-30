@@ -1,6 +1,7 @@
 // TODO: 本番環境では管理者認証チェックを追加する
 //       例: セッションのroleが'admin'でない場合は/loginにリダイレクト
 import { AdminSidebar } from './_components/AdminSidebar';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 
 export default function AdminLayout({
   children,
@@ -14,6 +15,7 @@ export default function AdminLayout({
       <main className="lg:ml-56 min-h-screen">
         {children}
       </main>
+      <ScrollToTop />
     </div>
   );
 }

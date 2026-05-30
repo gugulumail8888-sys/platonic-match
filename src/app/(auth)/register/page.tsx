@@ -2,8 +2,9 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { Check, Upload, X, ShieldCheck, Mail, CheckCircle2 } from 'lucide-react';
+import { Check, Upload, X, ShieldCheck, Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { ScrollHeader } from '@/components/ui/ScrollHeader';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { Button } from '@/components/ui/Button';
 
 // ============================================================
@@ -65,10 +66,18 @@ interface FormData {
   education: string;
   marriageTiming: string;
   childrenDesire: string;
+  fertilityMethod: string[];
+  fertilityMethodOther: string;
+  sexualActivity: string;
   sexuality: string;
+  sexualityOther: string;
   livingArrangement: string;
+  livingArrangementOther: string;
+  postMarriageLiving: string;
+  postMarriageLivingOther: string;
   externalPartner: string;
   financeManagement: string;
+  financeManagementOther: string;
   hobbies: string;
   pr: string;
   desiredConditions: string;
@@ -88,8 +97,12 @@ const INITIAL_FORM: FormData = {
   occupation: '', height: '', bodyType: '', bloodType: '',
   maritalHistory: '', numberOfChildren: '', smoking: '', income: '',
   siblings: '', education: '', marriageTiming: '', childrenDesire: '',
-  sexuality: '', livingArrangement: '', externalPartner: '',
-  financeManagement: '', hobbies: '', pr: '', desiredConditions: '',
+  fertilityMethod: [], fertilityMethodOther: '', sexualActivity: '',
+  sexuality: '', sexualityOther: '',
+  livingArrangement: '', livingArrangementOther: '',
+  postMarriageLiving: '', postMarriageLivingOther: '',
+  externalPartner: '',
+  financeManagement: '', financeManagementOther: '', hobbies: '', pr: '', desiredConditions: '',
 };
 
 // ============================================================
@@ -206,6 +219,36 @@ function FRadioGroup({
         ))}
       </div>
       <FieldError msg={error} />
+    </div>
+  );
+}
+
+function FCheckboxGroup({
+  value, options, onChange,
+}: {
+  value: string[];
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-x-5 gap-y-3 pt-0.5">
+      {options.map((o) => (
+        <label key={o.value} className="flex items-center gap-2 cursor-pointer group">
+          <div
+            onClick={() => onChange(o.value)}
+            className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 ${
+              value.includes(o.value)
+                ? 'border-teal-500 bg-teal-500'
+                : 'border-zinc-600 group-hover:border-teal-700'
+            }`}
+          >
+            {value.includes(o.value) && <Check className="w-3 h-3 text-white" />}
+          </div>
+          <span className="text-zinc-300 text-sm select-none" onClick={() => onChange(o.value)}>
+            {o.label}
+          </span>
+        </label>
+      ))}
     </div>
   );
 }
@@ -411,11 +454,12 @@ function Step1({
 // ============================================================
 
 function Step2({
-  data, onChange, onRadio, errors,
+  data, onChange, onRadio, onCheckbox, errors,
 }: {
   data: FormData;
   onChange: (e: AnyChangeEvent) => void;
   onRadio: (name: keyof FormData, val: string) => void;
+  onCheckbox: (name: keyof FormData, val: string) => void;
   errors: Errors;
 }) {
   return (
@@ -517,18 +561,95 @@ function Step2({
         />
       </Field>
 
+      {/* 妊活方法（「ほしい」選択時のみ表示） */}
+      {data.childrenDesire === 'want' && (
+        <Field label="妊活方法">
+          <FCheckboxGroup
+            value={data.fertilityMethod}
+            options={[
+              { value: '自然妊娠',        label: '自然妊娠' },
+              { value: '人工授精（AIH）', label: '人工授精（AIH）' },
+              { value: '体外受精（IVF）', label: '体外受精（IVF）' },
+              { value: '特別養子縁組',    label: '特別養子縁組' },
+              { value: '里親',            label: '里親' },
+              { value: '未定',            label: '未定' },
+              { value: 'その他',          label: 'その他' },
+            ]}
+            onChange={(v) => onCheckbox('fertilityMethod', v)}
+          />
+          {data.fertilityMethod.includes('その他') && (
+            <div className="mt-2">
+              <FInput
+                name="fertilityMethodOther"
+                value={data.fertilityMethodOther}
+                onChange={onChange}
+                placeholder="自由に記述してください"
+              />
+            </div>
+          )}
+        </Field>
+      )}
+
+      {/* 性交渉の有無 */}
+      {data.childrenDesire === 'want' && (
+        <Field label="性交渉の有無">
+          <FRadioGroup
+            name="sexualActivity" value={data.sexualActivity}
+            options={[{ value: 'yes', label: 'あり' }, { value: 'no', label: 'なし' }]}
+            onChange={(v) => onRadio('sexualActivity', v)}
+          />
+        </Field>
+      )}
+
       {/* セクシュアリティ */}
       <Field label="セクシュアリティ" required error={errors.sexuality}>
         <FSelect name="sexuality" value={data.sexuality} onChange={onChange}
-          options={['ヘテロセクシュアル', '同性愛', 'バイセクシュアル', 'その他']}
+          options={['異性愛', '同性愛', 'バイセクシュアル', 'その他']}
           error={errors.sexuality} />
+        {data.sexuality === 'その他' && (
+          <div className="mt-2">
+            <FInput
+              name="sexualityOther"
+              value={data.sexualityOther}
+              onChange={onChange}
+              placeholder="自由に記述してください"
+            />
+          </div>
+        )}
       </Field>
 
       {/* 居住形態 */}
       <Field label="居住形態" required error={errors.livingArrangement}>
         <FSelect name="livingArrangement" value={data.livingArrangement} onChange={onChange}
-          options={['一人暮らし', '家族と同居', 'その他']}
+          options={['一人暮らし', '実家', '家族と同居', 'その他']}
           error={errors.livingArrangement} />
+        {data.livingArrangement === 'その他' && (
+          <div className="mt-2">
+            <FInput
+              name="livingArrangementOther"
+              value={data.livingArrangementOther}
+              onChange={onChange}
+              placeholder="自由に記述してください"
+            />
+          </div>
+        )}
+      </Field>
+
+      {/* 結婚後の居住形態 */}
+      <Field label="結婚後の居住形態" required error={errors.postMarriageLiving}>
+        <FSelect name="postMarriageLiving" value={data.postMarriageLiving} onChange={onChange}
+          options={['同居', '別居', 'その他']}
+          error={errors.postMarriageLiving} />
+        {data.postMarriageLiving === 'その他' && (
+          <div className="mt-2">
+            <FInput
+              name="postMarriageLivingOther"
+              value={data.postMarriageLivingOther}
+              onChange={onChange}
+              placeholder="自由に記述してください"
+            />
+          </div>
+        )}
       </Field>
 
       {/* 外部パートナー */}
@@ -543,8 +664,18 @@ function Step2({
       {/* 家計の管理 */}
       <Field label="家計の管理" required error={errors.financeManagement}>
         <FSelect name="financeManagement" value={data.financeManagement} onChange={onChange}
-          options={['完全折半', '相談に応じて', '相談次第']}
+          options={['完全折半', '相談次第', 'その他']}
           error={errors.financeManagement} />
+        {data.financeManagement === 'その他' && (
+          <div className="mt-2">
+            <FInput
+              name="financeManagementOther"
+              value={data.financeManagementOther}
+              onChange={onChange}
+              placeholder="自由に記述してください"
+            />
+          </div>
+        )}
       </Field>
 
       {/* 趣味 */}
@@ -847,6 +978,16 @@ export default function RegisterPage() {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  const onCheckbox = (name: keyof FormData, val: string) => {
+    setData((prev) => {
+      const current = prev[name] as string[];
+      const updated = current.includes(val)
+        ? current.filter((x) => x !== val)
+        : [...current, val];
+      return { ...prev, [name]: updated };
+    });
+  };
+
   const handleFile = (side: 'front' | 'back') => (file: File) => {
     const url = URL.createObjectURL(file);
     if (side === 'front') { setFrontPreview(url); setFrontFile(file); }
@@ -902,6 +1043,7 @@ export default function RegisterPage() {
     if (!data.childrenDesire)        e.childrenDesire    = '子供の希望を選択してください';
     if (!data.sexuality)             e.sexuality         = 'セクシュアリティを選択してください';
     if (!data.livingArrangement)     e.livingArrangement = '居住形態を選択してください';
+    if (!data.postMarriageLiving)    e.postMarriageLiving = '結婚後の居住形態を選択してください';
     if (!data.externalPartner)       e.externalPartner   = '外部パートナーを選択してください';
     if (!data.financeManagement)     e.financeManagement = '家計の管理を選択してください';
     setErrors(e);
@@ -951,6 +1093,17 @@ export default function RegisterPage() {
       <ScrollHeader />
 
       <div className="max-w-2xl mx-auto px-4 pt-24 pb-16">
+        {/* トップへ戻るリンク */}
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-zinc-400 hover:text-teal-400 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            トップページへ
+          </Link>
+        </div>
+
         {/* ページタイトル */}
         <div className="text-center mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">会員登録</h1>
@@ -968,7 +1121,7 @@ export default function RegisterPage() {
             <Step1 data={data} onChange={onChange} onRadio={onRadio} errors={errors} />
           )}
           {step === 2 && (
-            <Step2 data={data} onChange={onChange} onRadio={onRadio} errors={errors} />
+            <Step2 data={data} onChange={onChange} onRadio={onRadio} onCheckbox={onCheckbox} errors={errors} />
           )}
           {step === 3 && (
             <Step3
@@ -1022,6 +1175,7 @@ export default function RegisterPage() {
           </p>
         )}
       </div>
+      <ScrollToTop />
     </div>
   );
 }

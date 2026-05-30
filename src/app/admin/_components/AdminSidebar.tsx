@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, HeartHandshake, Settings, ArrowLeft, Shield, ShieldCheck, Calendar } from 'lucide-react';
+import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -67,14 +67,14 @@ export function AdminSidebar() {
           })}
         </nav>
 
-        {/* サイトに戻る */}
+        {/* トップページへ */}
         <div className="p-3 border-t border-zinc-800">
           <Link
-            href="/dashboard"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 transition-all text-sm"
+            href="/"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all text-sm"
           >
             <ArrowLeft className="w-4 h-4 flex-shrink-0" />
-            サイトに戻る
+            トップページへ
           </Link>
         </div>
       </aside>
@@ -85,13 +85,6 @@ export function AdminSidebar() {
         <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
           <Shield className="w-4 h-4 text-teal-400" />
           <span className="text-sm font-bold text-white">amista 管理者パネル</span>
-          <Link
-            href="/dashboard"
-            className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            サイトへ
-          </Link>
         </div>
         {/* モバイルナビ */}
         <div className="flex overflow-x-auto gap-1 px-3 py-2">

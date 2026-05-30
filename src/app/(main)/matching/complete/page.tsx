@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   CheckCircle2, MapPin, Receipt, Bot, TriangleAlert,
-  Users, ClipboardList,
+  Users, ClipboardList, Flag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
@@ -155,6 +155,17 @@ function CompleteContent() {
           <ClipboardList className="w-4 h-4" />
           申請履歴を見る
         </Link>
+      </div>
+
+      {/* 通報リンク */}
+      <div className="pb-6 flex justify-center">
+        <a
+          href={`/report?applicationId=${applicationId}&nickname=${encodeURIComponent(nickname)}`}
+          className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-rose-400 transition-colors"
+        >
+          <Flag className="w-3 h-3" />
+          この相手を通報する
+        </a>
       </div>
     </div>
   );

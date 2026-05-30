@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Navbar } from "@/components/ui/Navbar";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 
 export default async function MainLayout({
   children,
@@ -25,6 +26,7 @@ export default async function MainLayout({
       <main className="lg:ml-64 pb-24 lg:pb-0 min-h-screen">
         {children}
       </main>
+      <ScrollToTop />
     </div>
   );
 }
