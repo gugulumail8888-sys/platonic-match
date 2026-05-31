@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import {
   UserPlus, ShieldCheck, Search, Heart, Calendar,
-  Video, ThumbsUp, CreditCard, MessageCircle,
-  AlertTriangle, ChevronDown,
+  Video, ThumbsUp, CreditCard, MessageCircle, ClipboardList,
+  AlertTriangle, ChevronDown, ChevronLeft,
 } from 'lucide-react';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 
 export const metadata: Metadata = {
   title: 'ご利用の流れ',
@@ -94,6 +96,14 @@ const STEPS: Step[] = [
     title: '連絡先交換',
     icon: MessageCircle,
     description: 'お支払い確認後、事務局から相手の連絡先をご案内します。ここからお二人の新しい関係が始まります！',
+    badge: 'ステップ完了',
+    variant: 'default',
+  },
+  {
+    number: 10,
+    title: '成婚報告・アンケート提出',
+    icon: ClipboardList,
+    description: 'パートナーシップが成立したら、ぜひ事務局へご報告ください。成婚報告アンケートにご協力いただくと、サービス改善に役立てることができます。末永くお幸せに！',
     badge: '🎉 ゴール',
     variant: 'goal',
   },
@@ -111,7 +121,6 @@ const variantStyles: Record<StepVariant, {
   iconColor: string;
   badgeBg: string;
   badgeText: string;
-  connector: string;
 }> = {
   default: {
     card:       'bg-zinc-800 border-zinc-700',
@@ -121,7 +130,6 @@ const variantStyles: Record<StepVariant, {
     iconColor:  'text-teal-400',
     badgeBg:    'bg-zinc-700/60',
     badgeText:  'text-zinc-300',
-    connector:  'text-zinc-600',
   },
   paid: {
     card:       'bg-rose-950/20 border-rose-800/50',
@@ -131,7 +139,6 @@ const variantStyles: Record<StepVariant, {
     iconColor:  'text-rose-400',
     badgeBg:    'bg-rose-900/50 border border-rose-700/50',
     badgeText:  'text-rose-300',
-    connector:  'text-zinc-600',
   },
   goal: {
     card:       'bg-amber-950/20 border-amber-700/40',
@@ -141,7 +148,6 @@ const variantStyles: Record<StepVariant, {
     iconColor:  'text-amber-400',
     badgeBg:    'bg-amber-900/50 border border-amber-700/50',
     badgeText:  'text-amber-300',
-    connector:  'text-zinc-600',
   },
 };
 
@@ -156,20 +162,13 @@ function StepCard({ step }: { step: Step }) {
   return (
     <div className={`rounded-2xl border p-5 ${s.card}`}>
       <div className="flex items-start gap-4">
-
-        {/* ステップ番号 */}
         <div className="flex flex-col items-center flex-shrink-0 gap-2">
-          <span
-            className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm font-bold ${s.numberBg} ${s.numberText}`}
-          >
+          <span className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm font-bold ${s.numberBg} ${s.numberText}`}>
             {step.number}
           </span>
         </div>
-
-        {/* コンテンツ */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            {/* アイコン */}
             <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
               <Icon className={`w-4 h-4 ${s.iconColor}`} />
             </span>
@@ -180,12 +179,10 @@ function StepCard({ step }: { step: Step }) {
           <p className="text-sm text-zinc-300 leading-relaxed mb-3">
             {step.description}
           </p>
-          {/* バッジ */}
           <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${s.badgeBg} ${s.badgeText}`}>
             {step.badge}
           </span>
         </div>
-
       </div>
     </div>
   );
@@ -197,71 +194,94 @@ function StepCard({ step }: { step: Step }) {
 
 export default function HowItWorksPage() {
   return (
-    <div className="p-4 md:p-6 max-w-xl mx-auto">
+    <div className="min-h-screen bg-zinc-950">
+      {/* ヘッダー */}
+      <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
+        <div className="max-w-xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link
+            href="/"
+            className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            トップページへ
+          </Link>
+          <Link href="/" className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #14b8a6, #0d9488)' }}>
+              <Heart className="w-2.5 h-2.5 text-white fill-white" />
+            </div>
+            <span className="font-bold text-white text-sm tracking-wide">
+              ami<span className="text-teal-400">sta</span>
+            </span>
+          </Link>
+        </div>
+      </header>
 
-      {/* ページヘッダー */}
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
-          amista ご利用の流れ
-        </h1>
-        <p className="text-zinc-400 text-sm">
-          友情婚活パートナーを見つけるまでの9ステップ
-        </p>
-      </div>
+      <div className="p-4 md:p-6 max-w-xl mx-auto">
+        {/* ページヘッダー */}
+        <div className="mb-6 text-center pt-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
+            amista ご利用の流れ
+          </h1>
+          <p className="text-zinc-400 text-sm">
+            友情婚活パートナーを見つけるまでの9ステップ
+          </p>
+        </div>
 
-      {/* 凡例 */}
-      <div className="flex flex-wrap justify-center gap-3 mb-6 text-xs">
-        <span className="flex items-center gap-1.5 text-zinc-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block" />
-          通常ステップ
-        </span>
-        <span className="flex items-center gap-1.5 text-zinc-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
-          有料ステップ
-        </span>
-        <span className="flex items-center gap-1.5 text-zinc-400">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-          ゴール
-        </span>
-      </div>
+        {/* 凡例 */}
+        <div className="flex flex-wrap justify-center gap-3 mb-6 text-xs">
+          <span className="flex items-center gap-1.5 text-zinc-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block" />
+            通常ステップ
+          </span>
+          <span className="flex items-center gap-1.5 text-zinc-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+            有料ステップ
+          </span>
+          <span className="flex items-center gap-1.5 text-zinc-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+            ゴール
+          </span>
+        </div>
 
-      {/* ステップリスト */}
-      <div>
-        {STEPS.map((step, index) => (
-          <div key={step.number}>
-            <StepCard step={step} />
-
-            {/* ステップ間の矢印（最後以外） */}
-            {index < STEPS.length - 1 && (
-              <div className="flex justify-center py-1">
-                <ChevronDown className="w-5 h-5 text-zinc-600" />
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* 注意事項 */}
-      <div className="mt-6 bg-zinc-800 rounded-2xl border border-zinc-700 p-5">
-        <h2 className="text-sm font-bold text-zinc-300 flex items-center gap-2 mb-3">
-          <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-          注意事項
-        </h2>
-        <ul className="space-y-2">
-          {[
-            'お見合い費用（各¥3,000）は日程確定後、前日までに両者それぞれにご請求します',
-            '成功報酬は両者合意が確認できた場合のみ発生します',
-            '連絡先の交換は必ず事務局を通じて行います',
-            '個人間での直接的な連絡先交換はお控えください',
-          ].map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-zinc-400 leading-relaxed">
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0" />
-              {item}
-            </li>
+        {/* ステップリスト */}
+        <div>
+          {STEPS.map((step, index) => (
+            <div key={step.number}>
+              <StepCard step={step} />
+              {index < STEPS.length - 1 && (
+                <div className="flex justify-center py-1">
+                  <ChevronDown className="w-5 h-5 text-zinc-600" />
+                </div>
+              )}
+            </div>
           ))}
-        </ul>
+        </div>
+
+        {/* 注意事項 */}
+        <div className="mt-6 bg-zinc-800 rounded-2xl border border-zinc-700 p-5">
+          <h2 className="text-sm font-bold text-zinc-300 flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+            注意事項
+          </h2>
+          <ul className="space-y-2">
+            {[
+              'お見合い費用（各¥3,000）は日程確定後、前日までに両者それぞれにご請求します',
+              '成功報酬は両者合意が確認できた場合のみ発生します',
+              '連絡先の交換は必ず事務局を通じて行います',
+              '個人間での直接的な連絡先交換はお控えください',
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-zinc-400 leading-relaxed">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="pb-12" />
       </div>
 
+      <ScrollToTop />
     </div>
   );
 }

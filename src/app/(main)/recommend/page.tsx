@@ -45,6 +45,47 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
+function BestMatchCard({ member }: { member: RecommendResult }) {
+  return (
+    <div className="relative rounded-2xl overflow-hidden border-2 border-yellow-400 shadow-[0_0_30px_rgba(234,179,8,0.3)]" style={{ background: 'linear-gradient(135deg, #134e4a 0%, #18181b 50%, #422006 100%)' }}>
+      {/* 帯 */}
+      <div className="flex items-center justify-center py-2 font-black text-sm text-black tracking-widest" style={{ background: 'linear-gradient(90deg, #ca8a04, #fde047, #ca8a04)' }}>
+        ✨ No.1 BEST MATCH ✨
+      </div>
+      <div className="p-6 flex flex-col gap-5">
+        <div className="flex items-start gap-4">
+          <div className="relative flex-shrink-0">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center text-white font-bold text-2xl select-none ring-4 ring-yellow-400" style={{ background: member.avatarColor }}>
+              {member.initials}
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-2xl mb-1">{member.nickname}</p>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-400">
+              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{member.prefecture}</span>
+              <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{member.occupation}</span>
+              <span>{member.age}歳</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-zinc-400">相性スコア</span>
+            <span className="text-5xl font-black text-yellow-400">{member.score}</span>
+          </div>
+          <div className="w-full bg-zinc-700/60 rounded-full h-3 overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${member.score}%`, background: 'linear-gradient(90deg, #ca8a04, #fde047)' }} />
+          </div>
+        </div>
+        <p className="text-zinc-200 text-sm leading-relaxed border-l-2 border-yellow-500 pl-3">{member.reason}</p>
+        <Link href={`/members/${member.id}`} className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold transition-colors text-black" style={{ background: 'linear-gradient(90deg, #ca8a04, #fde047, #ca8a04)' }}>
+          プロフィールを見る <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function ResultCard({ member, rank }: { member: RecommendResult; rank: number }) {
   const rankBg = rank === 1 ? 'bg-amber-500 text-amber-900' : rank === 2 ? 'bg-zinc-400 text-zinc-900' : rank === 3 ? 'bg-amber-700 text-amber-100' : 'bg-zinc-700 text-zinc-300';
   return (
@@ -186,18 +227,31 @@ export default function RecommendPage() {
         </div>
       )}
       {status === 'done' && results.length > 0 && (
-        <div>
+        <div className="flex flex-col gap-6">
           {isDemo && (
-            <div className="flex items-start gap-2.5 bg-amber-950/50 border border-amber-800 rounded-xl px-4 py-3 mb-4">
+            <div className="flex items-start gap-2.5 bg-amber-950/50 border border-amber-800 rounded-xl px-4 py-3">
               <TriangleAlert className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-amber-300 text-xs leading-relaxed">
                 <span className="font-semibold">※ 現在はデモ表示です。</span>{' '}本番環境ではAIがスコアを算出します。
               </p>
             </div>
           )}
-          <div className="grid gap-4">
-            {results.map((member, i) => <ResultCard key={member.id} member={member} rank={i + 1} />)}
+
+          {/* 最高相性エリア */}
+          <div>
+            <p className="text-xl font-bold text-yellow-400 mb-3">👑 ベストマッチ</p>
+            <BestMatchCard member={results[0]} />
           </div>
+
+          {/* その他のおすすめエリア */}
+          {results.length > 1 && (
+            <div>
+              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">その他のおすすめ</p>
+              <div className="grid gap-4">
+                {results.slice(1).map((member, i) => <ResultCard key={member.id} member={member} rank={i + 2} />)}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
