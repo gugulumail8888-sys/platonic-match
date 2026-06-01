@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Mail, Lock, Heart } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const loginSchema = z.object({
   email: z
@@ -37,20 +38,15 @@ export function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);
-
-    const maxAge = 60 * 60 * 24; // 24時間
-    if (data.email === "test@amista.jp" && data.password === "test1234") {
-      document.cookie = `auth=${JSON.stringify({ role: "user", email: data.email })}; path=/; max-age=${maxAge}`;
-      router.push("/members");
-    } else if (data.email === "test2@amista.jp" && data.password === "test5678") {
-      document.cookie = `auth=${JSON.stringify({ role: "user", email: data.email, hasAiOption: true })}; path=/; max-age=${maxAge}`;
-      router.push("/members");
-    } else if (data.email === "admin@amista.jp" && data.password === "admin1234") {
-      document.cookie = `auth=${JSON.stringify({ role: "admin", email: data.email })}; path=/; max-age=${maxAge}`;
-      router.push("/admin");
-    } else {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+    if (error) {
       setServerError("メールアドレスまたはパスワードが正しくありません");
+      return;
     }
+    router.push("/dashboard");
   };
 
   return (

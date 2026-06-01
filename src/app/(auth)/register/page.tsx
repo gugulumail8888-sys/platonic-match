@@ -6,6 +6,7 @@ import { Check, Upload, X, ShieldCheck, Mail, CheckCircle2, ArrowLeft } from 'lu
 import { ScrollHeader } from '@/components/ui/ScrollHeader';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { Button } from '@/components/ui/Button';
+import { supabase } from '@/lib/supabase';
 
 // ============================================================
 // Constants
@@ -952,6 +953,8 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<FormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<Errors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Step3 用
   const [docType, setDocType]           = useState<DocType>('');
@@ -1053,7 +1056,7 @@ export default function RegisterPage() {
   // Step3: 書類選択 + 両面アップロード済み + 同一画像でないことで有効
   const step3Valid = !!docType && !!frontPreview && !!backPreview && !isSameFile;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 1) {
       if (!validateStep1()) {
         setTimeout(() => {
@@ -1072,6 +1075,72 @@ export default function RegisterPage() {
       }
     } else if (step === 3) {
       if (!step3Valid) return;
+      setIsLoading(true);
+      setSubmitError(null);
+      try {
+        const { data: authData, error: signUpError } = await supabase.auth.signUp({
+          email: data.email,
+          password: data.password,
+        });
+        if (signUpError) {
+          setSubmitError(signUpError.message);
+          return;
+        }
+        const userId = authData.user?.id;
+        if (!userId) {
+          setSubmitError('ユーザーIDの取得に失敗しました');
+          return;
+        }
+        const { error: insertError } = await supabase.from('profiles').insert({
+          id: userId,
+          last_name: data.lastName,
+          first_name: data.firstName,
+          last_name_kana: data.lastNameKana,
+          first_name_kana: data.firstNameKana,
+          nickname: data.nickname,
+          birth_date: `${data.birthYear}-${String(data.birthMonth).padStart(2, '0')}-${String(data.birthDay).padStart(2, '0')}`,
+          gender: data.gender,
+          phone: data.phone,
+          prefecture: data.prefecture,
+          address_detail: data.addressDetail,
+          occupation: data.occupation,
+          height: Number(data.height),
+          body_type: data.bodyType,
+          blood_type: data.bloodType,
+          marital_history: data.maritalHistory === 'yes',
+          number_of_children: data.numberOfChildren,
+          smoking: data.smoking === 'yes',
+          income: data.income,
+          siblings: data.siblings,
+          education: data.education,
+          marriage_timing: data.marriageTiming,
+          children_desire: data.childrenDesire,
+          fertility_method: data.fertilityMethod,
+          fertility_method_other: data.fertilityMethodOther,
+          sexual_activity: data.sexualActivity,
+          sexuality: data.sexuality,
+          sexuality_other: data.sexualityOther,
+          living_arrangement: data.livingArrangement,
+          living_arrangement_other: data.livingArrangementOther,
+          post_marriage_living: data.postMarriageLiving,
+          post_marriage_living_other: data.postMarriageLivingOther,
+          external_partner: data.externalPartner === 'yes',
+          finance_management: data.financeManagement,
+          finance_management_other: data.financeManagementOther,
+          hobbies: data.hobbies,
+          pr: data.pr,
+          desired_conditions: data.desiredConditions,
+        });
+        if (insertError) {
+          setSubmitError(insertError.message);
+          return;
+        }
+        setStep(4);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } finally {
+        setIsLoading(false);
+      }
+      return;
     }
     setStep((s) => s + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1140,27 +1209,29 @@ export default function RegisterPage() {
 
           {/* ナビゲーションボタン */}
           {step < 4 && (
-            <div
-              className={`flex mt-8 pt-6 border-t border-zinc-800 ${
-                step > 1 ? 'justify-between' : 'justify-end'
-              }`}
-            >
-              {step > 1 && (
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-5 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-colors"
-                >
-                  ← 戻る
-                </button>
+            <div className="mt-8 pt-6 border-t border-zinc-800 space-y-3">
+              {submitError && (
+                <p className="text-red-400 text-sm text-center">{submitError}</p>
               )}
-              <Button
-                type="button"
-                onClick={handleNext}
-                disabled={step === 3 && !step3Valid}
-              >
-                {nextLabel}
-              </Button>
+              <div className={`flex ${step > 1 ? 'justify-between' : 'justify-end'}`}>
+                {step > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleBack}
+                    className="px-5 py-2.5 rounded-xl border border-zinc-700 text-zinc-300 text-sm font-medium hover:bg-zinc-800 transition-colors"
+                  >
+                    ← 戻る
+                  </button>
+                )}
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={(step === 3 && !step3Valid) || isLoading}
+                  isLoading={step === 3 && isLoading}
+                >
+                  {nextLabel}
+                </Button>
+              </div>
             </div>
           )}
         </div>
