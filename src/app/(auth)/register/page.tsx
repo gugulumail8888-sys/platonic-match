@@ -106,6 +106,32 @@ const INITIAL_FORM: FormData = {
   financeManagement: '', financeManagementOther: '', hobbies: '', pr: '', desiredConditions: '',
 };
 
+const formatPhone = (value: string) => {
+  const cleaned = value.replace(/[^\d-]/g, '');
+  const digits = cleaned.replace(/-/g, '');
+
+  if (/^(090|080|070)/.test(digits)) {
+    const d = digits.slice(0, 11);
+    if (d.length <= 3) return d;
+    if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`;
+    return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  }
+
+  // 固定電話：手動ハイフン許可、数字最大11桁、全体13文字まで
+  let result = '';
+  let digitCount = 0;
+  for (const char of cleaned) {
+    if (result.length >= 13) break;
+    if (char === '-') {
+      result += char;
+    } else if (digitCount < 11) {
+      result += char;
+      digitCount++;
+    }
+  }
+  return result;
+};
+
 // ============================================================
 // UI Primitives
 // ============================================================
@@ -146,10 +172,11 @@ function Field({
 }
 
 function FInput({
-  name, value, onChange, type = 'text', placeholder, error,
+  name, value, onChange, type = 'text', placeholder, error, autoComplete, inputMode, lang,
 }: {
   name: string; value: string; onChange: (e: AnyChangeEvent) => void;
   type?: string; placeholder?: string; error?: string;
+  autoComplete?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']; lang?: string;
 }) {
   return (
     <input
@@ -158,6 +185,9 @@ function FInput({
       value={value}
       onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
       placeholder={placeholder}
+      autoComplete={autoComplete}
+      inputMode={inputMode}
+      lang={lang}
       className={fieldCls(error)}
     />
   );
@@ -334,10 +364,11 @@ function StepIndicator({ step }: { step: number }) {
 // ============================================================
 
 function Step1({
-  data, onChange, onRadio, errors,
+  data, onChange, onPhoneChange, onRadio, errors,
 }: {
   data: FormData;
   onChange: (e: AnyChangeEvent) => void;
+  onPhoneChange: (e: AnyChangeEvent) => void;
   onRadio: (name: keyof FormData, val: string) => void;
   errors: Errors;
 }) {
@@ -361,13 +392,13 @@ function Step1({
 
       {/* フリガナ */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="フリガナ（氏）" required error={errors.lastNameKana}>
+        <Field label="フリガナ（氏）※カタカナまたはローマ字" required error={errors.lastNameKana}>
           <FInput name="lastNameKana" value={data.lastNameKana} onChange={onChange}
-            placeholder="例：ヤマダ" error={errors.lastNameKana} />
+            placeholder="カタカナまたはローマ字" error={errors.lastNameKana} />
         </Field>
-        <Field label="フリガナ（名）" required error={errors.firstNameKana}>
+        <Field label="フリガナ（名）※カタカナまたはローマ字" required error={errors.firstNameKana}>
           <FInput name="firstNameKana" value={data.firstNameKana} onChange={onChange}
-            placeholder="例：タロウ" error={errors.firstNameKana} />
+            placeholder="カタカナまたはローマ字" error={errors.firstNameKana} />
         </Field>
       </div>
 
@@ -419,8 +450,8 @@ function Step1({
 
       {/* 電話番号 */}
       <Field label="電話番号" required error={errors.phone}>
-        <FInput name="phone" value={data.phone} onChange={onChange}
-          placeholder="例：090-0000-0000" type="tel" error={errors.phone} />
+        <FInput name="phone" value={data.phone} onChange={onPhoneChange}
+          placeholder="090-0000-0000" type="tel" error={errors.phone} />
       </Field>
 
       {/* メールアドレス */}
@@ -442,9 +473,10 @@ function Step1({
       </Field>
 
       {/* 住所詳細 */}
-      <Field label="住所（詳細）">
+      <Field label="住所（詳細）" required error={errors.addressDetail}>
         <FInput name="addressDetail" value={data.addressDetail} onChange={onChange}
-          placeholder="例：市区町村・番地・建物名" />
+          placeholder="例：南町1-2-3 アミスタマンション101"
+          lang="ja" autoComplete="address-line2" inputMode="search" error={errors.addressDetail} />
       </Field>
     </div>
   );
@@ -620,7 +652,7 @@ function Step2({
       </Field>
 
       {/* 居住形態 */}
-      <Field label="居住形態" required error={errors.livingArrangement}>
+      <Field label="現在の居住形態" required error={errors.livingArrangement}>
         <FSelect name="livingArrangement" value={data.livingArrangement} onChange={onChange}
           options={['一人暮らし', '実家', '家族と同居', 'その他']}
           error={errors.livingArrangement} />
@@ -976,6 +1008,12 @@ export default function RegisterPage() {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  const onPhoneChange = (e: AnyChangeEvent) => {
+    const formatted = formatPhone(e.target.value);
+    setData((prev) => ({ ...prev, phone: formatted }));
+    setErrors((prev) => ({ ...prev, phone: undefined }));
+  };
+
   const onRadio = (name: keyof FormData, val: string) => {
     setData((prev) => ({ ...prev, [name]: val }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
@@ -1007,11 +1045,11 @@ export default function RegisterPage() {
     if (!data.lastName.trim())      e.lastName      = '氏を入力してください';
     if (!data.firstName.trim())     e.firstName     = '名を入力してください';
     if (!data.lastNameKana.trim())  e.lastNameKana  = 'フリガナ（氏）を入力してください';
-    else if (!/^[ァ-ヶー\s　]+$/.test(data.lastNameKana))
-      e.lastNameKana = '全角カタカナで入力してください';
+    else if (!/^[ァ-ヶーa-zA-Z\s]+$/.test(data.lastNameKana))
+      e.lastNameKana = 'カタカナまたはローマ字で入力してください';
     if (!data.firstNameKana.trim()) e.firstNameKana = 'フリガナ（名）を入力してください';
-    else if (!/^[ァ-ヶー\s　]+$/.test(data.firstNameKana))
-      e.firstNameKana = '全角カタカナで入力してください';
+    else if (!/^[ァ-ヶーa-zA-Z\s]+$/.test(data.firstNameKana))
+      e.firstNameKana = 'カタカナまたはローマ字で入力してください';
     if (!data.nickname.trim())      e.nickname      = 'ニックネームを入力してください';
     if (!data.birthYear)            e.birthYear     = '年を選択してください';
     if (!data.birthMonth)           e.birthMonth    = '月を選択してください';
@@ -1025,6 +1063,7 @@ export default function RegisterPage() {
     else if (data.password.length < 8)
       e.password = '8文字以上で入力してください';
     if (!data.prefecture)           e.prefecture    = '都道府県を選択してください';
+    if (!data.addressDetail.trim()) e.addressDetail = '住所詳細を入力してください';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -1187,7 +1226,7 @@ export default function RegisterPage() {
         {/* フォームカード */}
         <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 md:p-8">
           {step === 1 && (
-            <Step1 data={data} onChange={onChange} onRadio={onRadio} errors={errors} />
+            <Step1 data={data} onChange={onChange} onPhoneChange={onPhoneChange} onRadio={onRadio} errors={errors} />
           )}
           {step === 2 && (
             <Step2 data={data} onChange={onChange} onRadio={onRadio} onCheckbox={onCheckbox} errors={errors} />
