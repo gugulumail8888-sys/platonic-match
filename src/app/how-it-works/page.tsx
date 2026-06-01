@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   UserPlus, ShieldCheck, Search, Heart, Calendar,
-  Video, ThumbsUp, CreditCard, MessageCircle, ClipboardList,
+  Video, ThumbsUp, MessageCircle, ClipboardList,
   AlertTriangle, ChevronDown, ChevronLeft,
 } from 'lucide-react';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
@@ -85,22 +85,14 @@ const STEPS: Step[] = [
   },
   {
     number: 8,
-    title: '成功報酬のお支払い',
-    icon: CreditCard,
-    description: '両者が成功報酬をお支払いいただきます（金額は別途定める）',
-    badge: '金額未定・変更予定',
-    variant: 'paid',
-  },
-  {
-    number: 9,
     title: '連絡先交換',
     icon: MessageCircle,
-    description: 'お支払い確認後、事務局から相手の連絡先をご案内します。ここからお二人の新しい関係が始まります！',
+    description: '事務局から相手の連絡先をご案内します。ここからお二人の新しい関係が始まります！',
     badge: 'ステップ完了',
     variant: 'default',
   },
   {
-    number: 10,
+    number: 9,
     title: '成婚報告・アンケート提出',
     icon: ClipboardList,
     description: 'パートナーシップが成立したら、ぜひ事務局へご報告ください。成婚報告アンケートにご協力いただくと、サービス改善に役立てることができます。末永くお幸せに！',
@@ -266,7 +258,6 @@ export default function HowItWorksPage() {
           <ul className="space-y-2">
             {[
               'お見合い費用（各¥3,000）は日程確定後、前日までに両者それぞれにご請求します',
-              '成功報酬は両者合意が確認できた場合のみ発生します',
               '連絡先の交換は必ず事務局を通じて行います',
               '個人間での直接的な連絡先交換はお控えください',
             ].map((item, i) => (
