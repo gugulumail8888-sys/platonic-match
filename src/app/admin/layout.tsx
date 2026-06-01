@@ -1,17 +1,33 @@
-// TODO: 本番環境では管理者認証チェックを追加する
-//       例: セッションのroleが'admin'でない場合は/loginにリダイレクト
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 import { AdminSidebar } from './_components/AdminSidebar';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (!profile || profile.role !== 'admin') {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950">
       <AdminSidebar />
-      {/* デスクトップ: サイドバー分のmargin */}
       <main className="lg:ml-56 min-h-screen">
         {children}
       </main>

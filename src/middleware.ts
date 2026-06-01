@@ -1,54 +1,33 @@
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = [
-  "/",
-  "/login",
-  "/register",
-  "/terms",
-  "/privacy",
-  "/tokusho",
-  "/how-it-works",
-  "/help",
-  "/contact",
-];
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  const isPublic = PUBLIC_PATHS.some((path) => {
-    if (path === "/") return pathname === "/";
-    return pathname === path || pathname.startsWith(path + "/");
-  });
-
-  if (isPublic) {
-    return NextResponse.next();
-  }
-
-  const authCookie = request.cookies.get("auth");
-  let auth: { role: string; email: string } | null = null;
-
-  if (authCookie) {
-    try {
-      auth = JSON.parse(authCookie.value);
-    } catch {
-      // 不正なCookieは無視
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
     }
-  }
+  );
 
-  if (!auth) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(url);
-  }
+  await supabase.auth.getUser();
 
-  if (pathname.startsWith("/admin") && auth.role !== "admin") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {

@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { Handshake, Users, MessageCircle, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "ホーム",
 };
-
-function getAuthFromCookie() {
-  const cookieStore = cookies();
-  const authCookie = cookieStore.get("auth");
-  if (!authCookie) return null;
-  try { return JSON.parse(authCookie.value); } catch { return null; }
-}
 
 const DUMMY_NEW_MEMBERS = [
   { id: 1, nickname: "さくら", age: 30, prefecture: "東京都", occupation: "OL", initials: "さ", avatarColor: "#0d9488" },
@@ -25,8 +19,10 @@ const DUMMY_NEW_MEMBERS = [
 ];
 
 export default async function DashboardPage() {
-  const auth = getAuthFromCookie();
-  const nickname = auth?.email?.split("@")[0] ?? "ゲスト";
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const nickname = user.email?.split("@")[0] ?? "ゲスト";
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto">

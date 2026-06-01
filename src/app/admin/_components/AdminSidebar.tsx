@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, ArrowLeft } from 'lucide-react';
+import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, ArrowLeft, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/admin',          label: 'ダッシュボード', icon: Home,          exact: true },
+  { href: '/admin/review',   label: '個別審査',       icon: ClipboardList, exact: false },
   { href: '/admin/members',  label: '会員管理',       icon: Users,         exact: false },
   { href: '/admin/matching', label: '申請管理',       icon: HeartHandshake, exact: false },
   { href: '/admin/verify',   label: '本人確認審査',   icon: ShieldCheck,   exact: false },

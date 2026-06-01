@@ -1,52 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Mail, Lock, Heart } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "メールアドレスを入力してください")
-    .email("メールアドレスの形式が正しくありません"),
-  password: z
-    .string()
-    .min(1, "パスワードを入力してください")
-    .min(6, "パスワードは6文字以上で入力してください"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
-  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const supabase = createClient();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-  });
-
-  const onSubmit = async (data: LoginFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("submit", email, password);
     setServerError(null);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setIsSubmitting(false);
     if (error) {
       setServerError("メールアドレスまたはパスワードが正しくありません");
       return;
     }
-    router.push("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   return (
@@ -75,15 +54,15 @@ export function LoginForm() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <Input
             label="メールアドレス"
             type="email"
             placeholder="example@email.com"
             autoComplete="email"
             leftIcon={<Mail className="w-4 h-4" />}
-            error={errors.email?.message}
-            {...register("email")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
 
           <Input
@@ -92,8 +71,8 @@ export function LoginForm() {
             placeholder="パスワードを入力"
             autoComplete="current-password"
             leftIcon={<Lock className="w-4 h-4" />}
-            error={errors.password?.message}
-            {...register("password")}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
 
           <div className="flex justify-end">

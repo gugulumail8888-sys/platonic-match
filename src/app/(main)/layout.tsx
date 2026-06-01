@@ -13,11 +13,9 @@ export default async function MainLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 未認証ユーザーはログインへ（Supabase連携完了後に有効化）
-  // TODO: Supabase連携後にコメントアウトを外す
-  // if (!user) {
-  //   redirect("/login");
-  // }
+  if (!user) {
+    redirect("/login");
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950">
