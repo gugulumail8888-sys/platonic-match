@@ -1,17 +1,16 @@
+export const dynamic = 'force-dynamic';
+
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { CheckCircle, XCircle, User } from 'lucide-react';
 
 type Profile = {
   id: string;
-  user_id: string;
   nickname: string;
   birth_date: string;
   gender: string;
   prefecture: string;
   occupation: string;
-  about_me: string | null;
   avatar_url: string | null;
   status: string;
   created_at: string;
@@ -39,14 +38,18 @@ async function updateStatus(formData: FormData) {
 }
 
 export default async function ReviewPage() {
-  const supabase = createClient();
-  const { data: pending } = await supabase
-    .from('profiles')
-    .select('id, user_id, nickname, birth_date, gender, prefecture, occupation, about_me, avatar_url, status, created_at')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true });
+  const adminSupabase = createAdminClient();
 
-  const profiles = (pending ?? []) as Profile[];
+  // まず全件取得してみる（statusフィルターなし）
+  const { data: allProfiles, error: allError } = await adminSupabase
+    .from('profiles')
+    .select('id, nickname, status, birth_date, gender, prefecture, occupation, created_at');
+
+  console.log('ALL profiles:', JSON.stringify(allProfiles));
+  console.log('ALL error:', JSON.stringify(allError));
+
+  const pending = allProfiles?.filter((p) => p.status === 'pending') ?? [];
+  const profiles = pending as Profile[];
 
   return (
     <div className="p-6 md:p-8 space-y-6">
@@ -116,11 +119,6 @@ export default async function ReviewPage() {
                     </div>
                   </div>
 
-                  {profile.about_me && (
-                    <p className="text-sm text-zinc-400 bg-zinc-800 rounded-xl p-3 mb-3 line-clamp-3">
-                      {profile.about_me}
-                    </p>
-                  )}
 
                   <p className="text-xs text-zinc-600">
                     登録日: {new Date(profile.created_at).toLocaleDateString('ja-JP')}

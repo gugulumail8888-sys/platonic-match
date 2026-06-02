@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 // ==========================================
@@ -30,28 +31,11 @@ export function createClient() {
   );
 }
 
-// サービスロールクライアント（管理者操作用）
+// サービスロールクライアント（管理者操作用・RLSバイパス）
 export function createAdminClient() {
-  const cookieStore = cookies();
-
-  return createServerClient(
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet: { name: string; value: string; options?: object }[]) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // ignore
-          }
-        },
-      },
-    }
+    { auth: { autoRefreshToken: false, persistSession: false } }
   );
 }

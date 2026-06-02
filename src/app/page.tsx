@@ -117,21 +117,14 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-3 gap-8 text-center">
             {[
-              { number: "8,000+", label: "登録会員数" },
-              { number: "2,100+", label: "パートナーシップ成立" },
-              { number: "96%", label: "「友人として信頼できる」回答率" },
+              { icon: '🤝', label: '事務局が仲介', sub: '安心のサポート体制' },
+              { icon: '💻', label: 'ZOOMお見合い', sub: '自宅から気軽に参加' },
+              { icon: '🔒', label: '連絡先は事務局経由', sub: '個人情報を守ります' },
             ].map((stat) => (
               <div key={stat.label}>
-                <div className="text-3xl md:text-4xl font-bold mb-2" style={{
-                  background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  display: 'inline-block',
-                }}>
-                  {stat.number}
-                </div>
-                <div className="text-xs md:text-sm text-zinc-500">{stat.label}</div>
+                <div className="text-3xl md:text-4xl mb-2">{stat.icon}</div>
+                <div className="text-sm md:text-base font-semibold text-white mb-1">{stat.label}</div>
+                <div className="text-xs text-zinc-500">{stat.sub}</div>
               </div>
             ))}
           </div>
@@ -311,30 +304,58 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 体験談 */}
+      {/* 他サービスとの違い */}
       <section id="voice" className="py-20 px-4 bg-zinc-950">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">
-              パートナーシップ <span className="text-primary-400">成立体験談</span>
+            <h2 className="text-3xl font-bold text-white mb-3">
+              amistaが<span className="text-primary-400">選ばれる理由</span>
             </h2>
+            <p className="text-zinc-400">一般的な婚活・マッチングアプリとの違い</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                text: "仕事が忙しく婚活する時間がなかったのですが、AIおすすめプランのおかげで効率よく活動できました。ZOOMお見合いなので移動時間もなく、仕事終わりに自宅から参加できたのが助かりました。今のパートナーとは価値観がぴったり合い、友人のような関係から自然に発展しました。",
-                name: "Aさん（34歳・女性）",
+                title: '恋愛感情不要',
+                icon: '💛',
+                general: '「好き」という感情が必要',
+                amista: '価値観・人柄で選ぶ友情婚活',
               },
               {
-                text: "恋愛感情より価値観の合う人と一緒にいたかったのでamistaを選びました。ZOOMで実際に話してみるとプロフィールだけではわからない人柄がよくわかり、安心して次のステップに進めました。親からの結婚プレッシャーもなくなり、自分らしい選択ができたと思っています。",
-                name: "Bさん（41歳・男性）",
+                title: '事務局が仲介',
+                icon: '🤝',
+                general: '個人間でやり取り',
+                amista: '連絡先交換まで事務局がサポート',
               },
-            ].map((voice) => (
-              <div key={voice.name} className="bg-zinc-800 rounded-2xl p-6 shadow-card border border-zinc-700">
-                <div className="text-primary-400 text-4xl font-serif mb-3">"</div>
-                <p className="text-zinc-300 text-sm leading-relaxed mb-4">{voice.text}</p>
-                <p className="text-xs text-zinc-500 font-medium">{voice.name}</p>
+              {
+                title: 'プレッシャーなし',
+                icon: '😌',
+                general: '交際・結婚を急かされる',
+                amista: '自分のペースで自然に関係を築く',
+              },
+            ].map((item) => (
+              <div key={item.title} className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                <div className="bg-zinc-800 px-5 py-4 flex items-center gap-2">
+                  <span className="text-xl">{item.icon}</span>
+                  <h3 className="font-bold text-white text-sm">{item.title}</h3>
+                </div>
+                <div className="p-5 space-y-3">
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-red-500 text-xs flex-shrink-0 mt-0.5 font-bold">❌</span>
+                    <div>
+                      <p className="text-[10px] text-zinc-500 mb-0.5">一般的な婚活</p>
+                      <p className="text-sm text-zinc-400">{item.general}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-teal-400 text-xs flex-shrink-0 mt-0.5 font-bold">✅</span>
+                    <div>
+                      <p className="text-[10px] text-primary-400 mb-0.5">amista</p>
+                      <p className="text-sm text-white font-medium">{item.amista}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

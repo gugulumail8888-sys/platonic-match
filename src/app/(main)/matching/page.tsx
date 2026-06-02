@@ -1,89 +1,43 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, ClipboardList, Users, HeartHandshake } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { createClient } from '@/lib/supabase/client';
 
-// ============================================================
-// ダミーデータ（Supabase連携後はDBから取得）
-// TODO: Supabase連携時にこのダミーデータを削除し、実データに置き換える
-// ============================================================
+type ApplicationStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed';
 
-type ApplicationStatus = 'pending' | 'scheduling' | 'completed';
-
-interface Application {
+interface PartnerProfile {
   id: string;
-  member: {
-    id: number;
-    nickname: string;
-    age: number;
-    prefecture: string;
-    occupation: string;
-    initials: string;
-    avatarColor: string;
-  };
-  appliedAt: string;
-  status: ApplicationStatus;
-  amount: number;
+  nickname: string;
+  birth_date: string;
+  prefecture: string;
+  occupation: string;
+  avatar_url: string | null;
 }
 
-const DUMMY_APPLICATIONS: Application[] = [
-  {
-    id: 'APP-847',
-    member: {
-      id: 6,
-      nickname: 'けんじ',
-      age: 32,
-      prefecture: '東京都',
-      occupation: '会社員（営業）',
-      initials: 'け',
-      avatarColor: '#0d9488',
-    },
-    appliedAt: '2026-05-24',
-    status: 'pending',
-    amount: 3000,
-  },
-  {
-    id: 'APP-523',
-    member: {
-      id: 7,
-      nickname: 'たける',
-      age: 28,
-      prefecture: '大阪府',
-      occupation: 'ソフトウェアエンジニア',
-      initials: 'た',
-      avatarColor: '#2563eb',
-    },
-    appliedAt: '2026-05-20',
-    status: 'scheduling',
-    amount: 3000,
-  },
-  {
-    id: 'APP-291',
-    member: {
-      id: 8,
-      nickname: 'りょうた',
-      age: 35,
-      prefecture: '愛知県',
-      occupation: '公務員（市役所）',
-      initials: 'り',
-      avatarColor: '#059669',
-    },
-    appliedAt: '2026-05-13',
-    status: 'completed',
-    amount: 3000,
-  },
-];
+interface Matching {
+  id: string;
+  status: ApplicationStatus;
+  created_at: string;
+  applicant_id: string;
+  partner_id: string;
+  applicant_dating_wish: boolean;
+  partner: PartnerProfile;
+}
 
-// ============================================================
-// Status Badge
-// ============================================================
+function calcAge(birthDate: string) {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
 
-const STATUS_CONFIG: Record<
-  ApplicationStatus,
-  { label: string; className: string }
-> = {
+const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: string }> = {
   pending: {
     label: '申請中',
     className: 'bg-amber-900/50 text-amber-300 border border-amber-800',
@@ -96,6 +50,10 @@ const STATUS_CONFIG: Record<
     label: '完了',
     className: 'bg-green-900/50 text-green-300 border border-green-800',
   },
+  zoom_completed: {
+    label: 'ZOOM完了',
+    className: 'bg-blue-900 text-blue-300',
+  },
 };
 
 function StatusBadge({ status }: { status: ApplicationStatus }) {
@@ -107,37 +65,51 @@ function StatusBadge({ status }: { status: ApplicationStatus }) {
   );
 }
 
-// ============================================================
-// Application Card
-// ============================================================
-
-function ApplicationCard({ app }: { app: Application }) {
+function MatchingCard({ matching }: { matching: Matching }) {
   const router = useRouter();
+  const [wished, setWished] = useState(matching.applicant_dating_wish);
+
+  async function handleDatingWish() {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('matchings')
+      .update({ applicant_dating_wish: true, dating_wish_at: new Date().toISOString() })
+      .eq('id', matching.id);
+    if (!error) setWished(true);
+  }
+
+  const { partner, status, created_at, id } = matching;
+
   return (
     <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 hover:border-zinc-600 transition-all">
       {/* 上段: アバター + メンバー情報 + ステータス */}
       <div className="flex items-start gap-3">
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 select-none"
-          style={{ background: app.member.avatarColor }}
-        >
-          {app.member.initials}
-        </div>
+        {partner.avatar_url ? (
+          <img
+            src={partner.avatar_url}
+            alt={partner.nickname}
+            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-teal-700 flex items-center justify-center text-white font-bold text-lg flex-shrink-0 select-none">
+            {partner.nickname.charAt(0)}
+          </div>
+        )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="text-white font-semibold text-base">{app.member.nickname}</p>
+              <p className="text-white font-semibold text-base">{partner.nickname}</p>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-zinc-400 mt-0.5">
-                <span>{app.member.age}歳</span>
+                <span>{calcAge(partner.birth_date)}歳</span>
                 <span className="flex items-center gap-0.5">
                   <MapPin className="w-3 h-3 text-teal-500" />
-                  {app.member.prefecture}
+                  {partner.prefecture}
                 </span>
-                <span>{app.member.occupation}</span>
+                <span>{partner.occupation}</span>
               </div>
             </div>
-            <StatusBadge status={app.status} />
+            <StatusBadge status={status} />
           </div>
         </div>
       </div>
@@ -152,30 +124,47 @@ function ApplicationCard({ app }: { app: Application }) {
             <Calendar className="w-3 h-3" />
             申請日
           </p>
-          <p className="text-zinc-200 font-medium">{app.appliedAt}</p>
+          <p className="text-zinc-200 font-medium">
+            {new Date(created_at).toLocaleDateString('ja-JP')}
+          </p>
         </div>
         <div>
           <p className="text-zinc-500 mb-0.5 flex items-center gap-1">
             <ClipboardList className="w-3 h-3" />
             申請番号
           </p>
-          <p className="text-zinc-200 font-mono font-medium">{app.id}</p>
+          <p className="text-zinc-200 font-mono font-medium">{id.slice(0, 8).toUpperCase()}</p>
         </div>
         <div>
           <p className="text-zinc-500 mb-0.5">料金</p>
           <p className="text-zinc-200 font-medium">
-            {app.amount.toLocaleString()}円
+            3,000円
             <span className="text-zinc-500 font-normal">（税込）</span>
           </p>
         </div>
       </div>
 
       {/* ボタンエリア */}
-      <div className={`mt-4 ${app.status === 'scheduling' ? 'flex flex-col gap-2' : ''}`}>
-        {/* 日程調整ボタン（日程調整中のみ表示） */}
-        {app.status === 'scheduling' && (
+      <div className="mt-4 flex flex-col gap-2">
+        {/* 交際希望ボタン（ZOOM完了時のみ） */}
+        {status === 'zoom_completed' && (
+          <button
+            onClick={handleDatingWish}
+            disabled={wished}
+            className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all w-full ${
+              wished
+                ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
+                : 'bg-pink-700 hover:bg-pink-600 text-white'
+            }`}
+          >
+            {wished ? '交際希望を送りました ✓' : '💑 交際希望を伝える'}
+          </button>
+        )}
+
+        {/* 日程調整ボタン（日程調整中のみ） */}
+        {status === 'scheduling' && (
           <Link
-            href={`/schedule/request?id=${app.id}&name=${encodeURIComponent(app.member.nickname)}`}
+            href={`/schedule/request?id=${id}&name=${encodeURIComponent(partner.nickname)}`}
             className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md hover:scale-[1.02]"
             style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
           >
@@ -185,14 +174,14 @@ function ApplicationCard({ app }: { app: Application }) {
 
         {/* プロフィールリンク */}
         <Link
-          href={`/members/${app.member.id}`}
+          href={`/members/${partner.id}`}
           className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-zinc-600 text-zinc-400 text-xs hover:bg-zinc-700 hover:text-zinc-200 transition-colors"
         >
           プロフィールを見る
         </Link>
 
-        {/* キャンセル・変更ボタン（全ステータス） */}
-        {(app.status === 'completed' || app.status === 'pending' || app.status === 'scheduling') && (
+        {/* キャンセル・変更ボタン */}
+        {(status === 'pending' || status === 'scheduling' || status === 'completed') && (
           <button
             onClick={() => router.push('/cancel-policy')}
             className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-900 text-red-500 text-xs hover:bg-red-950/50 hover:border-red-800 transition-colors w-full"
@@ -205,16 +194,57 @@ function ApplicationCard({ app }: { app: Application }) {
   );
 }
 
-// ============================================================
-// Page
-// ============================================================
-
 export default function MatchingPage() {
-  const applications = DUMMY_APPLICATIONS;
+  const [matchings, setMatchings] = useState<Matching[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchMatchings() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+
+      const { data: rows, error } = await supabase
+        .from('matchings')
+        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish')
+        .or(`applicant_id.eq.${user.id},partner_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      console.log('matchings:', rows, 'error:', error);
+
+      if (!rows || rows.length === 0) { setLoading(false); return; }
+
+      const partnerUserIds = rows.map((r) =>
+        r.applicant_id === user.id ? r.partner_id : r.applicant_id
+      );
+
+      console.log('partnerUserIds:', partnerUserIds);
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, nickname, birth_date, prefecture, occupation, avatar_url')
+        .in('id', partnerUserIds);
+
+      const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+      const combined: Matching[] = rows
+        .map((r) => {
+          const partnerUserId = r.applicant_id === user.id ? r.partner_id : r.applicant_id;
+          const partner = profileMap.get(partnerUserId);
+          if (!partner) return null;
+          return { ...r, partner } as Matching;
+        })
+        .filter((r): r is Matching => r !== null);
+
+      setMatchings(combined);
+      setLoading(false);
+    }
+
+    fetchMatchings();
+  }, []);
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
-      {/* ページヘッダー */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-teal-900/50 border border-teal-800 rounded-xl flex items-center justify-center flex-shrink-0">
           <HeartHandshake className="w-5 h-5 text-teal-400" />
@@ -222,20 +252,20 @@ export default function MatchingPage() {
         <div>
           <h1 className="text-2xl font-bold text-white leading-tight">お見合い申請履歴</h1>
           <p className="text-xs text-zinc-400">
-            {applications.length}件の申請があります
+            {loading ? '読み込み中...' : `${matchings.length}件の申請があります`}
           </p>
         </div>
       </div>
 
-      {/* 申請一覧 */}
-      {applications.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-20 text-zinc-500">読み込み中...</div>
+      ) : matchings.length > 0 ? (
         <div className="space-y-4">
-          {applications.map((app) => (
-            <ApplicationCard key={app.id} app={app} />
+          {matchings.map((m) => (
+            <MatchingCard key={m.id} matching={m} />
           ))}
         </div>
       ) : (
-        /* 空状態UI */
         <div className="text-center py-20">
           <div className="w-20 h-20 bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center mx-auto mb-5">
             <HeartHandshake className="w-9 h-9 text-zinc-600" />

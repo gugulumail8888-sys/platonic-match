@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { AdminSidebar } from './_components/AdminSidebar';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 
@@ -15,11 +15,14 @@ export default async function AdminLayout({
     redirect('/login');
   }
 
-  const { data: profile } = await supabase
+  const adminSupabase = createAdminClient();
+  const { data: profile, error } = await adminSupabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single();
+
+  console.log('admin check:', { userId: user.id, profile, error });
 
   if (!profile || profile.role !== 'admin') {
     redirect('/dashboard');
