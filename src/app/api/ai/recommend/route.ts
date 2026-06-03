@@ -1,19 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 export const maxDuration = 60;
-
-// ============================================================
-// デモモード判定（APIキー未設定 or プレースホルダーの場合）
-// ============================================================
 
 function isDemoMode(): boolean {
   const key = process.env.ANTHROPIC_API_KEY;
   return !key || key === 'your_api_key_here';
 }
-
-// ============================================================
-// デモ用ダミーデータ
-// ============================================================
 
 const DEMO_REASONS = [
   '居住地が近く生活リズムが合いそうです。日常を共有しやすい距離感が魅力です。',
@@ -25,144 +18,119 @@ const DEMO_REASONS = [
   'お互いの希望条件が合致しており、自然な形で関係を深められそうです。',
 ];
 
-function demoCandidates(candidates: { id: number }[]) {
-  return candidates.map((c) => ({
-    id: c.id,
-    // 70〜95 のランダムスコア
-    score: Math.floor(Math.random() * 26) + 70,
-    reason: DEMO_REASONS[c.id % DEMO_REASONS.length],
-  }));
+const AVATAR_COLORS = [
+  '#0d9488','#7c3aed','#db2777','#ea580c','#16a34a',
+  '#2563eb','#d97706','#dc2626','#0891b2','#65a30d',
+];
+
+function getAvatarColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-// ============================================================
-// Types
-// ============================================================
-
-interface CandidateScore {
-  id: number;
-  score: number;
-  reason: string;
+function calcAge(birthDate: string | null): number {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
 }
 
-interface ProfileSummary {
-  nickname: string;
-  age: number;
-  prefecture: string;
-  occupation: string;
-  hobbies: string;
-  marriageTiming: string;
-  childrenDesire: string;
-  desiredConditions: string;
-}
-
-interface CandidateSummary extends ProfileSummary {
-  id: number;
-}
-
-// ============================================================
-// Route Handler
-// ============================================================
-
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
-    const body = await req.json() as {
-      myProfile: ProfileSummary;
-      candidates: CandidateSummary[];
-    };
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
 
-    const { myProfile, candidates } = body;
+    // ログインユーザーのプロフィール取得
+    const { data: myProfile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
 
-    // ── デモモード: ランダムスコアで返す ──
-    if (isDemoMode()) {
-      return NextResponse.json({
-        candidates: demoCandidates(candidates),
-        isDemo: true,
-      });
+    // ブロックリスト取得
+    const { data: blockedData } = await supabase
+      .from('blocks')
+      .select('blocked_id')
+      .eq('blocker_id', user.id);
+    const blockedIds = (blockedData ?? []).map((b: { blocked_id: string }) => b.blocked_id);
+
+    // 候補者取得（異性・アクティブ）
+    const oppositeGender = myProfile?.gender === 'male' ? 'female' : 'male';
+    const { data: candidates } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('gender', oppositeGender)
+      .eq('status', 'active')
+      .neq('id', user.id)
+      .not('id', 'in', `(${blockedIds.length > 0 ? blockedIds.join(',') : 'null'})`);
+
+
+    if (!candidates || candidates.length === 0) {
+      return NextResponse.json({ candidates: [], isDemo: true });
     }
 
-    // ── 本番: Anthropic API を直接呼び出す ──
-    const candidatesText = candidates
-      .map(
-        (c) =>
-          `ID:${c.id} / ${c.nickname} / ${c.age}歳 / ${c.prefecture} / ${c.occupation}` +
-          ` / 趣味:${c.hobbies.substring(0, 40)}` +
-          ` / 結婚希望:${c.marriageTiming}` +
-          ` / 子供希望:${c.childrenDesire}` +
-          ` / 希望条件:${c.desiredConditions.substring(0, 50)}`
-      )
-      .join('\n');
+    // デモモード
+    if (isDemoMode()) {
+      const results = candidates.map((c, i) => ({
+        id: c.id,
+        nickname: c.nickname,
+        prefecture: c.prefecture,
+        occupation: c.occupation,
+        age: calcAge(c.birth_date),
+        avatarColor: getAvatarColor(c.id),
+        initials: c.nickname?.charAt(0) ?? '?',
+        score: Math.floor(Math.random() * 26) + 70,
+        reason: DEMO_REASONS[i % DEMO_REASONS.length],
+      }));
+      results.sort((a, b) => b.score - a.score);
+      return NextResponse.json({ candidates: results, isDemo: true });
+    }
 
-    const apiResponse = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-opus-4-7',
-        max_tokens: 2048,
-        thinking: { type: 'enabled', budget_tokens: 1024 },
-        messages: [
-          {
-            role: 'user',
-            content: `あなたは友情婚活マッチングサービス「amista」のAIマッチングアドバイザーです。
-ユーザーのプロフィールと候補者リストを詳しく分析して、各候補者との相性スコア（0〜100）と
-100文字以内の具体的な理由を日本語で提示してください。
+    // 本番AIモード
+    const { default: Anthropic } = await import('@anthropic-ai/sdk');
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-友情婚活とは、恋愛感情なしに生活パートナーを求めるマッチングサービスです。
-価値観・生活スタイル・将来設計の合致度を重視してスコアを算出してください。
+    const prompt = `以下のユーザーと候補者リストの相性を分析してください。
+ユーザー: ${JSON.stringify(myProfile)}
+候補者: ${JSON.stringify(candidates)}
+各候補者に対して0-100のスコアと理由を日本語で返してください。
+JSON形式で返答: { "results": [{ "id": "...", "score": 数値, "reason": "..." }] }`;
 
-【ユーザープロフィール】
-${myProfile.nickname} / ${myProfile.age}歳 / ${myProfile.prefecture} / ${myProfile.occupation}
-趣味: ${myProfile.hobbies}
-結婚希望時期: ${myProfile.marriageTiming} / 子供希望: ${myProfile.childrenDesire}
-希望条件: ${myProfile.desiredConditions}
-
-【候補者リスト】
-${candidatesText}
-
-以下のJSON形式のみで回答してください。前置きや説明テキストは一切不要です：
-{
-  "candidates": [
-    {"id": 候補者ID, "score": スコア(0-100の整数), "reason": "理由(100文字以内の日本語)"}
-  ]
-}`,
-          },
-        ],
-      }),
+    const message = await anthropic.messages.create({
+      model: 'claude-opus-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }],
     });
 
-    if (!apiResponse.ok) {
-      const errBody = await apiResponse.text();
-      console.error('Anthropic API error:', apiResponse.status, errBody);
-      throw new Error(`Anthropic API returned ${apiResponse.status}`);
-    }
+    const text = message.content[0].type === 'text' ? message.content[0].text : '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean) as { results: { id: string; score: number; reason: string }[] };
 
-    const data = await apiResponse.json() as {
-      content: { type: string; text?: string }[];
-    };
+    const results = parsed.results.map((r) => {
+      const c = candidates.find((c) => c.id === r.id);
+      return {
+        id: r.id,
+        nickname: c?.nickname ?? '',
+        prefecture: c?.prefecture ?? '',
+        occupation: c?.occupation ?? '',
+        age: calcAge(c?.birth_date ?? null),
+        avatarColor: getAvatarColor(r.id),
+        initials: c?.nickname?.charAt(0) ?? '?',
+        score: r.score,
+        reason: r.reason,
+      };
+    });
 
-    const text = data.content
-      .filter((c) => c.type === 'text')
-      .map((c) => c.text ?? '')
-      .join('');
+    results.sort((a, b) => b.score - a.score);
+    return NextResponse.json({ candidates: results, isDemo: false });
 
-    const match = text.match(/\{[\s\S]*\}/);
-
-    if (!match) {
-      console.error('No JSON found in response:', text);
-      throw new Error('AIからの応答にJSONが含まれていませんでした');
-    }
-
-    const result = JSON.parse(match[0]) as { candidates: CandidateScore[] };
-
-    return NextResponse.json({ ...result, isDemo: false });
-  } catch (error) {
-    console.error('AI recommend error:', error);
-    return NextResponse.json(
-      { error: 'AIレコメンドの生成に失敗しました' },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error('recommend error:', err);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

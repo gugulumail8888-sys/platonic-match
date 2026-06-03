@@ -27,6 +27,38 @@ export async function middleware(request: NextRequest) {
 
   await supabase.auth.getUser();
 
+  const authCookie = request.cookies.get('auth')?.value;
+  const pathname = request.nextUrl.pathname;
+
+  // トップページ・API・静的アセットは常に通過
+  if (
+    pathname === '/' ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register')
+  ) {
+    return supabaseResponse;
+  }
+
+  if (authCookie) {
+    try {
+      const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string };
+      const isAdmin = auth.role === 'admin';
+
+      // admin が /dashboard 配下にアクセス → /admin へ
+      if (isAdmin && pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
+
+      // 一般会員が /admin 配下にアクセス → /dashboard へ
+      if (!isAdmin && pathname.startsWith('/admin')) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    } catch {
+      // 不正な cookie は無視
+    }
+  }
+
   return supabaseResponse;
 }
 

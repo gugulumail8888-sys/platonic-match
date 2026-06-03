@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   User, Heart, Settings, MapPin, Briefcase,
   Ruler, Sparkles, GraduationCap, Users, Cigarette,
   Wallet, Home, GitMerge, Calendar, Baby, HeartHandshake,
   Mail, Lock,
-  Edit3, Eye,
+  Edit3, Eye, ShieldOff,
 } from 'lucide-react';
 
 // ============================================================
@@ -450,14 +450,62 @@ function SettingsTab() {
 }
 
 // ============================================================
+// Blocked Tab
+// ============================================================
+
+function BlockedTab() {
+  const [members, setMembers] = React.useState<{id:string;nickname:string;prefecture:string|null;occupation:string|null}[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetch('/api/blocks/list')
+      .then((r) => r.json())
+      .then((data) => setMembers(data.members ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleUnblock = async (memberId: string, nickname: string) => {
+    if (!window.confirm(`${nickname}さんのブロックを解除しますか？`)) return;
+    await fetch('/api/blocks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberId }),
+    });
+    setMembers((prev) => prev.filter((m) => m.id !== memberId));
+  };
+
+  if (loading) return <div className="text-center text-zinc-400 py-12">読み込み中...</div>;
+  if (members.length === 0) return <div className="text-center text-zinc-400 py-12">ブロックしているユーザーはいません</div>;
+
+  return (
+    <div className="space-y-3">
+      {members.map((m) => (
+        <div key={m.id} className="bg-zinc-800 rounded-xl border border-zinc-700 p-4 flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-white">{m.nickname}</p>
+            <p className="text-sm text-zinc-400">{m.prefecture}{m.occupation ? ` / ${m.occupation}` : ''}</p>
+          </div>
+          <button onClick={() => handleUnblock(m.id, m.nickname)}
+            className="px-3 py-1.5 rounded-lg bg-zinc-700 text-zinc-300 text-sm hover:bg-zinc-600 transition-colors">
+            解除
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
 // Tab Navigation
 // ============================================================
 
-type TabId = 'profile' | 'likes' | 'settings';
+type TabId = 'profile' | 'likes' | 'settings' | 'blocked';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile',  label: 'マイプロフィール', icon: User },
   { id: 'likes',    label: 'いいね履歴',        icon: Heart },
+  { id: 'blocked',  label: 'ブロックリスト',   icon: ShieldOff },
   { id: 'settings', label: '設定',              icon: Settings },
 ];
 
@@ -502,6 +550,7 @@ export default function MyPage() {
       {activeTab === 'profile'  && <ProfileTab />}
       {activeTab === 'likes'    && <LikesTab />}
       {activeTab === 'settings' && <SettingsTab />}
+      {activeTab === 'blocked'  && <BlockedTab />}
     </div>
   );
 }

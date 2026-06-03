@@ -1,32 +1,22 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, RotateCcw, ChevronDown, ChevronUp, MapPin, Briefcase, User } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { FEMALE_MEMBERS, MemberDetail } from './_data';
 
-// ============================================================
-// Constants
-// ============================================================
-
-const PREFECTURES = [
-  '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
-  '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
-  '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
-  '岐阜県', '静岡県', '愛知県', '三重県',
-  '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
-  '鳥取県', '島根県', '岡山県', '広島県', '山口県',
-  '徳島県', '香川県', '愛媛県', '高知県',
-  '福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
-];
-
-const BODY_TYPES = ['がっちり', 'ぽっちゃり', 'ややぽっちゃり', '普通', '細身'];
-const CHILDREN_OPTIONS = ['なし', '1人', '2人', '3人', '4人', '5人以上'];
-
-// ============================================================
-// Filter State
-// ============================================================
+interface Member {
+  id: string;
+  nickname: string;
+  gender: string;
+  birth_date: string | null;
+  prefecture: string | null;
+  occupation: string | null;
+  body_type: string | null;
+  marital_history: string | null;
+  number_of_children: string | null;
+  avatar_url: string | null;
+}
 
 interface FilterState {
   ageMin: string;
@@ -38,265 +28,145 @@ interface FilterState {
 }
 
 const EMPTY_FILTER: FilterState = {
-  ageMin: '', ageMax: '', prefecture: '',
-  bodyType: '', maritalHistory: '', numberOfChildren: '',
+  ageMin: '', ageMax: '', prefecture: '', bodyType: '', maritalHistory: '', numberOfChildren: '',
 };
 
-// ============================================================
-// Sub-components
-// ============================================================
-
-const selectCls =
-  'bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm ' +
-  'focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors w-full';
-
-const inputCls =
-  'bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-white text-sm ' +
-  'placeholder-zinc-500 focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors w-full';
-
-function FilterPanel({
-  filter, setFilter, onSearch, onReset,
-}: {
-  filter: FilterState;
-  setFilter: (f: FilterState) => void;
-  onSearch: () => void;
-  onReset: () => void;
-}) {
-  const [open, setOpen] = useState(true);
-
-  const set = (key: keyof FilterState) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-      setFilter({ ...filter, [key]: e.target.value });
-
-  return (
-    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 mb-8">
-      {/* ヘッダー（折りたたみトグル） */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left group"
-      >
-        <div className="flex items-center gap-2 text-white font-semibold text-sm">
-          <Search className="w-4 h-4 text-teal-400" />
-          絞り込み検索
-        </div>
-        {open
-          ? <ChevronUp className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
-          : <ChevronDown className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
-        }
-      </button>
-
-      {open && (
-        <div className="px-5 pb-5 border-t border-zinc-800">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-            {/* 年齢（下限） */}
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">年齢（下限）</label>
-              <input
-                type="number" min="18" max="80" placeholder="例：25"
-                value={filter.ageMin} onChange={set('ageMin')}
-                className={inputCls}
-              />
-            </div>
-
-            {/* 年齢（上限） */}
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">年齢（上限）</label>
-              <input
-                type="number" min="18" max="80" placeholder="例：40"
-                value={filter.ageMax} onChange={set('ageMax')}
-                className={inputCls}
-              />
-            </div>
-
-            {/* 居住地 */}
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">居住地</label>
-              <select value={filter.prefecture} onChange={set('prefecture')} className={selectCls}>
-                <option value="">すべて</option>
-                {PREFECTURES.map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-
-            {/* 体型 */}
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">体型</label>
-              <select value={filter.bodyType} onChange={set('bodyType')} className={selectCls}>
-                <option value="">すべて</option>
-                {BODY_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            {/* 結婚歴 */}
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">結婚歴</label>
-              <select value={filter.maritalHistory} onChange={set('maritalHistory')} className={selectCls}>
-                <option value="">すべて</option>
-                <option value="なし">なし</option>
-                <option value="あり">あり</option>
-              </select>
-            </div>
-
-            {/* 子供の有無 */}
-            <div>
-              <label className="block text-xs text-zinc-400 mb-1.5">お子様の有無</label>
-              <select value={filter.numberOfChildren} onChange={set('numberOfChildren')} className={selectCls}>
-                <option value="">すべて</option>
-                {CHILDREN_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3 mt-5">
-            <button
-              type="button" onClick={onReset}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-zinc-700 text-zinc-400 text-sm hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              リセット
-            </button>
-            <Button type="button" onClick={onSearch} size="sm">
-              <Search className="w-3.5 h-3.5" />
-              検索する
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+function calcAge(birthDate: string | null): number {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
 }
 
-function MemberCard({ member }: { member: MemberDetail }) {
-  const shortHobbies =
-    member.hobbies.length > 20 ? member.hobbies.slice(0, 20) + '…' : member.hobbies;
-
-  return (
-    <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 flex flex-col gap-4 hover:bg-zinc-700/60 hover:border-zinc-600 hover:shadow-lg hover:shadow-black/30 transition-all duration-200">
-      {/* アバター + ニックネーム */}
-      <div className="flex items-center gap-3">
-        <div
-          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 select-none"
-          style={{ background: member.avatarColor }}
-        >
-          {member.initials}
-        </div>
-        <div>
-          <p className="text-white font-semibold text-base leading-tight">{member.nickname}</p>
-          <p className="text-zinc-400 text-sm">{member.age}歳</p>
-        </div>
-      </div>
-
-      {/* 詳細情報 */}
-      <div className="space-y-1.5 text-sm flex-1">
-        <div className="flex items-center gap-1.5 text-zinc-300">
-          <MapPin className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
-          <span>{member.prefecture}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-zinc-300">
-          <Briefcase className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
-          <span>{member.occupation}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-zinc-300">
-          <User className="w-3.5 h-3.5 text-teal-500 flex-shrink-0" />
-          <span>{member.bodyType}</span>
-        </div>
-      </div>
-
-      {/* タグ */}
-      <div className="flex flex-wrap gap-1.5">
-        <span className="bg-zinc-700 text-zinc-300 text-xs px-2 py-0.5 rounded-full">
-          結婚歴 {member.maritalHistory}
-        </span>
-        <span className="bg-zinc-700 text-zinc-300 text-xs px-2 py-0.5 rounded-full">
-          子供 {member.numberOfChildren}
-        </span>
-      </div>
-
-      {/* 趣味 */}
-      <p className="text-zinc-400 text-xs leading-relaxed border-t border-zinc-700 pt-3">
-        {shortHobbies}
-      </p>
-
-      {/* プロフィールボタン */}
-      <Link href={`/members/${member.id}`} className="mt-auto">
-        <button
-          type="button"
-          className="w-full py-2 rounded-xl border border-teal-700 text-teal-400 text-sm font-medium hover:bg-teal-900/40 hover:border-teal-500 transition-colors"
-        >
-          プロフィールを見る
-        </button>
-      </Link>
-    </div>
-  );
+function getInitials(nickname: string): string {
+  return nickname.charAt(0);
 }
 
-// ============================================================
-// Main Page
-// ============================================================
+const AVATAR_COLORS = [
+  '#0d9488','#7c3aed','#db2777','#ea580c','#16a34a',
+  '#2563eb','#d97706','#dc2626','#0891b2','#65a30d',
+];
+
+function MemberCard({ member, index }: { member: Member; index: number }) {
+  const age = calcAge(member.birth_date);
+  const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  return (
+    <Link href={`/members/${member.id}`}>
+      <div className="bg-gray-800 rounded-xl p-4 hover:bg-gray-700 transition cursor-pointer">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+            style={{ backgroundColor: color }}>
+            {getInitials(member.nickname)}
+          </div>
+          <div>
+            <div className="font-semibold text-white">{member.nickname}</div>
+            <div className="text-sm text-gray-400 flex items-center gap-1">
+              {age > 0 && <span>{age}歳</span>}
+              {member.prefecture && <><MapPin className="w-3 h-3" /><span>{member.prefecture}</span></>}
+            </div>
+          </div>
+        </div>
+        {member.occupation && (
+          <div className="text-sm text-gray-400 flex items-center gap-1">
+            <Briefcase className="w-3 h-3" /><span>{member.occupation}</span>
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
 
 export default function MembersPage() {
-  // TODO: Supabase連携時にログインユーザーの性別を取得し、
-  //       異性のメンバーのみ表示するよう実装する
-  // 現時点は女性メンバー一覧を固定表示
-  const allMembers = FEMALE_MEMBERS;
-
+  const [allMembers, setAllMembers] = useState<Member[]>([]);
+  const [blockedIds, setBlockedIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterState>(EMPTY_FILTER);
   const [appliedFilter, setAppliedFilter] = useState<FilterState>(EMPTY_FILTER);
+  const [showFilter, setShowFilter] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/members')
+      .then((r) => r.json())
+      .then((data: { members: Member[] }) => setAllMembers(data.members ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
+    fetch('/api/blocks')
+      .then((r) => r.json())
+      .then((data: { blocked: string[] }) => setBlockedIds(data.blocked ?? []))
+      .catch(() => {});
+  }, []);
 
   const filtered = useMemo(() => {
     return allMembers.filter((m) => {
-      if (appliedFilter.ageMin && m.age < Number(appliedFilter.ageMin)) return false;
-      if (appliedFilter.ageMax && m.age > Number(appliedFilter.ageMax)) return false;
+      if (blockedIds.includes(m.id)) return false;
+      const age = calcAge(m.birth_date);
+      if (appliedFilter.ageMin && age < Number(appliedFilter.ageMin)) return false;
+      if (appliedFilter.ageMax && age > Number(appliedFilter.ageMax)) return false;
       if (appliedFilter.prefecture && m.prefecture !== appliedFilter.prefecture) return false;
-      if (appliedFilter.bodyType && m.bodyType !== appliedFilter.bodyType) return false;
-      if (appliedFilter.maritalHistory && m.maritalHistory !== appliedFilter.maritalHistory) return false;
-      if (appliedFilter.numberOfChildren && m.numberOfChildren !== appliedFilter.numberOfChildren) return false;
+      if (appliedFilter.bodyType && m.body_type !== appliedFilter.bodyType) return false;
+      if (appliedFilter.maritalHistory && m.marital_history !== appliedFilter.maritalHistory) return false;
+      if (appliedFilter.numberOfChildren && m.number_of_children !== appliedFilter.numberOfChildren) return false;
       return true;
     });
-  }, [allMembers, appliedFilter]);
+  }, [allMembers, appliedFilter, blockedIds]);
 
   const handleSearch = () => setAppliedFilter({ ...filter });
   const handleReset = () => { setFilter(EMPTY_FILTER); setAppliedFilter(EMPTY_FILTER); };
 
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="text-gray-400">読み込み中...</div>
+    </div>
+  );
+
   return (
-    <div className="p-6 md:p-8">
-      {/* ページヘッダー */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">
-          メンバーを探す
-        </h1>
+    <div className="max-w-2xl mx-auto p-4">
+      <h1 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+        <User className="w-6 h-6" />会員一覧
+      </h1>
+
+      {/* フィルター */}
+      <div className="bg-gray-800 rounded-xl p-4 mb-6">
+        <button onClick={() => setShowFilter(!showFilter)}
+          className="flex items-center gap-2 text-white w-full">
+          <Search className="w-4 h-4" />
+          <span>絞り込み</span>
+          {showFilter ? <ChevronUp className="w-4 h-4 ml-auto" /> : <ChevronDown className="w-4 h-4 ml-auto" />}
+        </button>
+        {showFilter && (
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <input type="number" placeholder="年齢（下限）" value={filter.ageMin}
+              onChange={(e) => setFilter({ ...filter, ageMin: e.target.value })}
+              className="bg-gray-700 text-white rounded-lg p-2 text-sm" />
+            <input type="number" placeholder="年齢（上限）" value={filter.ageMax}
+              onChange={(e) => setFilter({ ...filter, ageMax: e.target.value })}
+              className="bg-gray-700 text-white rounded-lg p-2 text-sm" />
+            <input placeholder="都道府県" value={filter.prefecture}
+              onChange={(e) => setFilter({ ...filter, prefecture: e.target.value })}
+              className="bg-gray-700 text-white rounded-lg p-2 text-sm" />
+            <input placeholder="体型" value={filter.bodyType}
+              onChange={(e) => setFilter({ ...filter, bodyType: e.target.value })}
+              className="bg-gray-700 text-white rounded-lg p-2 text-sm" />
+            <div className="col-span-2 flex gap-2">
+              <Button onClick={handleSearch} className="flex-1">検索</Button>
+              <Button onClick={handleReset} variant="outline" className="flex-1">
+                <RotateCcw className="w-4 h-4 mr-1" />リセット
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 絞り込み検索パネル */}
-      <FilterPanel
-        filter={filter}
-        setFilter={setFilter}
-        onSearch={handleSearch}
-        onReset={handleReset}
-      />
-
-      {/* メンバーカード一覧 */}
-      {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.map((m) => (
-            <MemberCard key={m.id} member={m} />
-          ))}
-        </div>
+      {/* 会員リスト */}
+      {filtered.length === 0 ? (
+        <div className="text-center text-gray-400 py-12">該当する会員が見つかりませんでした</div>
       ) : (
-        <div className="text-center py-20">
-          <div className="w-16 h-16 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-7 h-7 text-zinc-600" />
-          </div>
-          <p className="text-zinc-400 font-medium mb-1">
-            該当するメンバーが見つかりませんでした
-          </p>
-          <p className="text-zinc-600 text-sm">検索条件を変更してお試しください</p>
-          <button
-            onClick={handleReset}
-            className="mt-4 text-teal-400 text-sm hover:text-teal-300 transition-colors"
-          >
-            条件をリセットする
-          </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {filtered.map((m, i) => <MemberCard key={m.id} member={m} index={i} />)}
         </div>
       )}
     </div>

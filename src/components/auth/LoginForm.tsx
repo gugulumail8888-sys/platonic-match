@@ -25,6 +25,22 @@ export function LoginForm() {
       setServerError("メールアドレスまたはパスワードが正しくありません");
       return;
     }
+
+    // auth cookie にロール情報をセット
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const auth = await res.json() as { role: string; email: string; hasAiOption: boolean };
+        document.cookie = `auth=${encodeURIComponent(JSON.stringify(auth))};path=/;max-age=86400;SameSite=Lax`;
+        if (auth.role === 'admin') {
+          window.location.href = '/admin';
+          return;
+        }
+      }
+    } catch {
+      // cookie セット失敗時はそのまま続行
+    }
+
     window.location.href = "/dashboard";
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, RotateCcw, MapPin, ExternalLink } from 'lucide-react';
 import {
@@ -61,6 +61,14 @@ export default function AdminMembersPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [members, setMembers]         = useState<AdminMember[]>(ADMIN_MEMBERS);
   const [toast, setToast]             = useState('');
+  const [blockCounts, setBlockCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch('/api/blocks/counts')
+      .then((r) => r.json())
+      .then((data: { counts: Record<string, number> }) => setBlockCounts(data.counts))
+      .catch(() => {});
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -162,7 +170,7 @@ export default function AdminMembersPage() {
           <table className="w-full text-sm min-w-[800px]">
             <thead className="border-b border-zinc-800">
               <tr>
-                {['ID', '会員', '性別', '年齢', '居住地', '登録日', 'ステータス', '操作'].map((h) => (
+                {['ID', '会員', '性別', '年齢', '居住地', '登録日', 'ステータス', 'ブロック数', '操作'].map((h) => (
                   <th
                     key={h}
                     className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider"
@@ -175,7 +183,7 @@ export default function AdminMembersPage() {
             <tbody className="divide-y divide-zinc-800">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-zinc-500">
                     該当する会員が見つかりませんでした
                   </td>
                 </tr>
@@ -223,6 +231,17 @@ export default function AdminMembersPage() {
                     {/* ステータス */}
                     <td className="px-4 py-3">
                       <StatusBadge status={m.memberStatus} />
+                    </td>
+
+                    {/* ブロック数 */}
+                    <td className="px-4 py-3 text-center">
+                      {(blockCounts[String(m.id)] ?? 0) > 0 ? (
+                        <span className="text-xs font-semibold text-red-400 bg-red-900/30 border border-red-800 px-2 py-0.5 rounded-full">
+                          {blockCounts[String(m.id)]}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-600">0</span>
+                      )}
                     </td>
 
                     {/* 操作 */}

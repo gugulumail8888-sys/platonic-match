@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   Heart,
-  MessageCircle,
   User,
   LogOut,
   Home,
@@ -23,7 +22,6 @@ const navItems = [
   { href: "/members", label: "会員一覧", icon: Users, requireAiOption: false },
   { href: "/matching", label: "マッチング", icon: Handshake, requireAiOption: false },
   { href: "/recommend", label: "AIおすすめ", icon: Bot, requireAiOption: true },
-  { href: "/messages", label: "メッセージ", icon: MessageCircle, requireAiOption: false },
   { href: "/mypage", label: "マイページ", icon: User, requireAiOption: false },
 ];
 

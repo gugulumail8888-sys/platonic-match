@@ -7,20 +7,16 @@ import {
   Bot, Sparkles, MapPin, Briefcase, ChevronRight, Loader2, AlertCircle, TriangleAlert, Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { MALE_MEMBERS, MemberDetail } from '../members/_data';
 
-const MY_PROFILE = {
-  nickname: 'さくら',
-  age: 30,
-  prefecture: '東京都',
-  occupation: 'OL',
-  hobbies: '読書が大好きで、毎月5冊以上読んでいます。カフェ巡りも趣味で、休日は気になったカフェを巡っています。映画も好きで、特にフランス映画が好みです。',
-  marriageTiming: '1〜2年以内',
-  childrenDesire: 'ほしい',
-  desiredConditions: '価値観が合う方を探しています。外見よりも中身を大切にしてくれる方、一緒にいて落ち着ける方が理想です。年齢は28〜38歳くらいの方。',
-};
 
-interface RecommendResult extends MemberDetail {
+interface RecommendResult {
+  id: string;
+  nickname: string;
+  prefecture: string;
+  occupation: string;
+  age: number;
+  avatarColor: string;
+  initials: string;
   score: number;
   reason: string;
 }
@@ -133,18 +129,10 @@ export default function RecommendPage() {
     setErrorMsg('');
     setIsDemo(false);
     try {
-      const res = await fetch('/api/ai/recommend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ myProfile: MY_PROFILE, candidates: MALE_MEMBERS }),
-      });
+      const res = await fetch('/api/ai/recommend', { method: 'POST' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json() as { candidates: { id: number; score: number; reason: string }[]; isDemo?: boolean };
-      const merged: RecommendResult[] = data.candidates
-        .map((c) => { const member = MALE_MEMBERS.find((m) => m.id === c.id); if (!member) return null; return { ...member, score: c.score, reason: c.reason }; })
-        .filter((m): m is RecommendResult => m !== null)
-        .sort((a, b) => b.score - a.score);
-      setResults(merged);
+      const data = await res.json() as { candidates: RecommendResult[]; isDemo?: boolean };
+      setResults(data.candidates ?? []);
       setIsDemo(data.isDemo ?? false);
       setStatus('done');
     } catch (err) {
@@ -179,27 +167,7 @@ export default function RecommendPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-teal-900 border border-teal-800 rounded-xl flex items-center justify-center flex-shrink-0">
-          <Bot className="w-5 h-5 text-teal-400" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white leading-tight">AIおすすめメンバー</h1>
-          <p className="text-xs text-zinc-400">あなたのプロフィールを元にAIが最適なマッチを分析します</p>
-        </div>
-      </div>
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 mb-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: '#0d9488' }}>
-          {MY_PROFILE.nickname[0]}
-        </div>
-        <div>
-          <p className="text-white text-sm font-medium">{MY_PROFILE.nickname} さん（{MY_PROFILE.age}歳）</p>
-          <p className="text-zinc-500 text-xs">{MY_PROFILE.prefecture} / {MY_PROFILE.occupation}</p>
-        </div>
-        <div className="ml-auto">
-          <span className="text-teal-400 text-xs bg-teal-900/40 px-2 py-0.5 rounded-full border border-teal-800">分析対象</span>
-        </div>
-      </div>
+
       {status === 'idle' && (
         <div className="text-center py-12">
           <div className="w-20 h-20 bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center mx-auto mb-5">

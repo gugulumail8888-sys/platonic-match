@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Handshake, Users, MessageCircle, ChevronRight, Sparkles } from "lucide-react";
+import { Handshake, Users, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,20 +9,51 @@ export const metadata: Metadata = {
   title: "ホーム",
 };
 
-const DUMMY_NEW_MEMBERS = [
-  { id: 1, nickname: "さくら", age: 30, prefecture: "東京都", occupation: "OL", initials: "さ", avatarColor: "#0d9488" },
-  { id: 2, nickname: "ゆり", age: 27, prefecture: "大阪府", occupation: "看護師", initials: "ゆ", avatarColor: "#7c3aed" },
-  { id: 3, nickname: "みらい", age: 33, prefecture: "神奈川県", occupation: "教師", initials: "み", avatarColor: "#db2777" },
-  { id: 4, nickname: "あかね", age: 29, prefecture: "愛知県", occupation: "会社員", initials: "あ", avatarColor: "#ea580c" },
-  { id: 5, nickname: "ひより", age: 25, prefecture: "福岡県", occupation: "デザイナー", initials: "ひ", avatarColor: "#65a30d" },
-  { id: 6, nickname: "なつき", age: 31, prefecture: "北海道", occupation: "エンジニア", initials: "な", avatarColor: "#0284c7" },
-];
+// DUMMY_NEW_MEMBERS removed
 
 export default async function DashboardPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const nickname = user.email?.split("@")[0] ?? "ゲスト";
+
+  // ログインユーザーのプロフィール取得
+  const { data: myProfile } = await supabase
+    .from('profiles')
+    .select('nickname, gender')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const nickname = myProfile?.nickname ?? user.email?.split("@")[0] ?? "ゲスト";
+  const oppositeGender = myProfile?.gender === 'male' ? 'female' : 'male';
+
+  // ブロックリスト取得
+  const { data: blockedData } = await supabase
+    .from('blocks')
+    .select('blocked_id')
+    .eq('blocker_id', user.id);
+  const blockedIds = (blockedData ?? []).map((b) => b.blocked_id);
+
+  // 新着会員取得（異性・最新6件）
+  const { data: newMembers } = await supabase
+    .from('profiles')
+    .select('id, nickname, birth_date, prefecture, occupation')
+    .eq('gender', oppositeGender)
+    .eq('status', 'active')
+    .neq('id', user.id)
+    .not('id', 'in', `(${blockedIds.length > 0 ? blockedIds.join(',') : 'null'})`)
+    .order('created_at', { ascending: false })
+    .limit(6);
+
+  const AVATAR_COLORS = ['#0d9488','#7c3aed','#db2777','#ea580c','#16a34a','#2563eb'];
+  function calcAge(birthDate: string | null): number {
+    if (!birthDate) return 0;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto">
@@ -39,7 +70,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* 統計カード */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
           <Handshake className="w-6 h-6 text-teal-400 mx-auto mb-2" />
           <p className="text-2xl font-bold text-white">0</p>
@@ -49,11 +80,6 @@ export default async function DashboardPage() {
           <Sparkles className="w-6 h-6 text-amber-400 mx-auto mb-2" />
           <p className="text-2xl font-bold text-white">0</p>
           <p className="text-xs text-zinc-500 mt-1">いいね</p>
-        </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
-          <MessageCircle className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-white">0</p>
-          <p className="text-xs text-zinc-500 mt-1">メッセージ</p>
         </div>
       </div>
 
@@ -66,14 +92,14 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {DUMMY_NEW_MEMBERS.map((member) => (
+          {(newMembers ?? []).map((member, i) => (
             <Link key={member.id} href={`/members/${member.id}`}>
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 hover:border-zinc-600 transition-all">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg mb-3" style={{ background: member.avatarColor }}>
-                  {member.initials}
+                <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg mb-3" style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}>
+                  {member.nickname?.charAt(0)}
                 </div>
                 <p className="text-white font-medium text-sm">{member.nickname}</p>
-                <p className="text-zinc-500 text-xs">{member.age}歳・{member.prefecture}</p>
+                <p className="text-zinc-500 text-xs">{calcAge(member.birth_date)}歳・{member.prefecture}</p>
                 <p className="text-zinc-600 text-xs mt-1">{member.occupation}</p>
               </div>
             </Link>
