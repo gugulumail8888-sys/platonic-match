@@ -14,38 +14,6 @@ import {
 // Dummy Data
 // ============================================================
 
-const MY_PROFILE = {
-  nickname: 'さくら',
-  gender: '女性',
-  age: 30,
-  prefecture: '東京都',
-  occupation: 'OL',
-  initials: 'さ',
-  avatarColor: '#0d9488',
-  // 基本情報
-  height: 158,
-  bodyType: '普通',
-  bloodType: 'A型',
-  maritalHistory: 'なし',
-  numberOfChildren: 'なし',
-  education: '大学卒',
-  siblings: '長女（2人姉妹）',
-  // ライフスタイル
-  smoking: 'なし',
-  income: '300万〜400万未満',
-  livingArrangement: '一人暮らし',
-  financeManagement: '相談に応じて',
-  externalPartner: 'なし',
-  // パートナー希望
-  marriageTiming: '1〜2年以内',
-  childrenDesire: 'ほしい',
-  sexuality: 'ヘテロセクシュアル',
-  // 自己紹介
-  hobbies: '読書が大好きで、毎月5冊以上は読んでいます。カフェ巡りも趣味で、休日は気になったカフェを巡っています。映画も好きで、特にフランス映画が好みです。',
-  pr: '明るくておっとりした性格です。仕事は真面目に取り組みながら、プライベートも大切にしています。料理は得意ではありませんが、一緒に作ることが好きです。日常の小さな幸せを大切にできるパートナーを探しています。',
-  desiredConditions: '価値観が合う方を探しています。外見よりも中身を大切にしてくれる方、一緒にいて落ち着ける方が理想です。年齢は28〜38歳くらいの方。',
-};
-
 const LIKED_BY_ME = [
   { id: 3, nickname: 'たかし', age: 32, prefecture: '東京都', initials: 'た', avatarColor: '#2563eb' },
   { id: 5, nickname: 'けんじ', age: 35, prefecture: '神奈川県', initials: 'け', avatarColor: '#7c3aed' },
@@ -74,8 +42,9 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 function InfoRow({ icon: Icon, label, value }: {
-  icon: React.ElementType; label: string; value: string;
+  icon: React.ElementType; label: string; value: string | null | undefined;
 }) {
+  if (!value) return null;
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-zinc-700/50 last:border-0">
       <div className="w-8 h-8 bg-zinc-700/50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -91,8 +60,74 @@ function InfoRow({ icon: Icon, label, value }: {
 // Tab 1: マイプロフィール
 // ============================================================
 
+interface MyProfile {
+  id: string;
+  nickname: string;
+  gender: string;
+  birth_date: string | null;
+  prefecture: string | null;
+  occupation: string | null;
+  height: number | null;
+  body_type: string | null;
+  blood_type: string | null;
+  marital_history: string | null;
+  number_of_children: string | null;
+  education: string | null;
+  siblings: string | null;
+  smoking: string | null;
+  income: string | null;
+  living_arrangement: string | null;
+  finance_management: string | null;
+  external_partner: string | null;
+  marriage_timing: string | null;
+  children_desire: string | null;
+  sexuality: string | null;
+  hobbies: string | null;
+  pr: string | null;
+  desired_conditions: string | null;
+}
+
+const GENDER_LABELS: Record<string, string> = { male: '男性', female: '女性', other: 'その他' };
+
+function yesNoLabel(v: string | boolean | null | undefined): string | null {
+  if (v === 'true' || v === true) return 'あり';
+  if (v === 'false' || v === false) return 'なし';
+  return null;
+}
+
+function externalPartnerLabel(v: string | boolean | null | undefined): string | null {
+  if (v === 'true' || v === true) return 'あり';
+  if (v === 'false' || v === false || v === null || v === undefined) return 'なし';
+  return null;
+}
+
+function childrenDesireLabel(v: string | null | undefined): string | null {
+  if (v === 'undecided') return '未定';
+  if (v === 'yes') return 'ほしい';
+  if (v === 'no') return 'ほしくない';
+  return v ?? null;
+}
+
 function ProfileTab() {
-  const p = MY_PROFILE;
+  const [profile, setProfile] = React.useState<MyProfile | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((data) => setProfile(data.profile ?? null))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="text-center text-zinc-400 py-12">読み込み中...</div>;
+  if (!profile) return <div className="text-center text-zinc-500 py-12">プロフィールが見つかりません</div>;
+
+  const p = profile;
+  const age = calcAge(p.birth_date);
+  const initial = p.nickname.charAt(0);
+  const bg = avatarColor(p.id);
+
   return (
     <div className="space-y-4">
       {/* プロフィールカード */}
@@ -100,9 +135,9 @@ function ProfileTab() {
         {/* イニシャルアバター */}
         <div
           className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-white font-bold text-4xl flex-shrink-0 select-none shadow-lg ring-4 ring-zinc-700"
-          style={{ background: p.avatarColor }}
+          style={{ background: bg }}
         >
-          {p.initials}
+          {initial}
         </div>
 
         {/* 基本情報 */}
@@ -110,16 +145,24 @@ function ProfileTab() {
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
               <h2 className="text-2xl font-bold text-white mb-0.5">{p.nickname}</h2>
-              <p className="text-zinc-400 text-sm mb-2">{p.age}歳 · {p.gender}</p>
+              <p className="text-zinc-400 text-sm mb-2">
+                {age !== null && `${age}歳`}
+                {age !== null && p.gender && ' · '}
+                {GENDER_LABELS[p.gender] ?? p.gender}
+              </p>
               <div className="flex flex-wrap justify-center sm:justify-start gap-3 text-sm">
-                <span className="flex items-center gap-1.5 text-zinc-300">
-                  <MapPin className="w-3.5 h-3.5 text-teal-500" />
-                  {p.prefecture}
-                </span>
-                <span className="flex items-center gap-1.5 text-zinc-300">
-                  <Briefcase className="w-3.5 h-3.5 text-teal-500" />
-                  {p.occupation}
-                </span>
+                {p.prefecture && (
+                  <span className="flex items-center gap-1.5 text-zinc-300">
+                    <MapPin className="w-3.5 h-3.5 text-teal-500" />
+                    {p.prefecture}
+                  </span>
+                )}
+                {p.occupation && (
+                  <span className="flex items-center gap-1.5 text-zinc-300">
+                    <Briefcase className="w-3.5 h-3.5 text-teal-500" />
+                    {p.occupation}
+                  </span>
+                )}
               </div>
             </div>
             <Link href="/profile/edit" className="flex-shrink-0">
@@ -138,11 +181,11 @@ function ProfileTab() {
       {/* 基本情報 */}
       <SectionCard title="基本情報">
         <div className="space-y-0">
-          <InfoRow icon={Ruler}          label="身長"         value={`${p.height}cm`} />
-          <InfoRow icon={User}           label="体型"         value={p.bodyType} />
-          <InfoRow icon={Sparkles}       label="血液型"       value={p.bloodType} />
-          <InfoRow icon={HeartHandshake} label="結婚歴"       value={p.maritalHistory} />
-          <InfoRow icon={Baby}           label="お子様の人数" value={p.numberOfChildren} />
+          <InfoRow icon={Ruler}          label="身長"         value={p.height ? `${p.height}cm` : null} />
+          <InfoRow icon={User}           label="体型"         value={p.body_type} />
+          <InfoRow icon={Sparkles}       label="血液型"       value={p.blood_type} />
+          <InfoRow icon={HeartHandshake} label="結婚歴"       value={yesNoLabel(p.marital_history)} />
+          <InfoRow icon={Baby}           label="お子様の人数" value={p.number_of_children} />
           <InfoRow icon={GraduationCap}  label="学歴"         value={p.education} />
           <InfoRow icon={Users}          label="兄弟姉妹"     value={p.siblings} />
         </div>
@@ -151,40 +194,48 @@ function ProfileTab() {
       {/* ライフスタイル */}
       <SectionCard title="ライフスタイル">
         <div className="space-y-0">
-          <InfoRow icon={Cigarette} label="喫煙"           value={p.smoking} />
+          <InfoRow icon={Cigarette} label="喫煙"           value={yesNoLabel(p.smoking)} />
           <InfoRow icon={Wallet}    label="収入（年収）"   value={p.income} />
-          <InfoRow icon={Home}      label="居住形態"       value={p.livingArrangement} />
-          <InfoRow icon={GitMerge}  label="家計の管理"     value={p.financeManagement} />
-          <InfoRow icon={Heart}     label="外部パートナー" value={p.externalPartner} />
+          <InfoRow icon={Home}      label="居住形態"       value={p.living_arrangement} />
+          <InfoRow icon={GitMerge}  label="家計の管理"     value={p.finance_management} />
+          <InfoRow icon={Heart}     label="外部パートナー" value={externalPartnerLabel(p.external_partner)} />
         </div>
       </SectionCard>
 
       {/* パートナー希望 */}
       <SectionCard title="パートナー希望">
         <div className="space-y-0">
-          <InfoRow icon={Calendar} label="結婚希望時期"       value={p.marriageTiming} />
-          <InfoRow icon={Baby}     label="子供の有無（希望）" value={p.childrenDesire} />
+          <InfoRow icon={Calendar} label="結婚希望時期"       value={p.marriage_timing} />
+          <InfoRow icon={Baby}     label="子供の有無（希望）" value={childrenDesireLabel(p.children_desire)} />
           <InfoRow icon={Sparkles} label="セクシュアリティ"   value={p.sexuality} />
         </div>
       </SectionCard>
 
       {/* 自己紹介 */}
-      <SectionCard title="自己紹介">
-        <div className="space-y-5">
-          <div>
-            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">趣味</p>
-            <p className="text-zinc-300 text-sm leading-relaxed">{p.hobbies}</p>
+      {(p.hobbies || p.pr || p.desired_conditions) && (
+        <SectionCard title="自己紹介">
+          <div className="space-y-5">
+            {p.hobbies && (
+              <div>
+                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">趣味</p>
+                <p className="text-zinc-300 text-sm leading-relaxed">{p.hobbies}</p>
+              </div>
+            )}
+            {p.pr && (
+              <div className="border-t border-zinc-700 pt-4">
+                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">PR</p>
+                <p className="text-zinc-300 text-sm leading-relaxed">{p.pr}</p>
+              </div>
+            )}
+            {p.desired_conditions && (
+              <div className="border-t border-zinc-700 pt-4">
+                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">希望条件</p>
+                <p className="text-zinc-300 text-sm leading-relaxed">{p.desired_conditions}</p>
+              </div>
+            )}
           </div>
-          <div className="border-t border-zinc-700 pt-4">
-            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">PR</p>
-            <p className="text-zinc-300 text-sm leading-relaxed">{p.pr}</p>
-          </div>
-          <div className="border-t border-zinc-700 pt-4">
-            <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-2">希望条件</p>
-            <p className="text-zinc-300 text-sm leading-relaxed">{p.desiredConditions}</p>
-          </div>
-        </div>
-      </SectionCard>
+        </SectionCard>
+      )}
 
       {/* 退会セクション */}
       <div className="mt-8 bg-zinc-800 rounded-2xl border border-rose-800 p-5">
@@ -528,9 +579,9 @@ type TabId = 'profile' | 'likes-sent' | 'likes-received' | 'blocked' | 'settings
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile',        label: 'マイプロフィール', icon: User },
-  { id: 'likes-sent',     label: 'いいねした',        icon: Heart },
-  { id: 'likes-received', label: 'いいねされた',      icon: HeartHandshake },
-  { id: 'blocked',        label: 'ブロックリスト',    icon: ShieldOff },
+  { id: 'likes-sent',     label: '送信済',            icon: Heart },
+  { id: 'likes-received', label: '受信済',            icon: HeartHandshake },
+  { id: 'blocked',        label: 'ブロック',          icon: ShieldOff },
   { id: 'settings',       label: '設定',              icon: Settings },
 ];
 
@@ -550,25 +601,50 @@ export default function MyPage() {
       </div>
 
       {/* タブナビゲーション */}
-      <div className="flex border-b border-zinc-800 mb-6 gap-1 overflow-x-auto scrollbar-hide">
-        {TABS.map(({ id, label, icon: Icon }) => {
-          const isActive = activeTab === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all duration-200 border-b-2 -mb-px focus:outline-none ${
-                isActive
-                  ? 'border-teal-500 text-teal-400'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
-              }`}
-            >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-teal-400' : 'text-zinc-500'}`} />
-              {label}
-            </button>
-          );
-        })}
+      <div className="flex flex-col border-b border-zinc-800 mb-6 gap-1">
+        {/* 上段: マイプロフィール（全幅） */}
+        <div className="flex">
+          {TABS.slice(0, 1).map(({ id, label, icon: Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center justify-center gap-1.5 px-4 py-3 w-full text-sm font-medium transition-all duration-200 border-b-2 -mb-px focus:outline-none ${
+                  isActive
+                    ? 'border-teal-500 text-teal-400'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-teal-400' : 'text-zinc-500'}`} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 下段: いいねした・いいねされた・ブロックリスト・設定（均等幅） */}
+        <div className="flex">
+          {TABS.slice(1).map(({ id, label, icon: Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveTab(id)}
+                className={`flex items-center justify-center gap-1 px-2 py-3 flex-1 text-xs font-medium transition-all duration-200 border-b-2 -mb-px focus:outline-none ${
+                  isActive
+                    ? 'border-teal-500 text-teal-400'
+                    : 'border-transparent text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-teal-400' : 'text-zinc-500'}`} />
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* タブコンテンツ */}

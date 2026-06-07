@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { ProfileForm } from "@/components/profile/ProfileForm";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { ProfileForm, type ProfileEditData } from "@/components/profile/ProfileForm";
 import { UserCircle, Sparkles } from "lucide-react";
-import type { Profile } from "@/types";
 
 export const metadata: Metadata = {
   title: "プロフィール編集",
@@ -23,11 +22,12 @@ export default async function ProfileEditPage({ searchParams }: Props) {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("*")
-    .eq("user_id", user.id)
-    .single();
+    .eq("id", user.id)
+    .maybeSingle();
 
   const isNew = searchParams.new === "true";
 
@@ -65,8 +65,7 @@ export default async function ProfileEditPage({ searchParams }: Props) {
       {/* フォーム */}
       <div className="bg-zinc-900 rounded-3xl shadow-card border border-zinc-800 p-6 md:p-8">
         <ProfileForm
-          initialData={profile as Profile | undefined}
-          userId={user.id}
+          initialData={profile as Partial<ProfileEditData> | undefined}
           isNew={isNew}
         />
       </div>
