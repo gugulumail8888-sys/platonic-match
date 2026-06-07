@@ -16,12 +16,16 @@ services:
       - /app/.next
     environment:
       - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=1536
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
       - NEXT_PUBLIC_SUPABASE_URL=https://rffnjcajfbduqtutraeo.supabase.co
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZm5qY2FqZmJkdXF0dXRyYWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNTc5MzcsImV4cCI6MjA5NTgzMzkzN30.E_UrMQu19rqDJLy7MHAD4iiW9TJl2hZsJCjLNtDbX_U
       - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZm5qY2FqZmJkdXF0dXRyYWVvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDI1NzkzNywiZXhwIjoyMDk1ODMzOTM3fQ.19JLmpgj8t7qsTkDSRitEREJ76M-weRDHtRMo9WrPws
       - NEXT_PUBLIC_APP_NAME=amista
       - BLOCKS_SUPABASE_URL=http://proxy:8000
       - BLOCKS_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJzZXJ2aWNlX3JvbGUiLAogICAgImlzcyI6ICJzdXBhYmFzZS1kZW1vIiwKICAgICJpYXQiOiAxNjQxNzY5MjAwLAogICAgImV4cCI6IDE3OTk1MzU2MDAKfQ.DaYlNEoUrrEn2Ig7tqibS-PHK5vgusbcbo7X36XVt4Q
+    mem_limit: 2g
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -46,6 +50,7 @@ services:
     depends_on:
       - auth
       - rest
+    mem_limit: 128m
     networks:
       - konkatsu_network
     restart: unless-stopped
@@ -76,6 +81,7 @@ services:
       JWT_EXP: 3600
     volumes:
       - db_data:/var/lib/postgresql/data
+    mem_limit: 512m
     networks:
       - konkatsu_network
     restart: unless-stopped
@@ -100,6 +106,7 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./supabase/migrations:/migrations:ro
+    mem_limit: 256m
     entrypoint: >
       bash -c "
         echo '--- 内部ユーザーパスワード設定 ---';
@@ -147,6 +154,7 @@ services:
       GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
       GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
       GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+    mem_limit: 256m
     networks:
       - konkatsu_network
     restart: unless-stopped
@@ -168,6 +176,7 @@ services:
       PGRST_DB_USE_LEGACY_GUCS: "false"
       PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET}
       PGRST_APP_SETTINGS_JWT_EXP: 3600
+    mem_limit: 256m
     networks:
       - konkatsu_network
     restart: unless-stopped
@@ -194,6 +203,7 @@ services:
       NEXT_PUBLIC_ENABLE_LOGS: "false"
     depends_on:
       - meta
+    mem_limit: 512m
     networks:
       - konkatsu_network
     restart: unless-stopped
@@ -214,6 +224,7 @@ services:
       PG_META_DB_NAME: postgres
       PG_META_DB_USER: supabase_admin
       PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    mem_limit: 128m
     networks:
       - konkatsu_network
     restart: unless-stopped
@@ -228,6 +239,7 @@ services:
     ports:
       - "54324:9000"
       - "54325:2500"
+    mem_limit: 128m
     networks:
       - konkatsu_network
     restart: unless-stopped

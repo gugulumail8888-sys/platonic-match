@@ -8,20 +8,19 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
 
-  const { data: me } = await supabase
-    .from('profiles')
-    .select('gender')
-    .eq('id', user.id)
-    .maybeSingle();
+  const { data: likes } = await supabase
+    .from('likes')
+    .select('liker_id')
+    .eq('liked_id', user.id);
 
-  const oppositeGender = me?.gender === 'male' ? 'female' : 'male';
+  if (!likes || likes.length === 0) return NextResponse.json({ members: [] });
+
+  const likerIds = likes.map((l: { liker_id: string }) => l.liker_id);
 
   const { data: members } = await supabase
     .from('profiles')
-    .select('id, nickname, gender, birth_date, prefecture, occupation, body_type, marital_history, number_of_children, avatar_url')
-    .eq('gender', oppositeGender)
-    .eq('status', 'active')
-    .neq('id', user.id);
+    .select('id, nickname, birth_date, prefecture')
+    .in('id', likerIds);
 
   return NextResponse.json({ members: members ?? [] });
 }

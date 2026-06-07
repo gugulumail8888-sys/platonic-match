@@ -177,6 +177,8 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
   const [applied, setApplied] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
@@ -199,6 +201,11 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
       .then((data: { hasAiOption: boolean }) => setHasAiOption(data.hasAiOption ?? false))
       .catch(() => {});
 
+    fetch('/api/likes')
+      .then((r) => r.json())
+      .then((data: { liked: string[] }) => setIsLiked((data.liked ?? []).includes(params.id)))
+      .catch(() => {});
+
     fetch('/api/blocks')
       .then((r) => r.json())
       .then((data: { blocked: string[] }) => {
@@ -206,6 +213,23 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
       })
       .catch(() => {});
   }, [params.id]);
+
+  const handleToggleLike = async () => {
+    if (!member) return;
+    setLikeLoading(true);
+    try {
+      const res = await fetch('/api/likes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId: member.id }),
+      });
+      const data = await res.json() as { liked: boolean };
+      setIsLiked(data.liked);
+    } catch {
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   const handleToggleBlock = async () => {
     if (!member) return;
@@ -330,6 +354,11 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
             {blockLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TriangleAlert className="w-4 h-4" />}
             {isBlocked ? 'ブロック解除' : 'ブロック'}
           </button>
+          <button onClick={handleToggleLike} disabled={likeLoading}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isLiked ? 'bg-pink-900/40 text-pink-400 border border-pink-800 hover:bg-pink-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
+              {likeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
+              {isLiked ? 'いいね済み' : 'いいね'}
+            </button>
           {!applied && (
             <button onClick={handleOpenApply}
               className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors">

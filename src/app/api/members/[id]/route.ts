@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -10,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     .from('profiles')
     .select('*')
     .eq('id', params.id)
-    .eq('status', 'active')
+    .in('status', ['active', 'approved'])
     .maybeSingle();
 
   if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 });
