@@ -62,13 +62,18 @@ export async function POST() {
 
     // 候補者取得（異性・アクティブ）
     const oppositeGender = myProfile?.gender === 'male' ? 'female' : 'male';
-    const { data: candidates } = await supabase
+    let candidatesQuery = supabase
       .from('profiles')
       .select('*')
       .eq('gender', oppositeGender)
-      .eq('status', 'active')
-      .neq('id', user.id)
-      .not('id', 'in', `(${blockedIds.length > 0 ? blockedIds.join(',') : 'null'})`);
+      .in('status', ['active', 'approved'])
+      .neq('id', user.id);
+
+    if (blockedIds.length > 0) {
+      candidatesQuery = candidatesQuery.not('id', 'in', `(${blockedIds.join(',')})`);
+    }
+
+    const { data: candidates } = await candidatesQuery;
 
 
     if (!candidates || candidates.length === 0) {

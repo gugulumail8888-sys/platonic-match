@@ -20,7 +20,7 @@ export async function GET() {
     .from('profiles')
     .select('id, nickname, gender, birth_date, prefecture, occupation, body_type, marital_history, number_of_children, avatar_url')
     .eq('gender', oppositeGender)
-    .eq('status', 'active')
+    .in('status', ['active', 'approved'])
     .neq('id', user.id);
 
   return NextResponse.json({ members: members ?? [] });

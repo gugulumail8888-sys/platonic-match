@@ -34,13 +34,18 @@ export default async function DashboardPage() {
   const blockedIds = (blockedData ?? []).map((b) => b.blocked_id);
 
   // 新着会員取得（異性・最新6件）
-  const { data: newMembers } = await supabase
+  let newMembersQuery = supabase
     .from('profiles')
     .select('id, nickname, birth_date, prefecture, occupation')
     .eq('gender', oppositeGender)
-    .eq('status', 'active')
-    .neq('id', user.id)
-    .not('id', 'in', `(${blockedIds.length > 0 ? blockedIds.join(',') : 'null'})`)
+    .in('status', ['active', 'approved'])
+    .neq('id', user.id);
+
+  if (blockedIds.length > 0) {
+    newMembersQuery = newMembersQuery.not('id', 'in', `(${blockedIds.join(',')})`);
+  }
+
+  const { data: newMembers } = await newMembersQuery
     .order('created_at', { ascending: false })
     .limit(6);
 
