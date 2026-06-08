@@ -46,7 +46,7 @@ export function ScrollHeader() {
             特徴
           </Link>
           <Link href="#voice" className="hover:text-primary-400 transition-colors">
-            体験談
+            コンセプト
           </Link>
           <Link href="/how-it-works" className="hover:text-primary-400 transition-colors">
             申請の流れ

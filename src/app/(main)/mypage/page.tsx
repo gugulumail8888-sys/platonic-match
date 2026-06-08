@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import {
   User, Heart, Settings, MapPin, Briefcase,
   Ruler, Sparkles, GraduationCap, Users, Cigarette,
@@ -404,13 +405,91 @@ const inputCls =
   'placeholder-zinc-500 focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors w-full';
 
 function SettingsTab() {
-  const [email, setEmail] = useState('sakura@example.com');
+  const [email, setEmail] = useState('');
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [notifyLike, setNotifyLike] = useState(true);
-  const [notifyMessage, setNotifyMessage] = useState(true);
   const [notifyMatch, setNotifyMatch] = useState(false);
+
+  const [toast, setToast] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [pwError, setPwError] = useState('');
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(''), 2500);
+  };
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) setEmail(user.email);
+    });
+  }, []);
+
+  const handleEmailSave = async () => {
+    setEmailError('');
+    setEmailSaving(true);
+    try {
+      const res = await fetch('/api/auth/update-email', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEmailError(data.error ?? 'メールアドレスの更新に失敗しました');
+        return;
+      }
+      showToast('メールアドレスを更新しました');
+    } catch {
+      setEmailError('メールアドレスの更新に失敗しました');
+    } finally {
+      setEmailSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    setPwError('');
+
+    if (!currentPw || !newPw || !confirmPw) {
+      setPwError('すべての項目を入力してください');
+      return;
+    }
+    if (newPw.length < 8) {
+      setPwError('新しいパスワードは8文字以上で入力してください');
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setPwError('新しいパスワードと確認用パスワードが一致しません');
+      return;
+    }
+
+    setPwSaving(true);
+    try {
+      const res = await fetch('/api/auth/update-password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPwError(data.error ?? 'パスワードの変更に失敗しました');
+        return;
+      }
+      setCurrentPw('');
+      setNewPw('');
+      setConfirmPw('');
+      showToast('パスワードを変更しました');
+    } catch {
+      setPwError('パスワードの変更に失敗しました');
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -437,11 +516,14 @@ function SettingsTab() {
               />
               <button
                 type="button"
-                className="px-4 py-2.5 bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium rounded-xl transition-colors flex-shrink-0"
+                onClick={handleEmailSave}
+                disabled={emailSaving}
+                className="px-4 py-2.5 bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium rounded-xl transition-colors flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                保存
+                {emailSaving ? '保存中...' : '保存'}
               </button>
             </div>
+            {emailError && <p className="text-xs text-red-400 mt-2">{emailError}</p>}
           </div>
 
           {/* パスワード変更 */}
@@ -481,11 +563,14 @@ function SettingsTab() {
                   placeholder="もう一度入力"
                 />
               </div>
+              {pwError && <p className="text-xs text-red-400">{pwError}</p>}
               <button
                 type="button"
-                className="w-full mt-1 px-4 py-2.5 bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium rounded-xl transition-colors"
+                onClick={handlePasswordChange}
+                disabled={pwSaving}
+                className="w-full mt-1 px-4 py-2.5 bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                パスワードを変更する
+                {pwSaving ? '変更中...' : 'パスワードを変更する'}
               </button>
             </div>
           </div>
@@ -505,12 +590,6 @@ function SettingsTab() {
               description="いいねを受け取ったときに通知します"
             />
             <ToggleSwitch
-              checked={notifyMessage}
-              onChange={setNotifyMessage}
-              label="メッセージ通知"
-              description="新しいメッセージが届いたときに通知します"
-            />
-            <ToggleSwitch
               checked={notifyMatch}
               onChange={setNotifyMatch}
               label="マッチング通知"
@@ -519,7 +598,11 @@ function SettingsTab() {
           </div>
         </div>
 
-
+      {toast && (
+        <div className="fixed bottom-6 right-6 bg-zinc-800 border border-zinc-700 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl z-50">
+          ✓ {toast}
+        </div>
+      )}
       </div>
   );
 }
