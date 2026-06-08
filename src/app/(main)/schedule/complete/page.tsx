@@ -1,7 +1,76 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { CreditCard, CheckCircle2 } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+
+function PaymentSection() {
+  const [isPremium, setIsPremium] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((data) => setIsPremium(data.profile?.is_premium ?? false))
+      .catch(() => {})
+      .finally(() => setLoadingProfile(false))
+  }, [])
+
+  const handleCheckout = async () => {
+    setSubmitting(true)
+    setError('')
+    try {
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setError(data.error ?? 'お支払い処理を開始できませんでした')
+        setSubmitting(false)
+      }
+    } catch {
+      setError('お支払い処理を開始できませんでした')
+      setSubmitting(false)
+    }
+  }
+
+  if (loadingProfile) return null
+
+  return (
+    <div className="bg-teal-950/40 border border-teal-800/60 rounded-2xl p-4 mb-6 text-left">
+      <div className="flex items-start gap-3 mb-3">
+        <CreditCard className="w-5 h-5 text-teal-400 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-teal-300 font-medium text-sm mb-1">お支払いについて</p>
+          <p className="text-teal-400/80 text-xs leading-relaxed">
+            お見合い前日までにお支払いください。
+          </p>
+        </div>
+      </div>
+
+      {isPremium ? (
+        <div className="flex items-center gap-2 text-sm text-teal-300 bg-teal-900/40 border border-teal-800/60 rounded-xl px-3 py-2.5">
+          <CheckCircle2 className="w-4 h-4 text-teal-400" />
+          お支払い済み
+        </div>
+      ) : (
+        <>
+          <Button fullWidth onClick={handleCheckout} disabled={submitting} isLoading={submitting}>
+            お支払いに進む
+          </Button>
+          {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+        </>
+      )}
+    </div>
+  )
+}
 
 function ScheduleCompleteContent() {
   const searchParams = useSearchParams()
@@ -48,6 +117,8 @@ function ScheduleCompleteContent() {
           <div className="bg-blue-900/30 border border-blue-700 rounded-xl p-3 mb-6 text-sm text-blue-300">
             📧 確認メールをご登録のアドレスにお送りしました
           </div>
+
+          {!isRequest && <PaymentSection />}
 
           <p className="text-xs text-zinc-500 mb-4">
             キャンセル・変更をご希望の方は
