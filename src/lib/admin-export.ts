@@ -19,12 +19,6 @@ export const STATUS_LABELS: Record<string, string> = {
   withdrawn: '退会済み',
 };
 
-export const MATCH_STATUS_LABELS: Record<string, string> = {
-  active: '有効',
-  blocked: 'ブロック',
-  deleted: '削除済み',
-};
-
 export interface ExportProfileRow {
   id: string;
   last_name: string | null;
@@ -40,7 +34,7 @@ export interface ExportProfileRow {
 
 const CSV_HEADERS = [
   'ユーザーID', '姓', '名', 'メールアドレス', '電話番号', '生年月日', '性別',
-  'ステータス', '登録日時', '退会日時', '削除予定日時', 'マッチング履歴', 'メッセージ履歴',
+  'ステータス', '登録日時', '退会日時', '削除予定日時', 'いいね履歴', 'ブロック履歴',
 ];
 
 // ── 管理者権限チェック ──
@@ -125,78 +119,87 @@ export async function buildUsersCsv(admin: SupabaseClient, profiles: ExportProfi
 
   const emailMap = await fetchEmailMap(admin, userIds);
 
-  // マッチング履歴
+  // いいね履歴（送信・受信）
   const idList = userIds.join(',');
-  const { data: matches } = await admin
-    .from('matches')
-    .select('id, user1_id, user2_id, status, matched_at')
-    .or(`user1_id.in.(${idList}),user2_id.in.(${idList})`);
+  const { data: likes } = await admin
+    .from('likes')
+    .select('sender_id, receiver_id, created_at')
+    .or(`sender_id.in.(${idList}),receiver_id.in.(${idList})`);
 
-  const matchesByUser = new Map<string, { partnerId: string; matched_at: string; status: string }[]>();
+  const likesByUser = new Map<string, { partnerId: string; created_at: string; type: string }[]>();
   const partnerIds = new Set<string>();
-  for (const m of matches ?? []) {
-    for (const uid of [m.user1_id, m.user2_id]) {
-      if (!userIds.includes(uid)) continue;
-      const partnerId = uid === m.user1_id ? m.user2_id : m.user1_id;
-      partnerIds.add(partnerId);
-      const list = matchesByUser.get(uid) ?? [];
-      list.push({ partnerId, matched_at: m.matched_at, status: m.status });
-      matchesByUser.set(uid, list);
+  for (const l of likes ?? []) {
+    if (userIds.includes(l.sender_id)) {
+      partnerIds.add(l.receiver_id);
+      const list = likesByUser.get(l.sender_id) ?? [];
+      list.push({ partnerId: l.receiver_id, created_at: l.created_at, type: '送信' });
+      likesByUser.set(l.sender_id, list);
+    }
+    if (userIds.includes(l.receiver_id)) {
+      partnerIds.add(l.sender_id);
+      const list = likesByUser.get(l.receiver_id) ?? [];
+      list.push({ partnerId: l.sender_id, created_at: l.created_at, type: '受信' });
+      likesByUser.set(l.receiver_id, list);
     }
   }
 
-  // メッセージ履歴（送信したメッセージのみ）
-  const matchMap = new Map((matches ?? []).map((m) => [m.id, m]));
-  const { data: messages } = await admin
-    .from('messages')
-    .select('match_id, sender_id, content, created_at')
-    .in('sender_id', userIds)
-    .order('created_at', { ascending: true });
+  // ブロック履歴（した・された）
+  const { data: blocks } = await admin
+    .from('blocks')
+    .select('blocker_id, blocked_id, created_at')
+    .or(`blocker_id.in.(${idList}),blocked_id.in.(${idList})`);
 
-  const messagesByUser = new Map<string, { partnerId: string; content: string; created_at: string }[]>();
-  for (const msg of messages ?? []) {
-    const match = matchMap.get(msg.match_id);
-    if (!match) continue;
-    const partnerId = msg.sender_id === match.user1_id ? match.user2_id : match.user1_id;
-    partnerIds.add(partnerId);
-    const list = messagesByUser.get(msg.sender_id) ?? [];
-    list.push({ partnerId, content: msg.content, created_at: msg.created_at });
-    messagesByUser.set(msg.sender_id, list);
+  const blocksByUser = new Map<string, { partnerId: string; created_at: string; type: string }[]>();
+  for (const b of blocks ?? []) {
+    if (!b.blocker_id || !b.blocked_id) continue;
+    if (userIds.includes(b.blocker_id)) {
+      partnerIds.add(b.blocked_id);
+      const list = blocksByUser.get(b.blocker_id) ?? [];
+      list.push({ partnerId: b.blocked_id, created_at: b.created_at, type: 'ブロックした' });
+      blocksByUser.set(b.blocker_id, list);
+    }
+    if (userIds.includes(b.blocked_id)) {
+      partnerIds.add(b.blocker_id);
+      const list = blocksByUser.get(b.blocked_id) ?? [];
+      list.push({ partnerId: b.blocker_id, created_at: b.created_at, type: 'ブロックされた' });
+      blocksByUser.set(b.blocked_id, list);
+    }
   }
 
-  // 相手の氏名解決用プロフィール
+  // 相手のnickname解決用プロフィール
   const allProfileIds = new Set([...userIds, ...partnerIds]);
   const { data: nameProfiles } = await admin
     .from('profiles')
-    .select('id, last_name, first_name, nickname')
+    .select('id, nickname')
     .in('id', Array.from(allProfileIds));
-  const nameMap = new Map((nameProfiles ?? []).map((p) => [p.id, p]));
+  const nicknameMap = new Map((nameProfiles ?? []).map((p) => [p.id, p.nickname ?? '']));
 
   for (const p of profiles) {
     const isWithdrawn = p.status === 'withdrawn' && !!p.withdrawn_at;
+    const hasName = !!(p.last_name || p.first_name);
 
-    const matchHistory = (matchesByUser.get(p.id) ?? [])
-      .map((m) => `${fullName(nameMap.get(m.partnerId))}（${formatDateTime(m.matched_at)} / ${MATCH_STATUS_LABELS[m.status] ?? m.status}）`)
-      .join('\n');
+    const likeHistory = (likesByUser.get(p.id) ?? [])
+      .map((l) => `${nicknameMap.get(l.partnerId) ?? ''}（${formatDateTime(l.created_at)} / ${l.type}）`)
+      .join('\n') || 'なし';
 
-    const messageHistory = (messagesByUser.get(p.id) ?? [])
-      .map((m) => `[${formatDateTime(m.created_at)}] →${fullName(nameMap.get(m.partnerId))}: ${m.content}`)
-      .join('\n');
+    const blockHistory = (blocksByUser.get(p.id) ?? [])
+      .map((b) => `${nicknameMap.get(b.partnerId) ?? ''}（${formatDateTime(b.created_at)} / ${b.type}）`)
+      .join('\n') || 'なし';
 
     csv += toCsvRow([
       p.id,
-      p.last_name ?? '',
-      p.first_name ?? '',
+      hasName ? (p.last_name ?? '') : (p.nickname ?? ''),
+      hasName ? (p.first_name ?? '') : '',
       emailMap.get(p.id) ?? '',
-      p.phone ?? '',
+      p.phone ? `="${p.phone}"` : '未登録',
       formatDate(p.birth_date),
       GENDER_LABELS[p.gender ?? ''] ?? (p.gender ?? ''),
       STATUS_LABELS[p.status] ?? p.status,
       formatDateTime(p.created_at),
-      isWithdrawn ? formatDateTime(p.withdrawn_at) : '',
-      isWithdrawn ? formatInTimeZone(addMonths(new Date(p.withdrawn_at!), 3), TZ, 'yyyy-MM-dd HH:mm:ss') : '',
-      matchHistory,
-      messageHistory,
+      isWithdrawn ? formatDateTime(p.withdrawn_at) : '-',
+      isWithdrawn ? formatInTimeZone(addMonths(new Date(p.withdrawn_at!), 3), TZ, 'yyyy-MM-dd HH:mm:ss') : '-',
+      likeHistory,
+      blockHistory,
     ]);
   }
 
@@ -241,7 +244,7 @@ export async function searchExportProfiles(
   const name = params.name?.trim();
   if (name) {
     const term = escapeIlike(name);
-    query = query.or(`last_name.ilike.%${term}%,first_name.ilike.%${term}%`);
+    query = query.or(`last_name.ilike.%${term}%,first_name.ilike.%${term}%,nickname.ilike.%${term}%`);
   }
 
   if (params.dateFrom) {
