@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, ChevronRight } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Loader2 } from 'lucide-react';
 
 const REASONS = [
   { value: 'found_partner', label: '良いパートナーが見つかった' },
@@ -16,9 +16,25 @@ type ReasonValue = typeof REASONS[number]['value'];
 export default function WithdrawPage() {
   const router = useRouter();
   const [reason, setReason] = useState<ReasonValue | ''>('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleWithdraw = () => {
-    console.log('退会処理:', { reason });
+  const handleWithdraw = async () => {
+    if (!window.confirm('本当に退会しますか？この操作は取り消せません。')) return;
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/account/withdraw', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? '退会処理に失敗しました');
+      }
+      router.push('/');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '退会処理に失敗しました');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -87,19 +103,36 @@ export default function WithdrawPage() {
         </div>
       </div>
 
+      {/* エラー */}
+      {error && (
+        <div className="bg-red-950/30 border border-red-900/50 text-red-400 text-sm rounded-xl px-4 py-3 mb-4">
+          {error}
+        </div>
+      )}
+
       {/* ボタン */}
       <div className="flex flex-col gap-3">
         <button
           type="button"
           onClick={handleWithdraw}
-          className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all text-sm"
+          disabled={submitting}
+          className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all text-sm"
         >
-          退会する <ChevronRight className="w-4 h-4" />
+          {submitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> 処理中...
+            </>
+          ) : (
+            <>
+              退会する <ChevronRight className="w-4 h-4" />
+            </>
+          )}
         </button>
         <button
           type="button"
           onClick={() => router.push('/mypage')}
-          className="w-full py-3 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-2xl hover:bg-zinc-700 transition-all text-sm font-medium"
+          disabled={submitting}
+          className="w-full py-3 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-2xl hover:bg-zinc-700 disabled:opacity-50 transition-all text-sm font-medium"
         >
           キャンセル
         </button>

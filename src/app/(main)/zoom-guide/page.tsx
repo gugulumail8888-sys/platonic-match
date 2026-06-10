@@ -93,6 +93,110 @@ const ANDROID_STEPS = [
   },
 ];
 
+const WINDOWS_STEPS = [
+  {
+    step: 1,
+    title: 'Zoom公式サイトを開く',
+    desc: 'ブラウザで「zoom.us/download」にアクセスしてください。',
+    icon: '🌐',
+    tip: '検索エンジンで「Zoom ダウンロード」と検索してもアクセスできます',
+  },
+  {
+    step: 2,
+    title: '「ミーティング用Zoomクライアント」をダウンロード',
+    desc: 'ダウンロードページから「ミーティング用Zoomクライアント」をクリックしてダウンロードしてください。',
+    icon: '⬇️',
+    tip: 'ファイルは「ZoomInstaller.exe」という名前で保存されます',
+  },
+  {
+    step: 3,
+    title: 'インストーラーを実行してインストール',
+    desc: 'ダウンロードしたインストーラー（.exe）をダブルクリックし、画面の指示に従ってインストールしてください。',
+    icon: '💿',
+    tip: '「このアプリがデバイスに変更を加えることを許可しますか？」には「はい」を選んでください',
+  },
+  {
+    step: 4,
+    title: 'ZOOMを起動する',
+    desc: 'インストール完了後、ZOOMアプリを起動してください。アカウント登録は不要です。',
+    icon: '🚀',
+    tip: '「サインイン」ではなく「ミーティングに参加」を選んでください',
+  },
+  {
+    step: 5,
+    title: '「ミーティングに参加」を選択',
+    desc: '起動画面に表示される「ミーティングに参加」ボタンをクリックしてください。',
+    icon: '👥',
+    tip: 'サインインしなくてもこのまま参加できます',
+  },
+  {
+    step: 6,
+    title: 'カメラ・マイクの許可',
+    desc: 'ZOOMを初めて起動すると、カメラとマイクの使用許可を求められます。必ず「許可」を選んでください。',
+    icon: '🎙️',
+    tip: '許可しないとお相手に声や映像が届きません',
+  },
+  {
+    step: 7,
+    title: 'URLまたはミーティングIDを入力して参加',
+    desc: 'amistaから送られたZOOMのURL、またはミーティングIDとパスコードを入力してミーティングに参加してください。',
+    icon: '⌨️',
+    tip: 'URLをクリックした場合は自動的にZOOMアプリが起動します',
+  },
+];
+
+const MAC_STEPS = [
+  {
+    step: 1,
+    title: 'Zoom公式サイトを開く',
+    desc: 'ブラウザで「zoom.us/download」にアクセスしてください。',
+    icon: '🌐',
+    tip: '検索エンジンで「Zoom ダウンロード」と検索してもアクセスできます',
+  },
+  {
+    step: 2,
+    title: '「ミーティング用Zoomクライアント」をダウンロード',
+    desc: 'ダウンロードページから「ミーティング用Zoomクライアント」をクリックしてダウンロードしてください。',
+    icon: '⬇️',
+    tip: 'ファイルは「.pkg」形式で保存されます',
+  },
+  {
+    step: 3,
+    title: '.pkgファイルを開いてインストール',
+    desc: 'ダウンロードした.pkgファイルをダブルクリックし、画面の指示に従ってインストールしてください。',
+    icon: '💿',
+    tip: 'インストール時にMacのパスワード入力を求められる場合があります',
+  },
+  {
+    step: 4,
+    title: 'ZOOMを起動する',
+    desc: 'インストール完了後、ZOOMアプリを起動してください。アカウント登録は不要です。',
+    icon: '🚀',
+    tip: '「サインイン」ではなく「ミーティングに参加」を選んでください',
+  },
+  {
+    step: 5,
+    title: '「ミーティングに参加」を選択',
+    desc: '起動画面に表示される「ミーティングに参加」ボタンをクリックしてください。',
+    icon: '👥',
+    tip: 'サインインしなくてもこのまま参加できます',
+  },
+  {
+    step: 6,
+    title: 'カメラ・マイクの許可',
+    desc: 'ZOOMを初めて起動すると、カメラとマイクの使用許可を求められます。必ず「許可」を選んでください。',
+    icon: '🎙️',
+    tip: '「システム環境設定」→「セキュリティとプライバシー」からも許可が必要な場合があります',
+  },
+  {
+    step: 7,
+    title: 'URLまたはミーティングIDを入力して参加',
+    desc: 'amistaから送られたZOOMのURL、またはミーティングIDとパスコードを入力してミーティングに参加してください。',
+    icon: '⌨️',
+    tip: 'URLをクリックした場合は自動的にZOOMアプリが起動します',
+  },
+];
+
 const CHECKLIST = [
   { icon: Wifi, text: 'Wi-Fiまたは4G/5G回線が安定している', color: 'text-blue-400' },
   { icon: Camera, text: 'カメラが正常に動作している', color: 'text-teal-400' },
@@ -102,9 +206,18 @@ const CHECKLIST = [
   { icon: AlertCircle, text: '静かで明るい場所にいる', color: 'text-orange-400' },
 ];
 
+type TabKey = 'iphone' | 'android' | 'windows' | 'mac';
+
+const TABS: { key: TabKey; buttonLabel: string; headingLabel: string; steps: typeof IPHONE_STEPS }[] = [
+  { key: 'iphone', buttonLabel: '🍎 iPhone（iOS）', headingLabel: '🍎 iPhone', steps: IPHONE_STEPS },
+  { key: 'android', buttonLabel: '🤖 Android', headingLabel: '🤖 Android', steps: ANDROID_STEPS },
+  { key: 'windows', buttonLabel: '🪟 Windows', headingLabel: '🪟 Windows', steps: WINDOWS_STEPS },
+  { key: 'mac', buttonLabel: '💻 Mac', headingLabel: '💻 Mac', steps: MAC_STEPS },
+];
+
 export default function ZoomGuidePage() {
-  const [tab, setTab] = useState<'iphone' | 'android'>('iphone');
-  const steps = tab === 'iphone' ? IPHONE_STEPS : ANDROID_STEPS;
+  const [tab, setTab] = useState<TabKey>('iphone');
+  const activeTab = TABS.find((t) => t.key === tab)!;
 
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">
@@ -115,41 +228,34 @@ export default function ZoomGuidePage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">ZOOMお見合い 準備ガイド</h1>
-          <p className="text-xs text-zinc-400">スマートフォンでのZOOM参加手順</p>
+          <p className="text-xs text-zinc-400">スマートフォン・パソコンでのZOOM参加手順</p>
         </div>
       </div>
 
       {/* タブ切り替え */}
-      <div className="flex gap-2 mb-8 bg-zinc-900 border border-zinc-800 rounded-2xl p-1">
-        <button
-          onClick={() => setTab('iphone')}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            tab === 'iphone'
-              ? 'bg-zinc-700 text-white'
-              : 'text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          🍎 iPhone（iOS）
-        </button>
-        <button
-          onClick={() => setTab('android')}
-          className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            tab === 'android'
-              ? 'bg-zinc-700 text-white'
-              : 'text-zinc-500 hover:text-zinc-300'
-          }`}
-        >
-          🤖 Android
-        </button>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-8 bg-zinc-900 border border-zinc-800 rounded-2xl p-1">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
+              tab === t.key
+                ? 'bg-zinc-700 text-white'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            {t.buttonLabel}
+          </button>
+        ))}
       </div>
 
       {/* ステップ */}
       <div className="mb-8">
         <h2 className="text-lg font-bold text-white mb-4">
-          {tab === 'iphone' ? '🍎 iPhone' : '🤖 Android'} セットアップ手順
+          {activeTab.headingLabel} セットアップ手順
         </h2>
         <div className="space-y-4">
-          {steps.map((s) => (
+          {activeTab.steps.map((s) => (
             <div key={s.step} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex gap-4">
               {/* ステップ番号 */}
               <div className="flex-shrink-0">
