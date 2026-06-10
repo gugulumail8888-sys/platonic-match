@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, ChevronRight, Loader2 } from 'lucide-react';
+import { AlertTriangle, Clock, Ban, ChevronRight, Loader2 } from 'lucide-react';
 
 const REASONS = [
   { value: 'found_partner', label: '良いパートナーが見つかった' },
@@ -13,11 +13,93 @@ const REASONS = [
 
 type ReasonValue = typeof REASONS[number]['value'];
 
+type WithdrawCheck = {
+  optionDaysRemaining: number | null;
+  hasSentPending: boolean;
+  receivedPendingCount: number;
+};
+
+type Step = 'loading' | 'option-warning' | 'sent-blocked' | 'received-blocked' | 'form';
+
+// ============================================================
+// 退会前チェック画面（オプション警告 / お見合いブロック）
+// ============================================================
+
+function PreCheckCard({
+  tone, icon: Icon, message, children,
+}: {
+  tone: 'warning' | 'block';
+  icon: React.ElementType;
+  message: string;
+  children: React.ReactNode;
+}) {
+  const colors = tone === 'warning'
+    ? {
+        iconBg: 'bg-orange-950 border-orange-800',
+        iconColor: 'text-orange-400',
+        boxBg: 'bg-orange-950/20 border-orange-900/50',
+        text: 'text-orange-300',
+      }
+    : {
+        iconBg: 'bg-red-950 border-red-800',
+        iconColor: 'text-red-400',
+        boxBg: 'bg-red-950/20 border-red-900/50',
+        text: 'text-red-300',
+      };
+
+  return (
+    <div className="p-6 md:p-8 max-w-md mx-auto py-12">
+      <div className="flex items-center gap-3 mb-6">
+        <div className={`w-10 h-10 border rounded-xl flex items-center justify-center flex-shrink-0 ${colors.iconBg}`}>
+          <Icon className={`w-5 h-5 ${colors.iconColor}`} />
+        </div>
+        <h1 className="text-xl font-bold text-white">退会のお手続き</h1>
+      </div>
+
+      <div className={`border rounded-2xl p-4 mb-6 ${colors.boxBg}`}>
+        <p className={`text-sm font-medium leading-relaxed ${colors.text}`}>{message}</p>
+      </div>
+
+      <div className="flex flex-col gap-3">{children}</div>
+    </div>
+  );
+}
+
 export default function WithdrawPage() {
   const router = useRouter();
+  const [step, setStep] = useState<Step>('loading');
+  const [check, setCheck] = useState<WithdrawCheck | null>(null);
   const [reason, setReason] = useState<ReasonValue | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/account/withdraw-check')
+      .then((res) => res.json())
+      .then((data: WithdrawCheck) => {
+        setCheck(data);
+        if (data.optionDaysRemaining !== null) {
+          setStep('option-warning');
+        } else if (data.hasSentPending) {
+          setStep('sent-blocked');
+        } else if (data.receivedPendingCount > 0) {
+          setStep('received-blocked');
+        } else {
+          setStep('form');
+        }
+      })
+      .catch(() => setStep('form'));
+  }, []);
+
+  const proceedAfterOptionWarning = () => {
+    if (check?.hasSentPending) {
+      setStep('sent-blocked');
+    } else if ((check?.receivedPendingCount ?? 0) > 0) {
+      setStep('received-blocked');
+    } else {
+      setStep('form');
+    }
+  };
 
   const handleWithdraw = async () => {
     if (!window.confirm('本当に退会しますか？この操作は取り消せません。')) return;
@@ -37,6 +119,80 @@ export default function WithdrawPage() {
     }
   };
 
+  // ── 読み込み中 ──
+  if (step === 'loading') {
+    return (
+      <div className="p-6 md:p-8 max-w-md mx-auto py-12 flex items-center justify-center text-zinc-400 text-sm gap-2">
+        <Loader2 className="w-4 h-4 animate-spin" /> 確認中...
+      </div>
+    );
+  }
+
+  // ── ① オプション契約中チェック ──
+  if (step === 'option-warning') {
+    return (
+      <PreCheckCard
+        tone="warning"
+        icon={Clock}
+        message={`オプションプランの有効期限があと${check?.optionDaysRemaining}日あります。期限終了後の退会をお勧めします。`}
+      >
+        <button
+          type="button"
+          onClick={proceedAfterOptionWarning}
+          className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all text-sm"
+        >
+          このまま退会する <ChevronRight className="w-4 h-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push('/mypage')}
+          className="w-full py-3 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-2xl hover:bg-zinc-700 transition-all text-sm font-medium"
+        >
+          戻る
+        </button>
+      </PreCheckCard>
+    );
+  }
+
+  // ── ② お見合い申請中チェック（自分が申請している） ──
+  if (step === 'sent-blocked') {
+    return (
+      <PreCheckCard
+        tone="block"
+        icon={Ban}
+        message="現在お見合いの申請中です。お見合い終了後に退会手続きをしてください。"
+      >
+        <button
+          type="button"
+          onClick={() => router.push('/mypage')}
+          className="w-full py-3 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-2xl hover:bg-zinc-700 transition-all text-sm font-medium"
+        >
+          戻る
+        </button>
+      </PreCheckCard>
+    );
+  }
+
+  // ── ③ お見合い申請受信チェック（相手から来ている） ──
+  if (step === 'received-blocked') {
+    return (
+      <PreCheckCard
+        tone="block"
+        icon={Ban}
+        message={`${check?.receivedPendingCount}件のお見合い申請が届いています。申請を確認してから退会手続きをしてください。`}
+      >
+        <button
+          type="button"
+          onClick={() => router.push('/mypage')}
+          className="w-full py-3 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded-2xl hover:bg-zinc-700 transition-all text-sm font-medium"
+        >
+          戻る
+        </button>
+      </PreCheckCard>
+    );
+  }
+
+  // ── 退会理由フォーム ──
   return (
     <div className="p-6 md:p-8 max-w-md mx-auto py-12">
       {/* ヘッダー */}
@@ -58,10 +214,6 @@ export default function WithdrawPage() {
           <li className="flex items-center gap-1.5">
             <span className="w-1 h-1 rounded-full bg-red-500 flex-shrink-0" />
             いいね・マッチング履歴
-          </li>
-          <li className="flex items-center gap-1.5">
-            <span className="w-1 h-1 rounded-full bg-red-500 flex-shrink-0" />
-            メッセージ履歴
           </li>
         </ul>
         <p className="text-red-400/70 text-xs mt-2">この操作は取り消せません。</p>

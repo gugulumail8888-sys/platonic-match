@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
           stripe_subscription_id: subscriptionId ?? null,
           subscription_status: 'active',
           subscription_plan: plan,
+          subscription_started_at: new Date().toISOString(),
           is_premium: true,
         })
         .eq('user_id', userId);
