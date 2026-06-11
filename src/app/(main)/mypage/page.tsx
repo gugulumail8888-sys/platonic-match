@@ -662,8 +662,8 @@ type TabId = 'profile' | 'likes-sent' | 'likes-received' | 'blocked' | 'settings
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile',        label: 'マイプロフィール', icon: User },
-  { id: 'likes-sent',     label: '送信済',            icon: Heart },
-  { id: 'likes-received', label: '受信済',            icon: HeartHandshake },
+  { id: 'likes-sent',     label: 'いいね送信',            icon: Heart },
+  { id: 'likes-received', label: 'いいね受信',            icon: HeartHandshake },
   { id: 'blocked',        label: 'ブロック',          icon: ShieldOff },
   { id: 'settings',       label: '設定',              icon: Settings },
 ];

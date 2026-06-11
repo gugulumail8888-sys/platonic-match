@@ -412,6 +412,9 @@ export default function HomePage() {
               <Link href="/help" className="hover:text-white transition-colors">
                 ヘルプ
               </Link>
+              <Link href="/cancel-policy" className="hover:text-white transition-colors">
+                キャンセルポリシー
+              </Link>
             </nav>
           </div>
 

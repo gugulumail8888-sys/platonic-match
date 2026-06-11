@@ -5,16 +5,16 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { CreditCard, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
-function PaymentSection() {
-  const [isPremium, setIsPremium] = useState(false)
+function PaymentSection({ matchingId }: { matchingId: string }) {
+  const [isPaid, setIsPaid] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetch('/api/profile')
+    fetch(`/api/stripe/omiai-payment-status?matchingId=${matchingId}`)
       .then((r) => r.json())
-      .then((data) => setIsPremium(data.profile?.is_premium ?? false))
+      .then((data) => setIsPaid(data.isPaid ?? false))
       .catch(() => {})
       .finally(() => setLoadingProfile(false))
   }, [])
@@ -23,10 +23,10 @@ function PaymentSection() {
     setSubmitting(true)
     setError('')
     try {
-      const res = await fetch('/api/stripe/create-checkout-session', {
+      const res = await fetch('/api/stripe/create-omiai-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ matchingId }),
       })
       const data = await res.json()
       if (data.url) {
@@ -55,7 +55,7 @@ function PaymentSection() {
         </div>
       </div>
 
-      {isPremium ? (
+      {isPaid ? (
         <div className="flex items-center gap-2 text-sm text-teal-300 bg-teal-900/40 border border-teal-800/60 rounded-xl px-3 py-2.5">
           <CheckCircle2 className="w-4 h-4 text-teal-400" />
           お支払い済み
@@ -118,7 +118,7 @@ function ScheduleCompleteContent() {
             📧 確認メールをご登録のアドレスにお送りしました
           </div>
 
-          {!isRequest && <PaymentSection />}
+          {!isRequest && <PaymentSection matchingId={applicationId} />}
 
           <p className="text-xs text-zinc-500 mb-4">
             キャンセル・変更をご希望の方は

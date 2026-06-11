@@ -51,6 +51,21 @@ export async function POST(req: NextRequest) {
         })
         .eq('user_id', userId);
     }
+
+    const matchingId = session.metadata?.matchingId;
+    const type = session.metadata?.type;
+
+    if (type === 'omiai_fee' && matchingId && userId) {
+      const paymentIntentId = typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id;
+
+      const supabase = createAdminClient();
+      await supabase
+        .from('matchings')
+        .update({ payment_intent_id: paymentIntentId })
+        .eq('id', matchingId);
+    }
   }
 
   return NextResponse.json({ received: true });
