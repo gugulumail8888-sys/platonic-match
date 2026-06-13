@@ -264,6 +264,7 @@ interface LikeMember {
   nickname: string;
   birth_date: string | null;
   prefecture: string | null;
+  isMutual?: boolean;
 }
 
 const AVATAR_COLORS = ['#0d9488','#2563eb','#7c3aed','#b45309','#be123c','#0f766e','#c2410c','#4f46e5'];
@@ -306,6 +307,11 @@ function LikeMemberCard({ member }: { member: LikeMember }) {
             <MapPin className="w-3 h-3 text-teal-600" />
             {member.prefecture}
           </p>
+        )}
+        {member.isMutual && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-pink-900/50 text-pink-300 border border-pink-800 mt-1">
+            💑 相互いいね
+          </span>
         )}
       </div>
 
