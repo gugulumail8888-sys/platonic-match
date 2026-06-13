@@ -395,7 +395,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
           <InfoRow icon={GitMerge} label="血液型" value={member.blood_type} />
           <InfoRow icon={GraduationCap} label="学歴" value={member.education} />
           <InfoRow icon={Users} label="兄弟姉妹" value={member.siblings} />
-          <InfoRow icon={Cigarette} label="喫煙" value={member.smoking} />
+          <InfoRow icon={Cigarette} label="喫煙" value={member.smoking === 'true' ? '喫煙あり' : member.smoking === 'false' ? '喫煙なし' : member.smoking} />
           <InfoRow icon={Wallet} label="年収" value={member.income} />
           <InfoRow icon={Home} label="住まい" value={member.living_arrangement} />
         </SectionCard>

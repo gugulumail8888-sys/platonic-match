@@ -190,7 +190,7 @@ export default function AdminMemberDetailPage({
             <InfoRow label="職業"       value={member.occupation} />
             <InfoRow label="収入（年収）" value={member.income} />
             <InfoRow label="居住形態"   value={member.livingArrangement} />
-            <InfoRow label="喫煙"       value={member.smoking} />
+            <InfoRow label="喫煙"       value={member.smoking === 'true' ? '喫煙あり' : member.smoking === 'false' ? '喫煙なし' : member.smoking} />
             <InfoRow label="結婚希望時期" value={member.marriageTiming} />
             <InfoRow label="子供希望"   value={member.childrenDesire} />
             <InfoRow label="セクシュアリティ" value={member.sexuality} />
