@@ -35,7 +35,7 @@ export const APP_STATUS_CONFIG: Record<AppStatus, { label: string; className: st
   pending:        { label: '申請中',     className: 'bg-amber-900/50 text-amber-300 border border-amber-800' },
   scheduling:     { label: '日程調整中', className: 'bg-blue-900/50  text-blue-300  border border-blue-800'  },
   completed:      { label: '完了',       className: 'bg-green-900/50 text-green-300 border border-green-800' },
-  zoom_completed: { label: 'ZOOM完了',   className: 'bg-blue-900    text-blue-300'                           },
+  zoom_completed: { label: 'Google Meet完了',   className: 'bg-blue-900    text-blue-300'                           },
 };
 
 const NEXT_STATUS: Partial<Record<AppStatus, AppStatus>> = {
@@ -46,7 +46,7 @@ const NEXT_STATUS: Partial<Record<AppStatus, AppStatus>> = {
 
 const NEXT_LABEL: Partial<Record<AppStatus, string>> = {
   pending:        '日程調整中に進める →',
-  scheduling:     'ZOOM完了にする →',
+  scheduling:     'Google Meet完了にする →',
   zoom_completed: '完了にする →',
 };
 
@@ -56,7 +56,7 @@ const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all',            label: 'すべて' },
   { value: 'pending',        label: '申請中' },
   { value: 'scheduling',     label: '日程調整中' },
-  { value: 'zoom_completed', label: 'ZOOM完了' },
+  { value: 'zoom_completed', label: 'Google Meet完了' },
   { value: 'completed',      label: '完了' },
 ];
 

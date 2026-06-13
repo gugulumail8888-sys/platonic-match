@@ -26,7 +26,7 @@ interface ScheduleItem {
 const STATUS_CONFIG: Record<ScheduleStatus, { label: string; className: string; icon: React.ElementType }> = {
   scheduling: { label: '日程調整中', className: 'bg-blue-900/50 text-blue-300 border border-blue-800',   icon: Clock },
   confirmed:  { label: '確定済み',   className: 'bg-green-900/50 text-green-300 border border-green-800', icon: CheckCircle2 },
-  zoom_sent:  { label: 'ZOOM送信済', className: 'bg-teal-900/50 text-teal-300 border border-teal-800',   icon: Video },
+  zoom_sent:  { label: 'Google Meet送信済', className: 'bg-teal-900/50 text-teal-300 border border-teal-800',   icon: Video },
 };
 
 // ============================================================
@@ -68,7 +68,7 @@ const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
   { value: 'all',        label: 'すべて' },
   { value: 'scheduling', label: '日程調整中' },
   { value: 'confirmed',  label: '確定済み' },
-  { value: 'zoom_sent',  label: 'ZOOM送信済' },
+  { value: 'zoom_sent',  label: 'Google Meet送信済' },
 ];
 
 export default function AdminSchedulePage() {
@@ -229,7 +229,7 @@ export default function AdminSchedulePage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500 flex items-center gap-1.5">
-                    <Video className="w-3 h-3" />ZOOMリンク
+                    <Video className="w-3 h-3" />Google Meetリンク
                   </span>
                   <span className={item.status === 'zoom_sent' ? 'text-green-400' : 'text-zinc-500'}>
                     {item.status === 'zoom_sent' ? '送信済' : '未送信'}
@@ -239,7 +239,7 @@ export default function AdminSchedulePage() {
 
               {/* ボタンエリア */}
               <div className="space-y-2">
-                {/* ZOOMリンク送信ボタン */}
+                {/* Google Meetリンク送信ボタン */}
                 <button
                   onClick={() => router.push(`/admin/schedule/${item.id}`)}
                   disabled={item.status === 'scheduling'}
@@ -251,7 +251,7 @@ export default function AdminSchedulePage() {
                       : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
                   }`}
                 >
-                  {item.status === 'zoom_sent' ? '詳細を見る' : item.status !== 'scheduling' ? 'ZOOMリンクを送る' : '日程未確定'}
+                  {item.status === 'zoom_sent' ? '詳細を見る' : item.status !== 'scheduling' ? 'Google Meetリンクを送る' : '日程未確定'}
                 </button>
 
                 {/* 返金ボタン */}

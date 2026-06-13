@@ -110,7 +110,7 @@ export default function TermsPage() {
           <BulletList items={[
             'メンバー検索・プロフィール閲覧',
             'お見合い申請（¥3,000 / 件）',
-            'ZOOMによるお見合い',
+            'Google Meetによるお見合い',
             'AIおすすめプラン（月額・別途料金）',
           ]} />
         </ArticleSection>
@@ -132,7 +132,7 @@ export default function TermsPage() {
           <BulletList items={[
             '申請料は ¥3,000（税込）',
             '申請後のキャンセル・返金不可',
-            '相手が承認した場合のみ ZOOM 日程調整へ進む',
+            '相手が承認した場合のみ Google Meet 日程調整へ進む',
           ]} />
         </ArticleSection>
 
@@ -162,7 +162,7 @@ export default function TermsPage() {
             </p>
             <BulletList items={[
               '会員同士のトラブルについて当社は責任を負いません',
-              'ZOOMお見合い後の連絡先交換は自己責任',
+              'Google Meetお見合い後の連絡先交換は自己責任',
             ]} />
           </div>
         </ArticleSection>

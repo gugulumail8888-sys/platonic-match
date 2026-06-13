@@ -41,7 +41,7 @@ function ScheduleRequestContent() {
         {/* ヘッダー */}
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">📅</div>
-          <h1 className="text-2xl font-bold text-white">ZOOMお見合いの日程調整</h1>
+          <h1 className="text-2xl font-bold text-white">Google Meetお見合いの日程調整</h1>
           <p className="text-zinc-400 mt-2">
             <span className="font-semibold text-pink-400">{partnerName}</span>さんとのお見合い日程を提案しましょう
           </p>
@@ -57,7 +57,7 @@ function ScheduleRequestContent() {
               <ol className="list-decimal list-inside space-y-1 text-blue-400">
                 <li>希望日時を最大3つ入力してください</li>
                 <li>お相手が都合の良い日時を選びます</li>
-                <li>確定後、ZOOMリンクをお送りします</li>
+                <li>確定後、Google Meetリンクをお送りします</li>
               </ol>
             </div>
           </div>
@@ -139,7 +139,7 @@ function ScheduleRequestContent() {
             onClick={() => router.push('/zoom-guide')}
             className="text-blue-400 hover:underline"
           >
-            📱 ZOOMお見合い準備ガイドを見る
+            📱 Google Meetお見合い準備ガイドを見る
           </button>
         </p>
       </div>

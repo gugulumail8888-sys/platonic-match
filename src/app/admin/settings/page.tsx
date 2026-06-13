@@ -272,7 +272,7 @@ export default function AdminSettingsPage() {
 
         {/* 5. マッチング設定 */}
         <SettingsSection icon={Heart} title="マッチング設定" onSave={handleSave}>
-          <FieldRow label="ZOOM面談有効期限" unit="日">
+          <FieldRow label="Google Meet面談有効期限" unit="日">
             <input
               type="number"
               value={zoomExpiryDays}

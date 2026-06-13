@@ -96,14 +96,14 @@ function ScheduleSelectContent() {
           {submitted ? '確定中...' : 'この日程で確定する 🎉'}
         </button>
         <p className="text-center text-xs text-zinc-500 mt-3">
-          確定後、ZOOMリンクをお送りします
+          確定後、Google Meetリンクをお送りします
         </p>
         <p className="text-center text-xs text-zinc-600 mt-2">
           <button
             onClick={() => router.push('/zoom-guide')}
             className="text-blue-400 hover:underline"
           >
-            📱 ZOOMお見合い準備ガイドを見る
+            📱 Google Meetお見合い準備ガイドを見る
           </button>
         </p>
       </div>

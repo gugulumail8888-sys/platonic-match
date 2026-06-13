@@ -92,7 +92,7 @@ function ScheduleCompleteContent() {
           <p className="text-zinc-400 mb-6">
             {isRequest
               ? 'お相手が日程を選んだら通知が届きます。しばらくお待ちください。'
-              : 'ZOOMリンクを事務局からお送りします。当日よろしくお願いします！'}
+              : 'Google Meetリンクを事務局からお送りします。当日よろしくお願いします！'}
           </p>
 
           <div className="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-4 mb-6 text-left">
@@ -101,15 +101,15 @@ function ScheduleCompleteContent() {
               <div className="space-y-2 text-sm text-zinc-300">
                 <div className="flex items-center gap-2"><span className="text-green-400">✅</span>日程候補を送信</div>
                 <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">お相手が日程を選ぶ</span></div>
-                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">ZOOMリンクが届く</span></div>
-                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">ZOOMでお見合い</span></div>
+                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">Google Meetリンクが届く</span></div>
+                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">Google Meetでお見合い</span></div>
               </div>
             ) : (
               <div className="space-y-2 text-sm text-zinc-300">
                 <div className="flex items-center gap-2"><span className="text-green-400">✅</span>日程候補を受け取る</div>
                 <div className="flex items-center gap-2"><span className="text-green-400">✅</span>日程を確定</div>
-                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">ZOOMリンクが届く</span></div>
-                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">ZOOMでお見合い</span></div>
+                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">Google Meetリンクが届く</span></div>
+                <div className="flex items-center gap-2"><span className="text-zinc-600">⏳</span><span className="text-zinc-500">Google Meetでお見合い</span></div>
               </div>
             )}
           </div>

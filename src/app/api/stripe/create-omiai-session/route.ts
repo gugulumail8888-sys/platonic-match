@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
             currency: 'jpy',
             unit_amount: OMIAI_FEE,
             product_data: {
-              name: 'ZOOMお見合い料',
-              description: 'amistaのZOOMお見合いに参加するための料金です',
+              name: 'Google Meetお見合い料',
+              description: 'amistaのGoogle Meetお見合いに参加するための料金です',
             },
           },
           quantity: 1,

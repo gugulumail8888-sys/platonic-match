@@ -18,7 +18,7 @@ const RULES = [
 export default function ZoomCheckClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const zoomUrl = searchParams.get('url') ?? 'https://zoom.us';
+  const meetUrl = searchParams.get('url') ?? 'https://meet.google.com';
   const partnerName = searchParams.get('name') ?? 'お相手';
 
   const [checked, setChecked] = useState<number[]>([]);
@@ -33,7 +33,7 @@ export default function ZoomCheckClient() {
   const allChecked = checked.length === RULES.length;
 
   const handleJoin = () => {
-    window.open(zoomUrl, '_blank');
+    window.open(meetUrl, '_blank');
     router.push('/matching');
   };
 
@@ -45,7 +45,7 @@ export default function ZoomCheckClient() {
           <Video className="w-5 h-5 text-blue-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">ZOOMお見合い参加前の確認</h1>
+          <h1 className="text-xl font-bold text-white">Google Meetお見合い参加前の確認</h1>
           <p className="text-xs text-zinc-400">{partnerName}さんとのお見合い</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function ZoomCheckClient() {
         <div>
           <p className="text-amber-300 font-medium text-sm mb-1">参加前に必ずご確認ください</p>
           <p className="text-amber-400/80 text-xs leading-relaxed">
-            amistaでは会員の安全を守るため、ZOOM中の直接連絡先交換を禁止しています。
+            amistaでは会員の安全を守るため、Google Meet中の直接連絡先交換を禁止しています。
             以下の注意事項をすべて確認し、同意した上でご参加ください。
           </p>
         </div>
@@ -143,7 +143,7 @@ export default function ZoomCheckClient() {
           }`}
         >
           <Video className="w-5 h-5" />
-          同意してZOOMに参加する
+          同意してGoogle Meetに参加する
         </button>
         <button
           onClick={() => router.back()}

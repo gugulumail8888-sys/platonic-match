@@ -228,13 +228,13 @@ export const ADMIN_APPLICATIONS: AdminApplication[] = [
     id: 'APP-523', applicant: _m(1), target: _m(7),
     appliedAt: '2026-05-20', status: 'scheduling', amount: 3000,
     aiScore: 78, aiComment: '趣味の傾向が近く、穏やかな関係が築けそうです。距離感が少し離れている点は要確認。',
-    adminNote: '2026-05-28にZOOM予定',
+    adminNote: '2026-05-28にGoogle Meet予定',
   },
   {
     id: 'APP-291', applicant: _m(1), target: _m(8),
     appliedAt: '2026-05-13', status: 'completed',  amount: 3000,
     aiScore: 71, aiComment: '子供希望が一致。生活スタイルの違いはあるが誠実さが共通点として光ります。',
-    adminNote: '2026-05-20にZOOM実施済み。良好',
+    adminNote: '2026-05-20にGoogle Meet実施済み。良好',
   },
   {
     id: 'APP-612', applicant: _m(2), target: _m(6),
@@ -264,7 +264,7 @@ export const ADMIN_APPLICATIONS: AdminApplication[] = [
     id: 'APP-741', applicant: _m(4), target: _m(8),
     appliedAt: '2026-05-21', status: 'scheduling', amount: 3000,
     aiScore: 80, aiComment: '結婚への本気度が共通。居住地の違いが最大の課題ですが子供希望は一致しています。',
-    adminNote: '5/30にZOOM予定',
+    adminNote: '5/30にGoogle Meet予定',
   },
   {
     id: 'APP-856', applicant: _m(5), target: _m(9),

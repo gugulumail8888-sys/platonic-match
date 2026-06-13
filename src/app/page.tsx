@@ -74,7 +74,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-sm text-zinc-500 mt-6">
-            登録無料・本人確認審査あり・ZOOMでお見合い
+            登録無料・本人確認審査あり・Google Meetでお見合い
           </p>
         </div>
       </section>
@@ -118,7 +118,7 @@ export default function HomePage() {
           <div className="grid grid-cols-3 gap-8 text-center">
             {[
               { icon: '🤝', label: '事務局が仲介', sub: '安心のサポート体制' },
-              { icon: '💻', label: 'ZOOMお見合い', sub: '自宅から気軽に参加' },
+              { icon: '💻', label: 'Google Meetお見合い', sub: '自宅から気軽に参加' },
               { icon: '🔒', label: '連絡先は事務局経由', sub: '個人情報を守ります' },
             ].map((stat) => (
               <div key={stat.label}>
@@ -146,7 +146,7 @@ export default function HomePage() {
               {
                 icon: Shield,
                 title: "安心・安全な環境",
-                desc: "本人確認必須・審査制で誠実な方だけが参加。ZOOMお見合いで顔を確認するため、外見より内面・価値観を重視した出会いを実現。",
+                desc: "本人確認必須・審査制で誠実な方だけが参加。Google Meetお見合いで顔を確認するため、外見より内面・価値観を重視した出会いを実現。",
                 color: "text-blue-400",
                 bg: "bg-blue-950",
                 border: "border-blue-900",
@@ -161,8 +161,8 @@ export default function HomePage() {
               },
               {
                 icon: MessageCircle,
-                title: "ZOOMでじっくり対話",
-                desc: "テキストではなくZOOMで顔を見ながら対話。友人として話すような感覚で、お互いの人柄をじっくり確かめることができます。",
+                title: "Google Meetでじっくり対話",
+                desc: "テキストではなくGoogle Meetで顔を見ながら対話。友人として話すような感覚で、お互いの人柄をじっくり確かめることができます。",
                 color: "text-amber-400",
                 bg: "bg-amber-950",
                 border: "border-amber-900",

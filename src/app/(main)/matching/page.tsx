@@ -51,7 +51,7 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: strin
     className: 'bg-green-900/50 text-green-300 border border-green-800',
   },
   zoom_completed: {
-    label: 'ZOOM完了',
+    label: 'Google Meet完了',
     className: 'bg-blue-900 text-blue-300',
   },
 };
@@ -146,7 +146,7 @@ function MatchingCard({ matching }: { matching: Matching }) {
 
       {/* ボタンエリア */}
       <div className="mt-4 flex flex-col gap-2">
-        {/* 交際希望ボタン（ZOOM完了時のみ） */}
+        {/* 交際希望ボタン（Google Meet完了時のみ） */}
         {status === 'zoom_completed' && (
           <button
             onClick={handleDatingWish}

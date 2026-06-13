@@ -28,9 +28,9 @@ const POLICIES = [
     color: 'text-amber-400',
     bg: 'bg-amber-950/30 border-amber-900/50',
     title: '遅刻について',
-    timing: '15分以上の遅刻でZOOM強制終了',
+    timing: '15分以上の遅刻でGoogle Meet強制終了',
     penalty: '遅刻した側に違約金・待った側は全額返金',
-    detail: '15分以上の遅刻が発生した場合、ZOOMお見合いは強制終了となります。【片方が遅刻の場合】遅刻した側のみ違約金が発生し、待っていた側には全額返金いたします。【両者が遅刻の場合】両者ともに違約金が発生し、返金はありません。',
+    detail: '15分以上の遅刻が発生した場合、Google Meetお見合いは強制終了となります。【片方が遅刻の場合】遅刻した側のみ違約金が発生し、待っていた側には全額返金いたします。【両者が遅刻の場合】両者ともに違約金が発生し、返金はありません。',
   },
   {
     icon: RefreshCw,
@@ -48,7 +48,7 @@ const POLICIES = [
     title: '急病・不可抗力について',
     timing: '天災・大規模停電・広域通信障害・急病など',
     penalty: '状況により全額返金または管理者判断で対応',
-    detail: '【天災・大規模停電・広域通信障害】ZOOMへの接続が不可能な事象が発生した場合は全額返金いたします。【急病の場合】診断書をご提出いただいた場合、管理者判断で返金対応いたします。診断書がない場合はキャンセル扱いとなります。いずれの場合も必ずお問い合わせページからご連絡ください。',
+    detail: '【天災・大規模停電・広域通信障害】Google Meetへの接続が不可能な事象が発生した場合は全額返金いたします。【急病の場合】診断書をご提出いただいた場合、管理者判断で返金対応いたします。診断書がない場合はキャンセル扱いとなります。いずれの場合も必ずお問い合わせページからご連絡ください。',
   },
 ];
 
@@ -65,7 +65,7 @@ export default function CancelPolicyPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-white">キャンセルポリシー</h1>
-          <p className="text-xs text-zinc-400">ZOOMお見合いのキャンセル・返金に関するルール</p>
+          <p className="text-xs text-zinc-400">Google Meetお見合いのキャンセル・返金に関するルール</p>
         </div>
       </div>
 
@@ -136,7 +136,7 @@ export default function CancelPolicyPage() {
             { timing: '前々日', content: '入金リマインドメール送信', color: 'bg-amber-500' },
             { timing: '前日17時', content: '未入金の場合、お見合いを自動キャンセル・相手側へ通知', color: 'bg-red-500' },
             { timing: '前日', content: '入金確認済みの方へ準備完了確認リマインダー送信', color: 'bg-blue-500' },
-            { timing: '当日2時間前', content: 'ZOOMお見合いリマインダー・注意事項の再確認', color: 'bg-purple-500' },
+            { timing: '当日2時間前', content: 'Google Meetお見合いリマインダー・注意事項の再確認', color: 'bg-purple-500' },
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-3">
               <div className={`w-2 h-2 rounded-full ${item.color} flex-shrink-0 mt-1.5`} />

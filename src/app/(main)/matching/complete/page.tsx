@@ -127,7 +127,7 @@ function CompleteContent() {
         <div className="space-y-3">
           {[
             { step: '1', text: '運営スタッフより3営業日以内にメールにてご連絡いたします。' },
-            { step: '2', text: 'ZOOMのURLをお送りしますので、ご確認ください。' },
+            { step: '2', text: 'Google MeetのURLをお送りしますので、ご確認ください。' },
             { step: '3', text: 'お互いの都合に合わせてお見合い日程を調整します。' },
           ].map(({ step, text }) => (
             <div key={step} className="flex gap-3 text-sm">
