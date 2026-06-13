@@ -1,27 +1,40 @@
 import Link from 'next/link';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { ChevronLeft } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 
-export default function PublicLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-            トップページへ
-          </Link>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">a</span>
-            </div>
-            <span className="text-white font-bold text-lg">amista</span>
-          </Link>
+          {user ? (
+            <Link href="/dashboard" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+              ダッシュボードに戻る
+            </Link>
+          ) : (
+            <Link href="/" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
+              <ChevronLeft className="w-4 h-4" />
+              トップページへ
+            </Link>
+          )}
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">a</span>
+              </div>
+              <span className="text-white font-bold text-lg">amista</span>
+            </Link>
+          </div>
         </div>
       </header>
       <main className="max-w-2xl mx-auto px-4 py-8">

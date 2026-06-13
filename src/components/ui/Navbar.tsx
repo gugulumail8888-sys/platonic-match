@@ -54,8 +54,11 @@ export function Navbar() {
 
   const hasAiOption = auth?.hasAiOption === true;
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     document.cookie = "auth=; path=/; max-age=0";
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await supabase.auth.signOut();
     router.push("/login");
     router.refresh();
   };
