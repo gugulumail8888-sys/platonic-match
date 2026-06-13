@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
 
 // ============================================================
-// 管理者通知 API（ダミー実装）
-// TODO: 本番環境では SendGrid や Resend を使いメールを送信する
-//       例: await resend.emails.send({ from: 'noreply@amista.jp', to: 'admin@amista.jp', ... })
+// 管理者通知 API
+// Resend を使い、新しいお見合い申請を管理者にメール通知する
 // ============================================================
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,30 +33,41 @@ export async function POST(req: NextRequest) {
       applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment,
     } = body;
 
-    // ── ダミー実装: コンソール出力のみ ──
-    // TODO: 本番環境では以下をメール送信に置き換える
-    console.log(
-      '\n========== [管理者通知メール] ==========\n' +
-      `件名: 【amista】新しいお見合い申請が届きました（${applicationId}）\n` +
-      '\n--- 申請詳細 ---\n' +
-      `申請番号  : ${applicationId}\n` +
-      `申請日時  : ${new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n` +
-      `料金      : ¥${amount.toLocaleString()}（税込）\n` +
-      '\n--- 申請者情報 ---\n' +
-      `ニックネーム: ${applicant.nickname}\n` +
-      `年齢        : ${applicant.age}歳\n` +
-      `居住地      : ${applicant.prefecture}\n` +
-      `職業        : ${applicant.occupation}\n` +
-      '\n--- お相手情報 ---\n' +
-      `ニックネーム: ${member.nickname}\n` +
-      `年齢        : ${member.age}歳\n` +
-      `居住地      : ${member.prefecture}\n` +
-      `職業        : ${member.occupation}\n` +
-      (aiCompatibilityComment
-        ? `\n--- AI相性コメント ---\n${aiCompatibilityComment}\n`
-        : '') +
-      '========================================\n'
-    );
+    const subject = `【amista】新しいお見合い申請が届きました（${applicationId}）`;
+
+    const { error } = await resend.emails.send({
+      from: 'amista <onboarding@resend.dev>',
+      to: process.env.ADMIN_EMAIL ?? 'admin@amista.jp',
+      subject,
+      html: `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head><body><div style="font-family: sans-serif; font-size: 14px; line-height: 1.8;">
+        <h2 style="color: #0d9488;">【amista】新しいお見合い申請が届きました</h2>
+        <h3>申請詳細</h3>
+        <p>申請番号：${applicationId}<br>
+        申請日時：${new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}<br>
+        料金：¥${amount.toLocaleString()}（税込）</p>
+        <h3>申請者情報</h3>
+        <p>ニックネーム：${applicant.nickname}<br>
+        年齢：${applicant.age}歳<br>
+        居住地：${applicant.prefecture}<br>
+        職業：${applicant.occupation}</p>
+        <h3>お相手情報</h3>
+        <p>ニックネーム：${member.nickname}<br>
+        年齢：${member.age}歳<br>
+        居住地：${member.prefecture}<br>
+        職業：${member.occupation}</p>
+        ${aiCompatibilityComment ? `<h3>AI相性コメント</h3><p>${aiCompatibilityComment}</p>` : ''}
+        <hr>
+        <p style="color: #888; font-size: 12px;">このメールはamistaシステムから自動送信されています。</p>
+      </div></body></html>`,
+    });
+
+    if (error) {
+      console.error('Admin notify mail error:', error);
+      return NextResponse.json(
+        { error: '管理者通知メールの送信に失敗しました' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
