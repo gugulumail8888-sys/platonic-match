@@ -86,7 +86,7 @@ export default function CancelPolicyPage() {
         <div>
           <p className="text-teal-300 font-medium text-sm mb-1">違約金はキャンセルした側のみ</p>
           <p className="text-teal-200/70 text-xs leading-relaxed">
-            違約金はキャンセルした本人にのみ発生します。相手側には費用は一切かかりません。
+            違約金はキャンセルした本人にのみ発生します。相手側には費用は一切かかりません。キャンセル料は申請料と同額（無料プラン¥3,500・AIおすすめプラン¥3,000）となります。なお、キャンセルが多い場合には退会をお願いする場合があります。
           </p>
         </div>
       </div>
