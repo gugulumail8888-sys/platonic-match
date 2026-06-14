@@ -203,10 +203,40 @@ const TABS: { key: TabKey; buttonLabel: string; headingLabel: string; steps: typ
 
 export default function ZoomGuidePage() {
   const [tab, setTab] = useState<TabKey>('iphone');
-  const activeTab = TABS.find((t) => t.key === tab)!;
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto space-y-6">
+      {/* 印刷用CSS */}
+      <style jsx global>{`
+        @media print {
+          aside, nav.fixed {
+            display: none !important;
+          }
+          main {
+            margin-left: 0 !important;
+            padding-bottom: 0 !important;
+          }
+          body {
+            background: #fff !important;
+            color: #000 !important;
+          }
+          [class*="bg-"] {
+            background-color: #fff !important;
+            background-image: none !important;
+          }
+          [class*="text-"] {
+            color: #000 !important;
+          }
+          [class*="border-"] {
+            border-color: #ccc !important;
+          }
+        }
+      `}</style>
+
       {/* ヘッダー */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-900 border border-blue-800 rounded-xl flex items-center justify-center">
@@ -230,7 +260,7 @@ export default function ZoomGuidePage() {
       </div>
 
       {/* タブ切り替え */}
-      <div className="grid grid-cols-4 gap-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-1">
+      <div className="grid grid-cols-4 gap-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-1 print:hidden">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -246,31 +276,35 @@ export default function ZoomGuidePage() {
         ))}
       </div>
 
-      {/* ステップ */}
+      {/* ステップ（印刷時は全デバイスの内容を表示） */}
       <div>
-        <h2 className="text-lg font-bold text-white mb-4">{activeTab.headingLabel}</h2>
-        <div className="space-y-3">
-          {activeTab.steps.map((s) => (
-            <div key={s.step} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex gap-4">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-teal-950 border border-teal-800 rounded-full flex items-center justify-center">
-                  <span className="text-teal-400 font-bold text-sm">{s.step}</span>
+        {TABS.map((t) => (
+          <div key={t.key} className={tab === t.key ? 'block' : 'hidden print:block'}>
+            <h2 className="text-lg font-bold text-white mb-4 print:mt-8">{t.headingLabel}</h2>
+            <div className="space-y-3">
+              {t.steps.map((s) => (
+                <div key={s.step} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-teal-950 border border-teal-800 rounded-full flex items-center justify-center">
+                      <span className="text-teal-400 font-bold text-sm">{s.step}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-base flex-shrink-0">{s.icon}</span>
+                      <h3 className="text-white font-bold text-xs sm:text-sm leading-snug">{s.title}</h3>
+                    </div>
+                    <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-2">{s.desc}</p>
+                    <div className="flex items-start gap-1.5 bg-teal-950/30 border border-teal-900/50 rounded-xl p-2">
+                      <span className="text-teal-400 text-xs flex-shrink-0">💡</span>
+                      <p className="text-teal-300/80 text-[11px] sm:text-xs leading-relaxed">{s.tip}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base flex-shrink-0">{s.icon}</span>
-                  <h3 className="text-white font-bold text-xs sm:text-sm leading-snug">{s.title}</h3>
-                </div>
-                <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-2">{s.desc}</p>
-                <div className="flex items-start gap-1.5 bg-teal-950/30 border border-teal-900/50 rounded-xl p-2">
-                  <span className="text-teal-400 text-xs flex-shrink-0">💡</span>
-                  <p className="text-teal-300/80 text-[11px] sm:text-xs leading-relaxed">{s.tip}</p>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
       {/* 参加前チェックリスト */}
@@ -308,8 +342,8 @@ export default function ZoomGuidePage() {
 
       {/* PDFダウンロード */}
       <button
-        onClick={() => alert('準備中です。しばらくお待ちください。')}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-zinc-700 text-zinc-500 hover:text-zinc-200 transition-all text-sm"
+        onClick={handlePrint}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-zinc-700 text-zinc-500 hover:text-zinc-200 transition-all text-sm print:hidden"
       >
         <Download className="w-4 h-4" />
         この手順書をPDFでダウンロード
