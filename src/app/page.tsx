@@ -247,6 +247,7 @@ export default function HomePage() {
                   <span className="text-4xl font-bold text-white">¥980</span>
                   <span className="text-zinc-400 text-sm mb-1">〜 / 月</span>
                 </div>
+                <p className="text-zinc-500 text-xs mt-0.5">税込 ¥1,078〜 / 月</p>
                 <p className="text-zinc-600 text-xs mt-1">※ 料金は変更予定</p>
               </div>
 
