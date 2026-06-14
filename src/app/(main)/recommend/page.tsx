@@ -4,10 +4,17 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Bot, Sparkles, MapPin, Briefcase, ChevronRight, Loader2, AlertCircle, TriangleAlert, Lock,
+  Bot, Sparkles, MapPin, Briefcase, ChevronRight, Loader2, AlertCircle, TriangleAlert, Lock, Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
+const MUST_CONDITION_OPTIONS = [
+  '子供ほしい', '子供ほしくない', '喫煙者NG', '飲酒者NG',
+  '同居希望', '別居希望', 'すぐに結婚したい', '外部パートナーあり', '外部パートナーなし',
+];
+const PRIORITY_POINT_OPTIONS = [
+  '価値観', '生活習慣', '居住地の近さ', '年齢', '収入', '趣味', '外見',
+];
 
 interface RecommendResult {
   id: string;
@@ -26,6 +33,22 @@ function getAuthFromCookie() {
   const match = document.cookie.match(/(?:^|;\s*)auth=([^;]*)/);
   if (!match) return null;
   try { return JSON.parse(decodeURIComponent(match[1])); } catch { return null; }
+}
+
+function CheckboxOption({ label, checked, onChange }: { label: string; checked: boolean; onChange: () => void }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer group">
+      <div
+        onClick={onChange}
+        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 ${
+          checked ? 'border-teal-500 bg-teal-500' : 'border-zinc-600 group-hover:border-teal-700'
+        }`}
+      >
+        {checked && <Check className="w-3 h-3 text-white" />}
+      </div>
+      <span className="text-zinc-300 text-sm select-none" onClick={onChange}>{label}</span>
+    </label>
+  );
 }
 
 function ScoreBar({ score }: { score: number }) {
@@ -114,21 +137,45 @@ function ResultCard({ member, rank }: { member: RecommendResult; rank: number })
 export default function RecommendPage() {
   const router = useRouter();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'preferences' | 'loading' | 'done' | 'error'>('idle');
   const [results, setResults] = useState<RecommendResult[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
   const [isDemo, setIsDemo] = useState(false);
+
+  const [ageMin, setAgeMin] = useState('');
+  const [ageMax, setAgeMax] = useState('');
+  const [prefecturePref, setPrefecturePref] = useState<'near' | 'anywhere' | ''>('');
+  const [mustConditions, setMustConditions] = useState<string[]>([]);
+  const [priorityPoints, setPriorityPoints] = useState<string[]>([]);
+  const [freeMessage, setFreeMessage] = useState('');
+
+  const toggleValue = (arr: string[], value: string, setter: (v: string[]) => void) => {
+    setter(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
+  };
 
   useEffect(() => {
     const auth = getAuthFromCookie();
     setHasAccess(auth?.hasAiOption === true);
   }, []);
 
-  const handleAnalyze = async () => {
+  const handleSubmitPreferences = async () => {
     setStatus('loading');
     setErrorMsg('');
     setIsDemo(false);
     try {
+      await fetch('/api/ai/preferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preferred_age_min: ageMin ? Number(ageMin) : null,
+          preferred_age_max: ageMax ? Number(ageMax) : null,
+          preferred_prefecture: prefecturePref || null,
+          must_conditions: mustConditions,
+          priority_points: priorityPoints,
+          free_message: freeMessage || null,
+        }),
+      });
+
       const res = await fetch('/api/ai/recommend', { method: 'POST' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as { candidates: RecommendResult[]; isDemo?: boolean };
@@ -175,7 +222,106 @@ export default function RecommendPage() {
           </div>
           <p className="text-zinc-300 font-medium mb-2">AIがあなたにぴったりのメンバーを分析します</p>
           <p className="text-zinc-600 text-xs mb-7">※ 分析には少し時間がかかる場合があります（約30〜60秒）</p>
-          <Button onClick={handleAnalyze}><Bot className="w-5 h-5" />分析を開始する</Button>
+          <Button onClick={() => setStatus('preferences')}><Bot className="w-5 h-5" />分析を開始する</Button>
+        </div>
+      )}
+      {status === 'preferences' && (
+        <div className="flex flex-col gap-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-8 h-8 text-teal-400" />
+            </div>
+            <p className="text-zinc-300 font-medium mb-1">分析の前に、あなたの希望を教えてください</p>
+            <p className="text-zinc-600 text-xs">回答はAIによるお相手提案に活用されます</p>
+          </div>
+
+          {/* 希望年齢範囲 */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <p className="text-white font-medium text-sm mb-3">希望年齢範囲</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                value={ageMin}
+                onChange={(e) => setAgeMin(e.target.value)}
+                placeholder="下限"
+                className="w-24 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-teal-700 transition-colors"
+              />
+              <span className="text-zinc-500 text-sm">〜</span>
+              <input
+                type="number"
+                value={ageMax}
+                onChange={(e) => setAgeMax(e.target.value)}
+                placeholder="上限"
+                className="w-24 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-teal-700 transition-colors"
+              />
+              <span className="text-zinc-500 text-sm">歳</span>
+            </div>
+          </div>
+
+          {/* 居住地の希望 */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <p className="text-white font-medium text-sm mb-3">居住地の希望</p>
+            <div className="flex gap-5 flex-wrap">
+              {[{ value: 'near', label: '近い人がいい' }, { value: 'anywhere', label: 'どこでもOK' }].map((o) => (
+                <label key={o.value} className="flex items-center gap-2 cursor-pointer text-sm text-zinc-300">
+                  <input
+                    type="radio"
+                    name="prefecturePref"
+                    value={o.value}
+                    checked={prefecturePref === o.value}
+                    onChange={() => setPrefecturePref(o.value as 'near' | 'anywhere')}
+                    className="w-4 h-4 accent-teal-500"
+                  />
+                  {o.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 絶対に譲れない条件 */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <p className="text-white font-medium text-sm mb-3">絶対に譲れない条件</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-3">
+              {MUST_CONDITION_OPTIONS.map((o) => (
+                <CheckboxOption
+                  key={o}
+                  label={o}
+                  checked={mustConditions.includes(o)}
+                  onChange={() => toggleValue(mustConditions, o, setMustConditions)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 重視するポイント */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <p className="text-white font-medium text-sm mb-3">重視するポイント</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-3">
+              {PRIORITY_POINT_OPTIONS.map((o) => (
+                <CheckboxOption
+                  key={o}
+                  label={o}
+                  checked={priorityPoints.includes(o)}
+                  onChange={() => toggleValue(priorityPoints, o, setPriorityPoints)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 一言メッセージ */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <p className="text-white font-medium text-sm mb-1">一言メッセージ</p>
+            <p className="text-zinc-500 text-xs mb-3">パートナーへの希望や、その他伝えたいことがあれば記入してください（任意）</p>
+            <textarea
+              value={freeMessage}
+              onChange={(e) => setFreeMessage(e.target.value)}
+              rows={4}
+              placeholder="例：休日は一緒にゆっくり過ごせる方が理想です..."
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-teal-700 transition-colors"
+            />
+          </div>
+
+          <Button onClick={handleSubmitPreferences}><Bot className="w-5 h-5" />分析を開始する</Button>
         </div>
       )}
       {status === 'loading' && (
@@ -191,7 +337,7 @@ export default function RecommendPage() {
             <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
           <p className="text-red-400 font-medium mb-2">{errorMsg}</p>
-          <Button onClick={handleAnalyze} className="mt-2">再試行する</Button>
+          <Button onClick={handleSubmitPreferences} className="mt-2">再試行する</Button>
         </div>
       )}
       {status === 'done' && results.length > 0 && (

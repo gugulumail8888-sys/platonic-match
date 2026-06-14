@@ -101,10 +101,37 @@ export async function POST() {
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-    const prompt = `以下のユーザーと候補者リストの相性を分析してください。
-ユーザー: ${JSON.stringify(myProfile)}
-候補者: ${JSON.stringify(candidates)}
-各候補者に対して0-100のスコアと理由を日本語で返してください。
+    // 聞き取りフォームの回答取得
+    const { data: aiPreferences } = await supabase
+      .from('ai_preferences')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const prompt = `あなたは婚活マッチングサービスのAIアドバイザーです。以下の情報をもとに、ユーザーと各候補者の相性を100点満点で採点してください。
+
+【ユーザーのプロフィール】
+${JSON.stringify(myProfile)}
+
+【ユーザーの聞き取り結果（AIおすすめの希望条件）】
+${JSON.stringify(aiPreferences)}
+
+【候補者リスト】
+${JSON.stringify(candidates)}
+
+【採点基準（合計100点）】
+1. 結婚希望時期の一致：25点
+2. 子供の希望の一致：20点
+3. 外部パートナーの一致：15点
+4. 結婚後の居住形態の一致：15点
+5. 家計の管理の一致：10点
+6. 喫煙・飲酒の相性：5点
+7. 趣味・PR・希望条件のテキスト相性分析：10点
+
+聞き取り結果の希望年齢範囲・居住地の希望・絶対に譲れない条件・重視するポイント・一言メッセージも考慮し、
+絶対に譲れない条件に反する候補者は大きく減点してください。
+
+各候補者に対してスコア（0-100の整数）と、マッチング理由を日本語50文字程度で返してください。
 JSON形式で返答: { "results": [{ "id": "...", "score": 数値, "reason": "..." }] }`;
 
     const message = await anthropic.messages.create({
