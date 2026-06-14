@@ -31,12 +31,25 @@ const FINANCE_MANAGEMENT_OPTIONS = ['完全折半', '相談次第', 'その他']
 const FERTILITY_METHOD_OPTIONS = [
   '自然妊娠', '人工授精（AIH）', '体外受精（IVF）', '特別養子縁組', '里親', '未定', 'その他',
 ];
+const ALCOHOL_OPTIONS = [
+  { value: 'never', label: '飲まない' },
+  { value: 'sometimes', label: 'たまに' },
+  { value: 'often', label: 'よく飲む' },
+  { value: 'every_day', label: '毎日' },
+];
 
 // ============================================================
 // バリデーションスキーマ（登録フォームと同じ項目）
 // ============================================================
 
 const profileSchema = z.object({
+  last_name: z.string().min(1, "姓を入力してください"),
+  first_name: z.string().min(1, "名を入力してください"),
+  furigana_last: z.string().min(1, "フリガナ（姓）を入力してください"),
+  furigana_first: z.string().min(1, "フリガナ（名）を入力してください"),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  alcohol: z.string().optional(),
   nickname: z.string().min(2, "2文字以上で入力してください").max(20, "20文字以内で入力してください"),
   birth_date: z.string().min(1, "生年月日を選択してください"),
   gender: z.enum(["male", "female", "other"]),
@@ -75,6 +88,13 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 // プロフィール編集が対象とするDBの行（登録フォームが書き込む列に合わせる）
 export interface ProfileEditData {
   id: string;
+  last_name: string | null;
+  first_name: string | null;
+  furigana_last: string | null;
+  furigana_first: string | null;
+  phone: string | null;
+  address: string | null;
+  alcohol: string | null;
   nickname: string | null;
   birth_date: string | null;
   gender: string | null;
@@ -261,6 +281,13 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
+      last_name: initialData?.last_name ?? "",
+      first_name: initialData?.first_name ?? "",
+      furigana_last: initialData?.furigana_last ?? "",
+      furigana_first: initialData?.furigana_first ?? "",
+      phone: initialData?.phone ?? "",
+      address: initialData?.address ?? "",
+      alcohol: initialData?.alcohol ?? "",
       nickname: initialData?.nickname ?? "",
       birth_date: initialData?.birth_date ?? "",
       gender: (initialData?.gender as ProfileFormData["gender"]) ?? "male",
@@ -314,6 +341,13 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
     setServerError(null);
 
     const profileData = {
+      last_name: data.last_name || null,
+      first_name: data.first_name || null,
+      furigana_last: data.furigana_last || null,
+      furigana_first: data.furigana_first || null,
+      phone: data.phone || null,
+      address: data.address || null,
+      alcohol: data.alcohol || null,
       nickname: data.nickname,
       birth_date: data.birth_date,
       gender: data.gender,
@@ -401,6 +435,15 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           基本情報
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <Input label="姓" placeholder="例：山田" error={errors.last_name?.message} required {...register("last_name")} />
+          <Input label="名" placeholder="例：太郎" error={errors.first_name?.message} required {...register("first_name")} />
+          <Input label="フリガナ（姓）" placeholder="例：ヤマダ" error={errors.furigana_last?.message} required {...register("furigana_last")} />
+          <Input label="フリガナ（名）" placeholder="例：タロウ" error={errors.furigana_first?.message} required {...register("furigana_first")} />
+          <Input label="電話番号" type="tel" placeholder="例：09012345678" error={errors.phone?.message} {...register("phone")} />
+          <Select label="飲酒" options={ALCOHOL_OPTIONS} placeholder="選択してください" error={errors.alcohol?.message} {...register("alcohol")} />
+          <div className="md:col-span-2">
+            <Input label="住所" placeholder="例：東京都渋谷区..." error={errors.address?.message} {...register("address")} />
+          </div>
           <Input label="ニックネーム" placeholder="例：さくら" error={errors.nickname?.message} required {...register("nickname")} />
           <Input label="生年月日" type="date" error={errors.birth_date?.message} required {...register("birth_date")} />
           <Select label="性別" options={genderOptions} error={errors.gender?.message} required {...register("gender")} />
