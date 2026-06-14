@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertTriangle, CheckCircle, Send } from 'lucide-react';
 
 const REASONS = [
-  '急病・体調不良',
+  '相手が時間になっても現れなかった',
+  '相手から連絡なしにキャンセルされた',
+  '急病・体調不良（自分）',
   '家族の緊急事態',
   '仕事の緊急対応',
   '交通機関のトラブル',
@@ -15,15 +17,54 @@ const REASONS = [
 
 export default function CancelReportPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const applicationId = searchParams.get('applicationId');
+
   const [step, setStep] = useState<'form' | 'done'>('form');
   const [selectedReason, setSelectedReason] = useState('');
   const [detail, setDetail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    if (!selectedReason) return;
-    // TODO: Supabase連携後に実際に送信・管理者通知
-    setStep('done');
+  const handleSubmit = async () => {
+    if (!selectedReason || !applicationId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/matching/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          applicationId,
+          cancelReason: selectedReason,
+          cancelDetail: detail,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'キャンセル処理に失敗しました');
+
+      setStep('done');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'キャンセル処理に失敗しました');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (!applicationId) {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center py-20">
+        <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-4" />
+        <p className="text-zinc-300 text-sm mb-6">申請情報が見つかりません。マッチング一覧から再度お試しください。</p>
+        <button
+          onClick={() => router.push('/matching')}
+          className="px-8 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-medium transition-all"
+        >
+          マッチング一覧に戻る
+        </button>
+      </div>
+    );
+  }
 
   if (step === 'done') {
     return (
@@ -57,8 +98,8 @@ export default function CancelReportPage() {
           <AlertTriangle className="w-5 h-5 text-red-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">キャンセル理由の報告</h1>
-          <p className="text-xs text-zinc-400">お見合いをキャンセルされた方はこちらからご報告ください</p>
+          <h1 className="text-xl font-bold text-white">ドタキャン・キャンセルの報告</h1>
+          <p className="text-xs text-zinc-400">相手が現れなかった場合や、キャンセルされた場合はこちらからご報告ください</p>
         </div>
       </div>
 
@@ -68,15 +109,15 @@ export default function CancelReportPage() {
         <div>
           <p className="text-amber-300 font-medium text-sm mb-1">ご確認ください</p>
           <p className="text-amber-400/80 text-xs leading-relaxed">
-            キャンセル理由によっては違約金が発生します。<br />
-            やむを得ない事情がある場合は詳細をご記載ください。運営が状況を確認した上で対応いたします。
+            相手側のドタキャン・無断欠席の場合、お支払い済みの金額を返金いたします。<br />
+            運営が状況を確認した上で対応いたします。
           </p>
         </div>
       </div>
 
       {/* 理由選択 */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-5">
-        <p className="text-white font-medium text-sm mb-3">キャンセル理由を選んでください <span className="text-red-400">*</span></p>
+        <p className="text-white font-medium text-sm mb-3">報告理由を選んでください <span className="text-red-400">*</span></p>
         <div className="space-y-2">
           {REASONS.map((reason) => (
             <button
@@ -106,24 +147,32 @@ export default function CancelReportPage() {
         <textarea
           value={detail}
           onChange={(e) => setDetail(e.target.value)}
-          placeholder="例：急に高熱が出て病院に行く必要がありました..."
+          placeholder="例：時間になっても相手が現れず、15分待ちましたが来られませんでした..."
           rows={4}
           className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-teal-700 transition-colors"
         />
       </div>
 
+      {/* エラー表示 */}
+      {error && (
+        <div className="flex items-start gap-3 bg-red-950/50 border border-red-800 rounded-2xl p-4 mb-5">
+          <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <p className="text-red-300 text-sm">{error}</p>
+        </div>
+      )}
+
       {/* 送信ボタン */}
       <button
         onClick={handleSubmit}
-        disabled={!selectedReason}
+        disabled={!selectedReason || loading}
         className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-medium transition-all ${
-          selectedReason
+          selectedReason && !loading
             ? 'bg-red-700 hover:bg-red-600 text-white'
             : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
         }`}
       >
         <Send className="w-4 h-4" />
-        報告を送信する
+        {loading ? '送信中...' : '報告を送信する'}
       </button>
 
       <p className="text-center text-xs text-zinc-600 mt-4">

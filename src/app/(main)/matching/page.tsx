@@ -7,7 +7,7 @@ import { MapPin, Calendar, ClipboardList, Users, HeartHandshake } from 'lucide-r
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
 
-type ApplicationStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed';
+type ApplicationStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled';
 
 interface PartnerProfile {
   id: string;
@@ -53,6 +53,10 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: strin
   zoom_completed: {
     label: 'Google Meet完了',
     className: 'bg-blue-900 text-blue-300',
+  },
+  cancelled: {
+    label: 'キャンセル済み',
+    className: 'bg-zinc-800 text-zinc-400 border border-zinc-700',
   },
 };
 
@@ -183,7 +187,7 @@ function MatchingCard({ matching }: { matching: Matching }) {
         {/* キャンセル・変更ボタン */}
         {(status === 'pending' || status === 'scheduling' || status === 'completed') && (
           <button
-            onClick={() => router.push('/cancel-policy')}
+            onClick={() => router.push(`/cancel-report?applicationId=${matching.id}`)}
             className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-900 text-red-500 text-xs hover:bg-red-950/50 hover:border-red-800 transition-colors w-full"
           >
             キャンセル・変更を申請する
