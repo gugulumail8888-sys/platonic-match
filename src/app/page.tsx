@@ -212,7 +212,7 @@ export default function HomePage() {
                 {[
                   '会員登録・プロフィール作成',
                   'メンバー検索・閲覧',
-                  'お見合い申請（1件 ¥3,000）',
+                  'お見合い申請（1件 ¥3,500（税込））',
                   'マイページ管理',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-zinc-300">
@@ -255,7 +255,7 @@ export default function HomePage() {
                 {[
                   '会員登録・プロフィール作成',
                   'メンバー検索・閲覧',
-                  'お見合い申請（1件 ¥3,000）',
+                  'お見合い申請（1件 ¥3,000（税込））',
                   'マイページ管理',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
@@ -299,7 +299,7 @@ export default function HomePage() {
 
           {/* 注意書き */}
           <p className="text-center text-xs text-zinc-500 mt-6">
-            ※ お見合い申請料（¥3,000 / 件）は両プラン共通です
+            ※ 無料プランのお見合い申請料：¥3,500（税込）／AIおすすめプランのお見合い申請料：¥3,000（税込）
           </p>
         </div>
       </section>

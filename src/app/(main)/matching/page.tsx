@@ -138,7 +138,7 @@ function MatchingCard({ matching }: { matching: Matching }) {
         <div>
           <p className="text-zinc-500 mb-0.5">料金</p>
           <p className="text-zinc-200 font-medium">
-            3,000円
+            無料プラン ¥3,500・AIおすすめプラン ¥3,000
             <span className="text-zinc-500 font-normal">（税込）</span>
           </p>
         </div>

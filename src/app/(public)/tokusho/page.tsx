@@ -176,7 +176,7 @@ export default function TokushoPage() {
                 label: 'お見合い申請料',
                 value: (
                   <span className="text-teal-300 font-semibold">
-                    ¥3,000（税込）/ 件
+                    無料プラン ¥3,500（税込）・AIおすすめプラン ¥3,000（税込） / 件
                   </span>
                 ),
               },

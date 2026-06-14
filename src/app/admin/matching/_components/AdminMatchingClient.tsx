@@ -191,7 +191,7 @@ function DetailModal({
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-500">料金</span>
-              <span className="text-zinc-200">¥3,000（税込）</span>
+              <span className="text-zinc-200">無料プラン ¥3,500・AIおすすめプラン ¥3,000（税込）</span>
             </div>
           </div>
 

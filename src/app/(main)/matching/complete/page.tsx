@@ -83,7 +83,7 @@ function CompleteContent() {
               <Receipt className="w-3.5 h-3.5" />
               料金
             </span>
-            <span className="text-white font-medium">3,000円（税込）</span>
+            <span className="text-white font-medium">無料プラン ¥3,500（税込）・AIおすすめプラン ¥3,000（税込）</span>
           </div>
         </div>
       </div>

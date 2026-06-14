@@ -125,7 +125,7 @@ function ConfirmApplyModal({ member, onClose, onConfirm, aiLoading, aiScore, aiR
           <span className="flex items-center gap-1.5 text-sm text-zinc-400">
             <Receipt className="w-4 h-4" />料金
           </span>
-          <span className="text-white font-bold text-lg">1回 3,000円<span className="text-sm font-normal text-zinc-400 ml-1">（税別）</span></span>
+          <span className="text-white font-bold text-lg">1回 {hasAiOption ? '3,000' : '3,500'}円<span className="text-sm font-normal text-zinc-400 ml-1">（税込）</span></span>
         </div>
         {hasAiOption && <div className="bg-zinc-800 rounded-xl p-4 mb-5">
           <div className="flex items-center gap-1.5 mb-3">

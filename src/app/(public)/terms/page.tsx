@@ -109,7 +109,7 @@ export default function TermsPage() {
         <ArticleSection number={3} title="サービス内容">
           <BulletList items={[
             'メンバー検索・プロフィール閲覧',
-            'お見合い申請（¥3,000 / 件）',
+            'お見合い申請（無料プラン¥3,500（税込）・AIおすすめプラン¥3,000（税込））',
             'Google Meetによるお見合い',
             'AIおすすめプラン（月額・別途料金）',
           ]} />
@@ -130,7 +130,7 @@ export default function TermsPage() {
         {/* 第5条 */}
         <ArticleSection number={5} title="お見合い申請料">
           <BulletList items={[
-            '申請料は ¥3,000（税込）',
+            '申請料は、無料プラン ¥3,500（税込）、AIおすすめプラン ¥3,000（税込）',
             '申請後のキャンセル・返金不可',
             '相手が承認した場合のみ Google Meet 日程調整へ進む',
           ]} />

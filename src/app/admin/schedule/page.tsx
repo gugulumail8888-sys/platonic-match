@@ -103,7 +103,7 @@ export default function AdminSchedulePage() {
       alert('決済情報が見つかりません');
       return;
     }
-    if (!confirm(`${item.applicant.nickname} さんへ3,000円を返金しますか？`)) return;
+    if (!confirm(`${item.applicant.nickname} さんへ返金しますか？`)) return;
 
     setRefunding(item.id);
     try {
@@ -261,7 +261,7 @@ export default function AdminSchedulePage() {
                     disabled={refunding === item.id}
                     className="w-full py-2 rounded-xl text-sm font-medium border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {refunding === item.id ? '返金処理中...' : '⚠ 返金する（3,000円）'}
+                    {refunding === item.id ? '返金処理中...' : '⚠ 返金する'}
                   </button>
                 )}
                 {item.refunded && (
