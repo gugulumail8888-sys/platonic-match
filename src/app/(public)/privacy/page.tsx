@@ -4,6 +4,7 @@ import { ShieldCheck, ChevronRight, AlertTriangle } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'プライバシーポリシー',
+  description: 'amistaの個人情報の取り扱いについて説明しています。',
 };
 
 // ============================================================

@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard
+Disallow: /members
+Disallow: /matching
+Disallow: /recommend
+Disallow: /mypage
+Disallow: /profile
+Disallow: /schedule
+Disallow: /messages
+Disallow: /cancel-report
+Disallow: /zoom-check
+Disallow: /zoom-guide
+Disallow: /report
+Disallow: /withdraw
+
+Sitemap: https://amista.jp/sitemap.xml

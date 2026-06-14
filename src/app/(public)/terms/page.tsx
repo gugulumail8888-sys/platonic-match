@@ -4,6 +4,7 @@ import { FileText, ChevronRight } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: '利用規約',
+  description: 'amistaの利用規約です。サービスご利用前に必ずお読みください。',
 };
 
 // ============================================================

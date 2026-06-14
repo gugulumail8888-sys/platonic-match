@@ -4,6 +4,7 @@ import { Receipt, ChevronRight, AlertTriangle } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: '特定商取引法に基づく表記',
+  description: 'amistaの特定商取引法に基づく表記です。',
 };
 
 // ============================================================

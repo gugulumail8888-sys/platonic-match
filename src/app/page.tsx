@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Shield, MessageCircle, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ScrollHeader } from "@/components/ui/ScrollHeader";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+
+export const metadata: Metadata = {
+  title: '友情から始まる本物のパートナーシップ | amista',
+  description: 'amistaは友情・信頼・パートナーシップを大切にする友情婚活マッチングサービス。AIおすすめ機能とGoogle Meetで効率よくお見合いができます。',
+};
 
 export default function HomePage() {
   return (
