@@ -38,6 +38,15 @@ interface Member {
   avatar_url: string | null;
 }
 
+interface MyProfile {
+  nickname: string;
+  age: number;
+  prefecture: string | null;
+  occupation: string | null;
+  hobbies: string | null;
+  pr: string | null;
+}
+
 function calcAge(birthDate: string | null): number {
   if (!birthDate) return 0;
   const today = new Date();
@@ -189,6 +198,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
   const [aiReason, setAiReason] = useState('');
   const [aiIsDemo, setAiIsDemo] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [myProfile, setMyProfile] = useState<MyProfile | null>(null);
 
   useEffect(() => {
     fetch(`/api/members/${params.id}`)
@@ -199,7 +209,10 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
 
     fetch('/api/auth/me')
       .then((r) => r.json())
-      .then((data: { hasAiOption: boolean }) => setHasAiOption(data.hasAiOption ?? false))
+      .then((data: { hasAiOption: boolean; profile?: MyProfile }) => {
+        setHasAiOption(data.hasAiOption ?? false);
+        setMyProfile(data.profile ?? null);
+      })
       .catch(() => {});
 
     fetch('/api/likes')
@@ -288,11 +301,18 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
     if (!member) return;
     setApplying(true);
     try {
-      const res = await fetch('/api/apply', {
+      const res = await fetch('/api/matching/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          applicant: {},
+          applicant: {
+            nickname: myProfile?.nickname,
+            age: myProfile?.age,
+            prefecture: myProfile?.prefecture,
+            occupation: myProfile?.occupation,
+            hobbies: myProfile?.hobbies,
+            pr: myProfile?.pr,
+          },
           member: { id: member.id, nickname: member.nickname, age: calcAge(member.birth_date), prefecture: member.prefecture, occupation: member.occupation },
           amount: 3000,
         }),
@@ -309,7 +329,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
         notifyMessage: data.notifyMessage,
         isDemo: String(data.isDemo),
       });
-      router.push(`/apply-complete?${query.toString()}`);
+      router.push(`/matching/complete?${query.toString()}`);
     } catch (err) {
       console.error(err);
       setApplying(false);
