@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder';
+type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder' | 'survey_reminder';
 
 type Matching = {
   id: string;
@@ -102,6 +102,7 @@ async function notifyAdmin(origin: string, type: string, matching: Matching, per
       amount: matching.amount ?? 0,
       scheduledAt: matching.scheduled_at,
       meetUrl: matching.zoom_link,
+      surveyUrl: `${origin}/omiai-survey?matchingId=${matching.id}`,
     }),
   });
 }
@@ -203,6 +204,33 @@ export async function POST(req: NextRequest) {
       const personCache = await buildPersonCache(admin, matchings);
       for (const matching of matchings) {
         await notifyAdmin(origin, 'day_reminder', matching, personCache);
+      }
+
+      return NextResponse.json({ ok: true, count: matchings.length });
+    }
+
+    // ── ④ survey_reminder: お見合い終了1〜2時間後 → アンケート依頼 ──
+    if (type === 'survey_reminder') {
+      const nowMs = Date.now();
+      const start = new Date(nowMs - 2 * 60 * 60 * 1000).toISOString();
+      const end = new Date(nowMs - 1 * 60 * 60 * 1000).toISOString();
+
+      const { data, error } = await admin
+        .from('matchings')
+        .select(MATCHING_COLUMNS)
+        .gte('scheduled_at', start)
+        .lt('scheduled_at', end)
+        .eq('status', 'zoom_completed');
+
+      if (error) {
+        console.error('survey_reminder fetch error:', error);
+        return NextResponse.json({ error: 'データ取得に失敗しました' }, { status: 500 });
+      }
+
+      const matchings = (data ?? []) as Matching[];
+      const personCache = await buildPersonCache(admin, matchings);
+      for (const matching of matchings) {
+        await notifyAdmin(origin, 'survey_reminder', matching, personCache);
       }
 
       return NextResponse.json({ ok: true, count: matchings.length });

@@ -12,7 +12,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -24,6 +24,8 @@ type NotifyBody = {
   // payment_reminder / day_reminder用
   scheduledAt?: string;
   meetUrl?: string;
+  // survey_reminder用
+  surveyUrl?: string;
 };
 
 const baseStyle = `font-family: sans-serif; font-size: 14px; line-height: 1.8; max-width: 600px; margin: 0 auto; padding: 24px;`;
@@ -36,7 +38,7 @@ function wrap(content: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as NotifyBody;
-    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl } = body;
+    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl } = body;
 
     const dateStr = new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
     const amountStr = `¥${amount.toLocaleString()}（税込）`;
@@ -251,6 +253,36 @@ export async function POST(req: NextRequest) {
           <p>${member.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
+        `),
+      });
+
+    } else if (type === 'survey_reminder') {
+      // アンケート依頼（お見合い終了1〜2時間後）
+      const surveySection = surveyUrl
+        ? `<p><a href="${surveyUrl}">${surveyUrl}</a></p>`
+        : '';
+
+      // 申請者
+      emails.push({
+        to: applicant.email,
+        subject: '【amista】お見合いアンケートのご協力をお願いします',
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合いお疲れ様でした</h2>
+          <p>${applicant.nickname} さん、本日のお見合いはいかがでしたでしょうか。</p>
+          <p>今後のサービス向上のため、アンケートのご協力をお願いいたします。</p>
+          ${surveySection}
+        `),
+      });
+
+      // お相手
+      emails.push({
+        to: member.email,
+        subject: '【amista】お見合いアンケートのご協力をお願いします',
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合いお疲れ様でした</h2>
+          <p>${member.nickname} さん、本日のお見合いはいかがでしたでしょうか。</p>
+          <p>今後のサービス向上のため、アンケートのご協力をお願いいたします。</p>
+          ${surveySection}
         `),
       });
     }
