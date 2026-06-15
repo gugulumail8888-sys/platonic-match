@@ -12,7 +12,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -21,6 +21,9 @@ type NotifyBody = {
   aiCompatibilityComment?: string;
   // cancel_timeout用
   lateBy?: 'applicant' | 'member' | 'both';
+  // payment_reminder / day_reminder用
+  scheduledAt?: string;
+  meetUrl?: string;
 };
 
 const baseStyle = `font-family: sans-serif; font-size: 14px; line-height: 1.8; max-width: 600px; margin: 0 auto; padding: 24px;`;
@@ -33,10 +36,13 @@ function wrap(content: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as NotifyBody;
-    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy } = body;
+    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl } = body;
 
     const dateStr = new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
     const amountStr = `¥${amount.toLocaleString()}（税込）`;
+    const scheduledDateStr = scheduledAt
+      ? new Date(scheduledAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })
+      : null;
 
     const emails: { to: string; subject: string; html: string }[] = [];
 
@@ -174,6 +180,77 @@ export async function POST(req: NextRequest) {
           <h2 style="color: #0d9488;">お見合いがキャンセルされました</h2>
           <p>${member.nickname} さん、申請者よりキャンセルのご依頼があり、お見合い（${applicationId}）はキャンセルとなりました。</p>
           <p>お支払いいただいた${amountStr}を返金いたします。詳細は事務局よりご連絡します。</p>
+        `),
+      });
+
+    } else if (type === 'payment_reminder') {
+      // 支払いリマインド（お見合い3日前・未払い）
+      const whenStr = scheduledDateStr ? `${scheduledDateStr}に` : '3日後に';
+
+      // 管理者
+      emails.push({
+        to: process.env.ADMIN_EMAIL ?? 'admin@amista.jp',
+        subject: '【amista】お見合い料のお支払いのご案内',
+        html: wrap(`
+          <h2 style="color: #0d9488;">支払いリマインドを送信しました</h2>
+          <p>申請番号：${applicationId}<br>お見合い予定：${whenStr}</p>
+          <p>${applicant.nickname} さん・${member.nickname} さんへ、お見合い料（${amountStr}）のお支払いのご案内メールを送信しました。</p>
+          <p>前日17時までにお支払いが確認できない場合は自動キャンセルとなります。</p>
+        `),
+      });
+
+      // 申請者
+      emails.push({
+        to: applicant.email,
+        subject: '【amista】お見合い料のお支払いのご案内',
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合い料のお支払いのご案内</h2>
+          <p>${applicant.nickname} さん、${whenStr}お見合いが予定されています。</p>
+          <p>お見合い料（${amountStr}）のお支払いを、<strong>お見合い前日の17時まで</strong>に完了してください。</p>
+          <p>期日までにお支払いが確認できない場合、本お見合いは自動的にキャンセルとなりますのでご注意ください。</p>
+        `),
+      });
+
+      // お相手
+      emails.push({
+        to: member.email,
+        subject: '【amista】お見合い料のお支払いのご案内',
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合い料のお支払いのご案内</h2>
+          <p>${member.nickname} さん、${whenStr}お見合いが予定されています。</p>
+          <p>お見合い料（${amountStr}）のお支払いを、<strong>お見合い前日の17時まで</strong>に完了してください。</p>
+          <p>期日までにお支払いが確認できない場合、本お見合いは自動的にキャンセルとなりますのでご注意ください。</p>
+        `),
+      });
+
+    } else if (type === 'day_reminder') {
+      // 当日リマインド（お見合い2時間前）
+      const meetSection = meetUrl
+        ? `<p>Google Meet URL：<a href="${meetUrl}">${meetUrl}</a></p>`
+        : '';
+      const whenStr = scheduledDateStr ? `本日${scheduledDateStr}` : '本日';
+
+      // 申請者
+      emails.push({
+        to: applicant.email,
+        subject: '【amista】本日のGoogle Meetお見合いのご案内',
+        html: wrap(`
+          <h2 style="color: #0d9488;">本日、お見合いが予定されています</h2>
+          <p>${applicant.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
+          ${meetSection}
+          <p>明るく静かな環境でのご参加をお願いいたします。</p>
+        `),
+      });
+
+      // お相手
+      emails.push({
+        to: member.email,
+        subject: '【amista】本日のGoogle Meetお見合いのご案内',
+        html: wrap(`
+          <h2 style="color: #0d9488;">本日、お見合いが予定されています</h2>
+          <p>${member.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
+          ${meetSection}
+          <p>明るく静かな環境でのご参加をお願いいたします。</p>
         `),
       });
     }
