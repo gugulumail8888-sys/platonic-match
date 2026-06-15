@@ -108,10 +108,9 @@ export default function AdminSettingsPage() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   // 2. 料金設定
-  const [lightPlanPrice, setLightPlanPrice] = useState(980);
-  const [standardPlanPrice, setStandardPlanPrice] = useState(1980);
-  const [matchingFee, setMatchingFee] = useState(3000);
-  const [trialDays, setTrialDays] = useState(0);
+  const [lightPlanPrice, setLightPlanPrice] = useState(1078);
+  const [matchingFeeNormal, setMatchingFeeNormal] = useState(3500);
+  const [matchingFeePremium, setMatchingFeePremium] = useState(3000);
 
   // 3. 会員設定
   const [registrationOpen, setRegistrationOpen] = useState(true);
@@ -183,7 +182,7 @@ export default function AdminSettingsPage() {
 
         {/* 2. 料金設定 */}
         <SettingsSection icon={Wallet} title="料金設定" onSave={handleSave}>
-          <FieldRow label="ライトプラン月額" unit="円">
+          <FieldRow label="AIおすすめプラン月額（税込）" unit="円">
             <input
               type="number"
               value={lightPlanPrice}
@@ -191,27 +190,19 @@ export default function AdminSettingsPage() {
               className={inputCls}
             />
           </FieldRow>
-          <FieldRow label="スタンダードプラン月額" unit="円">
+          <FieldRow label="お見合い申請料金（無料プラン・税込）" unit="円">
             <input
               type="number"
-              value={standardPlanPrice}
-              onChange={(e) => setStandardPlanPrice(Number(e.target.value))}
+              value={matchingFeeNormal}
+              onChange={(e) => setMatchingFeeNormal(Number(e.target.value))}
               className={inputCls}
             />
           </FieldRow>
-          <FieldRow label="お見合い申請料金" unit="円">
+          <FieldRow label="お見合い申請料金（AIプラン・税込）" unit="円">
             <input
               type="number"
-              value={matchingFee}
-              onChange={(e) => setMatchingFee(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
-          <FieldRow label="無料トライアル期間" unit="日">
-            <input
-              type="number"
-              value={trialDays}
-              onChange={(e) => setTrialDays(Number(e.target.value))}
+              value={matchingFeePremium}
+              onChange={(e) => setMatchingFeePremium(Number(e.target.value))}
               className={inputCls}
             />
           </FieldRow>
