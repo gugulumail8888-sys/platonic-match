@@ -1,7 +1,41 @@
 import { createServerClient } from "@supabase/ssr";
+import { createAdminClient } from "@/lib/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // ── メンテナンスモードチェック（既存の認証チェックより前に実行） ──
+  if (
+    pathname !== '/maintenance' &&
+    !pathname.startsWith('/api') &&
+    !pathname.startsWith('/_next')
+  ) {
+    let isAdmin = false;
+    const authCookie = request.cookies.get('auth')?.value;
+    if (authCookie) {
+      try {
+        const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string };
+        isAdmin = auth.role === 'admin';
+      } catch {
+        // 不正な cookie は無視
+      }
+    }
+
+    if (!isAdmin) {
+      const admin = createAdminClient();
+      const { data } = await admin
+        .from('settings')
+        .select('value')
+        .eq('key', 'maintenance_mode')
+        .maybeSingle();
+
+      if (data?.value === 'true') {
+        return NextResponse.redirect(new URL('/maintenance', request.url));
+      }
+    }
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -28,7 +62,6 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.getUser();
 
   const authCookie = request.cookies.get('auth')?.value;
-  const pathname = request.nextUrl.pathname;
 
   // トップページ・API・静的アセットは常に通過
   if (

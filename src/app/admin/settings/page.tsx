@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Settings, Wallet, Users, Bell, Heart,
 } from 'lucide-react';
@@ -132,7 +132,46 @@ export default function AdminSettingsPage() {
     setTimeout(() => setToast(''), 2500);
   };
 
+  // 現在の設定値を取得してstateに反映
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((res) => res.json())
+      .then((data: Record<string, string>) => {
+        if (data.site_name !== undefined) setSiteName(data.site_name);
+        if (data.maintenance_mode !== undefined) setMaintenanceMode(data.maintenance_mode === 'true');
+        if (data.light_plan_price !== undefined) setLightPlanPrice(Number(data.light_plan_price));
+        if (data.matching_fee_normal !== undefined) setMatchingFeeNormal(Number(data.matching_fee_normal));
+        if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
+      })
+      .catch((err) => console.error('settings fetch error:', err));
+  }, []);
+
   const handleSave = () => showToast('この機能は現在準備中です');
+
+  const saveSettings = async (payload: Record<string, string>) => {
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('failed');
+      showToast('保存しました');
+    } catch {
+      showToast('保存に失敗しました');
+    }
+  };
+
+  const handleSaveBasic = () => saveSettings({
+    site_name: siteName,
+    maintenance_mode: String(maintenanceMode),
+  });
+
+  const handleSavePricing = () => saveSettings({
+    light_plan_price: String(lightPlanPrice),
+    matching_fee_normal: String(matchingFeeNormal),
+    matching_fee_premium: String(matchingFeePremium),
+  });
 
   return (
     <div className="p-6 md:p-8 space-y-6">
@@ -144,7 +183,7 @@ export default function AdminSettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* 1. 基本設定 */}
-        <SettingsSection icon={Settings} title="基本設定" onSave={handleSave}>
+        <SettingsSection icon={Settings} title="基本設定" onSave={handleSaveBasic}>
           <FieldRow label="サイト名">
             <input
               type="text"
@@ -181,7 +220,7 @@ export default function AdminSettingsPage() {
         </SettingsSection>
 
         {/* 2. 料金設定 */}
-        <SettingsSection icon={Wallet} title="料金設定" onSave={handleSave}>
+        <SettingsSection icon={Wallet} title="料金設定" onSave={handleSavePricing}>
           <FieldRow label="AIおすすめプラン月額（税込）" unit="円">
             <input
               type="number"
