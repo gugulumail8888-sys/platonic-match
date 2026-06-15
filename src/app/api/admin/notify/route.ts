@@ -292,6 +292,7 @@ export async function POST(req: NextRequest) {
       const { error } = await resend.emails.send({
         from: 'amista <onboarding@resend.dev>',
         ...mail,
+        headers: { 'Content-Type': 'text/html; charset=UTF-8' },
       });
       if (error) {
         console.error('Mail send error:', error);
