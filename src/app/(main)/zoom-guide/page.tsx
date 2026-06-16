@@ -7,7 +7,7 @@ const IPHONE_STEPS = [
   {
     step: 1,
     title: 'Safariまたはブラウザを開く',
-    desc: 'Google MeetはアプリなしでSafariから参加できます。アプリのインストールは不要です。',
+    desc: 'Google MeetはアプリなしでSafariから参加できます。アプリのインストールは不要です。スマホの場合はGoogle Meetアプリをインストールするとより快適に利用できます。App Storeで「Google Meet」と検索してください。',
     icon: '🌐',
     tip: 'iPhoneの場合はSafariの使用を推奨します',
   },
@@ -52,7 +52,7 @@ const ANDROID_STEPS = [
   {
     step: 1,
     title: 'ChromeまたはブラウザでURLを開く',
-    desc: 'Google MeetはアプリなしでChromeブラウザから参加できます。アプリのインストールは不要です。',
+    desc: 'Google MeetはアプリなしでChromeブラウザから参加できます。アプリのインストールは不要です。スマホの場合はGoogle Meetアプリをインストールするとより快適に利用できます。Google Playで「Google Meet」と検索してください。',
     icon: '🌐',
     tip: 'AndroidはChromeブラウザの使用を推奨します',
   },
