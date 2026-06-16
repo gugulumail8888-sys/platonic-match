@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder' | 'survey_reminder';
+type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder' | 'survey_reminder' | 'matching_expired';
 
 type Matching = {
   id: string;
@@ -231,6 +231,40 @@ export async function POST(req: NextRequest) {
       const personCache = await buildPersonCache(admin, matchings);
       for (const matching of matchings) {
         await notifyAdmin(origin, 'survey_reminder', matching, personCache);
+      }
+
+      return NextResponse.json({ ok: true, count: matchings.length });
+    }
+
+    // ── ⑤ matching_expired: 申請から7日以上経過・pending → 自動不成立 ──
+    if (type === 'matching_expired') {
+      const threshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await admin
+        .from('matchings')
+        .select(MATCHING_COLUMNS)
+        .eq('status', 'pending')
+        .lt('created_at', threshold);
+
+      if (error) {
+        console.error('matching_expired fetch error:', error);
+        return NextResponse.json({ error: 'データ取得に失敗しました' }, { status: 500 });
+      }
+
+      const matchings = (data ?? []) as Matching[];
+      const personCache = await buildPersonCache(admin, matchings);
+
+      for (const matching of matchings) {
+        const { error: updateError } = await admin
+          .from('matchings')
+          .update({ status: 'rejected', responded_at: new Date().toISOString() })
+          .eq('id', matching.id);
+
+        if (updateError) {
+          console.error('matching_expired update error:', updateError);
+          continue;
+        }
+
+        await notifyAdmin(origin, 'matching_expired', matching, personCache);
       }
 
       return NextResponse.json({ ok: true, count: matchings.length });

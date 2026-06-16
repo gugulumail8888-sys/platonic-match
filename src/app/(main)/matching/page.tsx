@@ -7,7 +7,7 @@ import { MapPin, Calendar, ClipboardList, Users, HeartHandshake } from 'lucide-r
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
 
-type ApplicationStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled';
+type ApplicationStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled' | 'rejected';
 
 interface PartnerProfile {
   id: string;
@@ -58,6 +58,10 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: strin
     label: 'キャンセル済み',
     className: 'bg-zinc-800 text-zinc-400 border border-zinc-700',
   },
+  rejected: {
+    label: 'お断り',
+    className: 'bg-zinc-800 text-zinc-500 border border-zinc-700',
+  },
 };
 
 function StatusBadge({ status }: { status: ApplicationStatus }) {
@@ -69,9 +73,10 @@ function StatusBadge({ status }: { status: ApplicationStatus }) {
   );
 }
 
-function MatchingCard({ matching }: { matching: Matching }) {
+function MatchingCard({ matching, currentUserId }: { matching: Matching; currentUserId: string }) {
   const router = useRouter();
   const [wished, setWished] = useState(matching.applicant_dating_wish);
+  const [responding, setResponding] = useState(false);
 
   async function handleDatingWish() {
     const supabase = createClient();
@@ -82,6 +87,28 @@ function MatchingCard({ matching }: { matching: Matching }) {
     if (!error) setWished(true);
   }
 
+  async function handleApprove() {
+    setResponding(true);
+    await fetch('/api/matching/approve', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matchingId: matching.id }),
+    });
+    router.refresh();
+  }
+
+  async function handleReject() {
+    if (!window.confirm('このお見合い申請をお断りしますか？')) return;
+    setResponding(true);
+    await fetch('/api/matching/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matchingId: matching.id }),
+    });
+    router.refresh();
+  }
+
+  const isReceiver = matching.partner_id === currentUserId;
   const { partner, status, created_at, id } = matching;
 
   return (
@@ -150,6 +177,26 @@ function MatchingCard({ matching }: { matching: Matching }) {
 
       {/* ボタンエリア */}
       <div className="mt-4 flex flex-col gap-2">
+        {/* 承認・拒否ボタン（申請中かつ自分がお相手の場合のみ） */}
+        {status === 'pending' && isReceiver && (
+          <div className="flex gap-2">
+            <button
+              onClick={handleApprove}
+              disabled={responding}
+              className="flex-1 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              承認する
+            </button>
+            <button
+              onClick={handleReject}
+              disabled={responding}
+              className="flex-1 py-2.5 rounded-xl border border-red-900 text-red-400 text-sm font-semibold hover:bg-red-950/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              お断りする
+            </button>
+          </div>
+        )}
+
         {/* 交際希望ボタン（Google Meet完了時のみ） */}
         {status === 'zoom_completed' && (
           <button
@@ -201,12 +248,14 @@ function MatchingCard({ matching }: { matching: Matching }) {
 export default function MatchingPage() {
   const [matchings, setMatchings] = useState<Matching[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState('');
 
   useEffect(() => {
     async function fetchMatchings() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
+      setCurrentUserId(user.id);
 
       const { data: rows, error } = await supabase
         .from('matchings')
@@ -266,7 +315,7 @@ export default function MatchingPage() {
       ) : matchings.length > 0 ? (
         <div className="space-y-4">
           {matchings.map((m) => (
-            <MatchingCard key={m.id} matching={m} />
+            <MatchingCard key={m.id} matching={m} currentUserId={currentUserId} />
           ))}
         </div>
       ) : (

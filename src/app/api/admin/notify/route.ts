@@ -12,7 +12,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -253,6 +253,90 @@ export async function POST(req: NextRequest) {
           <p>${member.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
+        `),
+      });
+
+    } else if (type === 'matching_request') {
+      // お見合い申請通知（申請者・お相手へ）
+      // 申請者
+      emails.push({
+        to: applicant.email,
+        subject: `【amista】お見合い申請を送りました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合い申請を送りました</h2>
+          <p>${applicant.nickname} さん、${member.nickname} さんへのお見合い申請を受け付けました。</p>
+          <p>お相手の返答をお待ちください。<strong>7日以内</strong>に返答がない場合は自動的に不成立となります。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+      // お相手
+      emails.push({
+        to: member.email,
+        subject: `【amista】お見合い申請が届きました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合い申請が届きました</h2>
+          <p>${member.nickname} さん、${applicant.nickname} さんからお見合いの申請が届いています。</p>
+          <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top:8px;">
+            <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; width:100px;">申請者</td><td style="padding:8px 0; color:#111827;">${applicant.nickname}（${applicant.age}歳・${applicant.prefecture}）</td></tr>
+            <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280;">職業</td><td style="padding:8px 0; color:#111827;">${applicant.occupation}</td></tr>
+          </table>
+          <p style="margin-top:12px;">マイページから<strong>承認または辞退</strong>をお選びください。<strong>7日以内</strong>にご返答がない場合は自動的に不成立となります。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+    } else if (type === 'matching_approved') {
+      // お見合い成立通知（両者へ）
+      // 申請者
+      emails.push({
+        to: applicant.email,
+        subject: `【amista】お見合いが成立しました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合いが成立しました！</h2>
+          <p>${applicant.nickname} さん、${member.nickname} さんがお見合いを承認しました。</p>
+          <p>マイページから日程調整にお進みください。Google Meetにてお見合いを行っていただきます。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+      // お相手
+      emails.push({
+        to: member.email,
+        subject: `【amista】お見合いが成立しました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合いが成立しました！</h2>
+          <p>${member.nickname} さん、${applicant.nickname} さんとのお見合いが成立しました。</p>
+          <p>マイページから日程調整にお進みください。Google Meetにてお見合いを行っていただきます。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+    } else if (type === 'matching_rejected') {
+      // 申請辞退通知（申請者のみ）
+      emails.push({
+        to: applicant.email,
+        subject: `【amista】お見合い申請についてのご連絡（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #f59e0b;">お見合い申請についてのご連絡</h2>
+          <p>${applicant.nickname} さん、申請いただきありがとうございました。</p>
+          <p>誠に恐れ入りますが、今回はご縁がなかったようです。</p>
+          <p>引き続きamistaをご利用いただき、素敵な出会いを見つけてください。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+    } else if (type === 'matching_expired') {
+      // 7日間未返答による自動不成立（申請者のみ）
+      emails.push({
+        to: applicant.email,
+        subject: `【amista】お見合い申請が期限切れとなりました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #6b7280;">お見合い申請が期限切れとなりました</h2>
+          <p>${applicant.nickname} さん、申請いただきありがとうございました。</p>
+          <p>7日間お相手からの返答がなかったため、今回のお見合い申請は自動的に不成立となりました。</p>
+          <p>引き続きamistaをご利用いただき、素敵な出会いを見つけてください。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
         `),
       });
 
