@@ -3,7 +3,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const ADMIN_EMAIL = 'amistasupport@gmail.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'amistasupport@gmail.com';
 
 const baseStyle = `font-family: sans-serif; font-size: 14px; line-height: 1.8; max-width: 600px; margin: 0 auto; padding: 24px;`;
 const footer = `<hr><p style="color: #888; font-size: 12px;">このメールはamistaシステムから自動送信されています。</p>`;
