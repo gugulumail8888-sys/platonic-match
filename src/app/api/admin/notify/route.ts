@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
         html: wrap(`
           <h2 style="color: #f59e0b;">キャンセル依頼が届きました</h2>
           <p>申請番号：${applicationId}<br>申請者：${applicant.nickname} さん</p>
-          <p>キャンセル料（${amountStr}）の請求と、お相手（${member.nickname} さん）への返金処理を行ってください。</p>
+          <p>キャンセル料（${amountStr}）の請求と、お相手（${member.nickname} さん）への返金処理について、管理者の許可のもと対応をお願いします。</p>
         `),
       });
 
