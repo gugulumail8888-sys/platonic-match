@@ -35,14 +35,14 @@ export async function POST(req: NextRequest) {
       subject: `【amista お問い合わせ】${subject}`,
       html: wrap(`
         <h2 style="color: #0d9488;">新しいお問い合わせが届きました</h2>
-        <table style="width:100%; border-collapse:collapse; font-size:14px;">
-          <tr><td style="padding:6px 0; color:#888; width:120px;">お名前</td><td style="padding:6px 0; color:#fff;">${name}</td></tr>
-          <tr><td style="padding:6px 0; color:#888;">メール</td><td style="padding:6px 0; color:#fff;">${email}</td></tr>
-          <tr><td style="padding:6px 0; color:#888;">種別</td><td style="padding:6px 0; color:#fff;">${type}</td></tr>
-          <tr><td style="padding:6px 0; color:#888;">件名</td><td style="padding:6px 0; color:#fff;">${subject}</td></tr>
+        <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top:8px;">
+          <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; width:100px; vertical-align:top;">お名前</td><td style="padding:8px 0; color:#111827;">${name}</td></tr>
+          <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; vertical-align:top;">メール</td><td style="padding:8px 0; color:#111827;">${email}</td></tr>
+          <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; vertical-align:top;">種別</td><td style="padding:8px 0; color:#111827;">${type}</td></tr>
+          <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; vertical-align:top;">件名</td><td style="padding:8px 0; color:#111827;">${subject}</td></tr>
         </table>
-        <h3 style="margin-top:16px;">お問い合わせ内容</h3>
-        <div style="background:#1a1a1a; border-radius:8px; padding:16px; white-space:pre-wrap; color:#e4e4e7;">${message}</div>
+        <h3 style="margin-top:16px; color:#111827;">お問い合わせ内容</h3>
+        <div style="background:#f3f4f6; border-radius:8px; padding:16px; white-space:pre-wrap; color:#111827; border:1px solid #e5e7eb;">${message}</div>
       `),
       headers: { 'Content-Type': 'text/html; charset=UTF-8' },
     });
@@ -62,10 +62,10 @@ export async function POST(req: NextRequest) {
         <p>${name} 様、お問い合わせいただきありがとうございます。</p>
         <p>以下の内容で受け付けました。<strong>3営業日以内</strong>にご返信いたします。</p>
         <table style="width:100%; border-collapse:collapse; font-size:14px; margin-top:12px;">
-          <tr><td style="padding:6px 0; color:#888; width:120px;">種別</td><td style="padding:6px 0;">${type}</td></tr>
-          <tr><td style="padding:6px 0; color:#888;">件名</td><td style="padding:6px 0;">${subject}</td></tr>
+          <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; width:100px; vertical-align:top;">種別</td><td style="padding:8px 0; color:#111827;">${type}</td></tr>
+          <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; vertical-align:top;">件名</td><td style="padding:8px 0; color:#111827;">${subject}</td></tr>
         </table>
-        <div style="background:#1a1a1a; border-radius:8px; padding:16px; margin-top:12px; white-space:pre-wrap; color:#e4e4e7;">${message}</div>
+        <div style="background:#f3f4f6; border-radius:8px; padding:16px; margin-top:12px; white-space:pre-wrap; color:#111827; border:1px solid #e5e7eb;">${message}</div>
         <p style="margin-top:16px; color:#888; font-size:12px;">※ このメールに返信しないでください。お問い合わせは <a href="mailto:${ADMIN_EMAIL}" style="color:#0d9488;">${ADMIN_EMAIL}</a> までご連絡ください。</p>
       `),
       headers: { 'Content-Type': 'text/html; charset=UTF-8' },
