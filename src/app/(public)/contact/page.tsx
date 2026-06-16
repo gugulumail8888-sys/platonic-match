@@ -84,6 +84,8 @@ function SuccessMessage({ onReset }: { onReset: () => void }) {
 export default function ContactPage() {
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
 
   const isValid =
     form.name.trim() !== '' &&
@@ -96,11 +98,28 @@ export default function ContactPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!isValid) return;
-    // TODO: 実際の送信処理（API呼び出し）
-    setSubmitted(true);
+    if (!isValid || sending) return;
+    setSending(true);
+    setSendError('');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (!res.ok) {
+        setSendError(data.error ?? '送信に失敗しました。時間をおいて再度お試しください。');
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setSendError('送信に失敗しました。時間をおいて再度お試しください。');
+    } finally {
+      setSending(false);
+    }
   }
 
   function handleReset() {
@@ -229,20 +248,23 @@ export default function ContactPage() {
             {/* 送信ボタン */}
             <button
               type="submit"
-              disabled={!isValid}
+              disabled={!isValid || sending}
               className={`w-full py-3 rounded-xl text-sm font-bold transition-colors ${
-                isValid
+                isValid && !sending
                   ? 'bg-teal-600 hover:bg-teal-500 text-white'
                   : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
               }`}
             >
-              送信する
+              {sending ? '送信中...' : '送信する'}
             </button>
 
             {!isValid && (
               <p className="text-center text-xs text-zinc-500">
                 すべての必須項目を入力してください
               </p>
+            )}
+            {sendError && (
+              <p className="text-center text-xs text-red-400">{sendError}</p>
             )}
           </form>
         </>
