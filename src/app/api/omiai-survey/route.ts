@@ -55,6 +55,72 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'アンケートの保存に失敗しました' }, { status: 500 });
     }
 
+    // 両者がアンケート回答済みかチェックし、両者ともyesならsuccess_couplesに登録
+    if (matchingId) {
+      const { data: surveys } = await admin
+        .from('omiai_surveys')
+        .select('user_id, want_to_meet_again')
+        .eq('matching_id', matchingId);
+
+      if (surveys && surveys.length === 2) {
+        const bothYes = surveys.every((s) => s.want_to_meet_again === 'yes');
+
+        if (bothYes) {
+          const { data: matching } = await admin
+            .from('matchings')
+            .select('applicant_id, partner_id')
+            .eq('id', matchingId)
+            .maybeSingle();
+
+          if (matching) {
+            const userAId = matching.applicant_id as string;
+            const userBId = matching.partner_id as string;
+
+            const { data: profiles } = await admin
+              .from('profiles')
+              .select('id, prefecture, smoking, alcohol, marriage_intention, hobbies, birth_date, children_desire, external_partner, finance_management, marriage_timing, living_arrangement')
+              .in('id', [userAId, userBId]);
+
+            const profA = profiles?.find((p) => p.id === userAId);
+            const profB = profiles?.find((p) => p.id === userBId);
+
+            const calcAgeDiff = (a: string | null, b: string | null): number | null => {
+              if (!a || !b) return null;
+              return Math.abs(new Date().getFullYear() - new Date(a).getFullYear()
+                - (new Date().getFullYear() - new Date(b).getFullYear()));
+            };
+
+            const calcHobbiesSimilarity = (a: string[] | null, b: string[] | null): number => {
+              if (!a?.length || !b?.length) return 0;
+              const setA = new Set(a);
+              const common = b.filter((h) => setA.has(h)).length;
+              return Math.round((common / Math.max(a.length, b.length)) * 100);
+            };
+
+            await admin.from('success_couples').insert({
+              matching_id: matchingId,
+              user_a_id: userAId,
+              user_b_id: userBId,
+              age_difference: calcAgeDiff(profA?.birth_date ?? null, profB?.birth_date ?? null),
+              same_prefecture: profA && profB ? profA.prefecture === profB.prefecture : null,
+              marriage_timing_match: profA && profB ? profA.marriage_intention === profB.marriage_intention : null,
+              children_desire_match: profA && profB && profA.children_desire && profB.children_desire
+                ? profA.children_desire === profB.children_desire : null,
+              external_partner_match: profA && profB && profA.external_partner && profB.external_partner
+                ? profA.external_partner === profB.external_partner : null,
+              post_marriage_living_match: profA && profB && profA.living_arrangement && profB.living_arrangement
+                ? profA.living_arrangement === profB.living_arrangement : null,
+              finance_management_match: profA && profB && profA.finance_management && profB.finance_management
+                ? profA.finance_management === profB.finance_management : null,
+              smoking_match: profA && profB ? profA.smoking === profB.smoking : null,
+              alcohol_match: profA && profB ? profA.alcohol === profB.alcohol : null,
+              hobbies_similarity: calcHobbiesSimilarity(profA?.hobbies ?? null, profB?.hobbies ?? null),
+            });
+          }
+        }
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Omiai survey error:', error);
