@@ -56,6 +56,20 @@ export async function POST(req: NextRequest) {
 
     // ── matchingsテーブルに申請を保存 ──
     const adminSupabase = createAdminClient();
+
+    // ── 重複チェック ──
+    const { data: existing } = await adminSupabase
+      .from('matchings')
+      .select('id')
+      .eq('applicant_id', user.id)
+      .eq('partner_id', member.id)
+      .in('status', ['pending', 'scheduling'])
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ error: 'すでにお見合い申請中です' }, { status: 400 });
+    }
+
     const { error: insertError } = await adminSupabase.from('matchings').insert({
       applicant_id: user.id,
       partner_id: member.id,

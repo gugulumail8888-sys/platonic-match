@@ -94,7 +94,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ matchingId: matching.id }),
     });
-    router.refresh();
+    window.location.reload();
   }
 
   async function handleReject() {
@@ -105,7 +105,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ matchingId: matching.id }),
     });
-    router.refresh();
+    window.location.reload();
   }
 
   const isReceiver = matching.partner_id === currentUserId;
@@ -149,7 +149,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
       <div className="border-t border-zinc-700 my-4" />
 
       {/* 下段: 申請日・申請番号・料金 */}
-      <div className="grid grid-cols-3 gap-2 text-xs">
+      <div className={`grid gap-2 text-xs ${isReceiver ? 'grid-cols-2' : 'grid-cols-3'}`}>
         <div>
           <p className="text-zinc-500 mb-0.5 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -166,13 +166,15 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           </p>
           <p className="text-zinc-200 font-mono font-medium">{id.slice(0, 8).toUpperCase()}</p>
         </div>
-        <div>
-          <p className="text-zinc-500 mb-0.5">料金</p>
-          <p className="text-zinc-200 font-medium">
-            無料プラン ¥3,500・AIおすすめプラン ¥3,000
-            <span className="text-zinc-500 font-normal">（税込）</span>
-          </p>
-        </div>
+        {!isReceiver && (
+          <div>
+            <p className="text-zinc-500 mb-0.5">料金</p>
+            <p className="text-zinc-200 font-medium">
+              無料プラン ¥3,500・AIおすすめプラン ¥3,000
+              <span className="text-zinc-500 font-normal">（税込）</span>
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ボタンエリア */}
@@ -232,7 +234,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
         </Link>
 
         {/* キャンセル・変更ボタン */}
-        {(status === 'pending' || status === 'scheduling' || status === 'completed') && (
+        {!isReceiver && (status === 'pending' || status === 'scheduling' || status === 'completed') && (
           <button
             onClick={() => router.push(`/cancel-report?applicationId=${matching.id}`)}
             className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-900 text-red-500 text-xs hover:bg-red-950/50 hover:border-red-800 transition-colors w-full"
