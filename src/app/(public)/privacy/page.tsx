@@ -195,12 +195,11 @@ export default function PrivacyPage() {
             <p>
               お問い合わせ先：
               <a
-                href="mailto:info@amista.jp"
+                href="mailto:amistasupport@gmail.com"
                 className="text-teal-400 hover:text-teal-300 underline underline-offset-2 ml-1 transition-colors"
               >
-                info@amista.jp
+                amistasupport@gmail.com
               </a>
-              <span className="text-zinc-500 text-xs ml-1">（仮）</span>
             </p>
           </div>
         </ArticleSection>
@@ -233,7 +232,7 @@ export default function PrivacyPage() {
           rows={[
             { label: 'サービス名', value: 'amista' },
             { label: '運営者',    value: '〇〇〇〇（後で修正）' },
-            { label: 'メール',    value: 'info@amista.jp（後で修正）' },
+            { label: 'メール',    value: 'amistasupport@gmail.com' },
             { label: '制定日',    value: '2026年5月27日' },
           ]}
         />

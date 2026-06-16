@@ -136,13 +136,12 @@ export default function TokushoPage() {
                 label: 'メールアドレス',
                 value: (
                   <a
-                    href="mailto:info@amista.jp"
+                    href="mailto:amistasupport@gmail.com"
                     className="text-teal-400 hover:text-teal-300 underline underline-offset-2 transition-colors"
                   >
-                    info@amista.jp
+                    amistasupport@gmail.com
                   </a>
                 ),
-                note: '（後で修正）',
               },
               { label: 'サービス名',        value: 'amista' },
               {

@@ -211,7 +211,7 @@ export default function TermsPage() {
           { label: 'サービス名', value: 'amista' },
           { label: '運営者',    value: '〇〇〇〇（後で修正）' },
           { label: '所在地',    value: '〇〇県〇〇市（後で修正）' },
-          { label: 'メール',    value: 'info@amista.jp（後で修正）' },
+          { label: 'メール',    value: 'amistasupport@gmail.com' },
           { label: '制定日',    value: '2026年5月27日' },
         ]} />
       </div>
