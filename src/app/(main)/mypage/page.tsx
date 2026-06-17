@@ -378,22 +378,32 @@ interface ToggleSwitchProps {
   onChange: (v: boolean) => void;
   label: string;
   description?: string;
+  disabled?: boolean;
+  badge?: string;
 }
 
-function ToggleSwitch({ checked, onChange, label, description }: ToggleSwitchProps) {
+function ToggleSwitch({ checked, onChange, label, description, disabled, badge }: ToggleSwitchProps) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-zinc-700/50 last:border-0">
       <div>
-        <p className="text-sm text-zinc-200 font-medium">{label}</p>
+        <p className="text-sm text-zinc-200 font-medium flex items-center gap-2">
+          {label}
+          {badge && (
+            <span className="text-[10px] px-1.5 py-0.5 bg-zinc-700 text-zinc-400 rounded-full font-normal">
+              {badge}
+            </span>
+          )}
+        </p>
         {description && <p className="text-xs text-zinc-500 mt-0.5">{description}</p>}
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
-          checked ? 'bg-teal-600' : 'bg-zinc-600'
+        disabled={disabled}
+        onClick={() => !disabled && onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+          disabled ? 'cursor-not-allowed opacity-40 bg-zinc-600' : `cursor-pointer focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${checked ? 'bg-teal-600' : 'bg-zinc-600'}`
         }`}
       >
         <span
@@ -594,14 +604,21 @@ function SettingsTab() {
               onChange={setNotifyLike}
               label="いいね通知"
               description="いいねを受け取ったときに通知します"
+              disabled
+              badge="準備中"
             />
             <ToggleSwitch
               checked={notifyMatch}
               onChange={setNotifyMatch}
               label="マッチング通知"
               description="マッチングが成立したときに通知します"
+              disabled
+              badge="準備中"
             />
           </div>
+          <p className="text-xs text-zinc-500 mt-3">
+            通知機能は現在準備中です。正式リリース後にご利用いただけます。
+          </p>
         </div>
 
       {toast && (
