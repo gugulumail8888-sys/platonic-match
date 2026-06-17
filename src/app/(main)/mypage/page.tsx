@@ -597,6 +597,7 @@ function SettingsTab() {
           <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider mb-4 flex items-center gap-2">
             <span className="w-1 h-4 bg-teal-500 rounded-full inline-block" />
             通知設定
+            <span className="text-[11px] text-zinc-500 font-normal normal-case tracking-normal">※正式リリース後にご利用いただけます</span>
           </h3>
           <div className="space-y-0">
             <ToggleSwitch
@@ -616,9 +617,6 @@ function SettingsTab() {
               badge="準備中"
             />
           </div>
-          <p className="text-xs text-zinc-500 mt-3">
-            通知機能は現在準備中です。正式リリース後にご利用いただけます。
-          </p>
         </div>
 
       {toast && (
