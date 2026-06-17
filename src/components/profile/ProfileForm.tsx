@@ -473,9 +473,10 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           <Select label="収入（年収）" options={toOptions(INCOME_OPTIONS)} placeholder="選択してください" error={errors.income?.message} required {...register("income")} />
           <Select label="お子様の人数" options={toOptions(NUMBER_OF_CHILDREN_OPTIONS)} placeholder="選択してください" error={errors.number_of_children?.message} required {...register("number_of_children")} />
           <Select label="兄弟姉妹の有無" options={toOptions(['なし', 'あり'])} placeholder="選択してください" error={errors.siblings_exist?.message} {...register("siblings_exist")} />
-          {siblingsExist === 'あり' && (
+          {siblingsExist === 'あり' && (<>
 <Input label="兄弟姉妹の詳細" placeholder="例：兄1人・妹2人など" {...register("siblings_detail")} />
             <Select label="自分の続柄" options={toOptions(['長男', '次男', '三男以降', '長女', '次女', '三女以降', '一人っ子'])} placeholder="選択してください" error={errors.siblings_position?.message} {...register("siblings_position")} />
+            </>
           )}
           <YesNoRadio label="結婚歴" name="marital_history" register={register} error={errors.marital_history?.message} required />
           <YesNoRadio label="喫煙" name="smoking" register={register} error={errors.smoking?.message} required />
