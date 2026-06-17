@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Settings, Wallet, Users, Bell, Heart,
+  Settings, Wallet, Users, Bell, Heart, Bot,
 } from 'lucide-react';
 
 // ============================================================
@@ -124,6 +124,9 @@ export default function AdminSettingsPage() {
 
   // 5. マッチング設定
   const [zoomExpiryDays, setZoomExpiryDays] = useState(0);
+
+  // 6. ベータ版設定
+  const [aiOptionEnabled, setAiOptionEnabled] = useState(true);
   const [matchingAutoCancelDays, setMatchingAutoCancelDays] = useState(0);
   const [datingWishExpiryDays, setDatingWishExpiryDays] = useState(0);
 
@@ -142,6 +145,7 @@ export default function AdminSettingsPage() {
         if (data.light_plan_price !== undefined) setLightPlanPrice(Number(data.light_plan_price));
         if (data.matching_fee_normal !== undefined) setMatchingFeeNormal(Number(data.matching_fee_normal));
         if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
+        if (data.ai_option_enabled !== undefined) setAiOptionEnabled(data.ai_option_enabled !== 'false');
       })
       .catch((err) => console.error('settings fetch error:', err));
   }, []);
@@ -171,6 +175,10 @@ export default function AdminSettingsPage() {
     light_plan_price: String(lightPlanPrice),
     matching_fee_normal: String(matchingFeeNormal),
     matching_fee_premium: String(matchingFeePremium),
+  });
+
+  const handleSaveBeta = () => saveSettings({
+    ai_option_enabled: String(aiOptionEnabled),
   });
 
   return (
@@ -245,6 +253,16 @@ export default function AdminSettingsPage() {
               className={inputCls}
             />
           </FieldRow>
+        </SettingsSection>
+
+        {/* ベータ版設定 */}
+        <SettingsSection icon={Bot} title="ベータ版設定" onSave={handleSaveBeta}>
+          <ToggleSwitch
+            checked={aiOptionEnabled}
+            onChange={setAiOptionEnabled}
+            label="AIおすすめオプション"
+            description="AIによるマッチングおすすめ機能を有効にします"
+          />
         </SettingsSection>
 
         {/* 3. 会員設定 */}

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, CheckCircle, ChevronRight, ChevronLeft, Minus, Plus } from 'lucide-react';
+import { Bot, CheckCircle, ChevronRight, ChevronLeft, Minus, Plus, Loader2 } from 'lucide-react';
 
 const PREFECTURES = [
   '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
@@ -75,7 +75,17 @@ function StepIndicator({ current }: { current: number }) {
 
 export default function OptionApplyPage() {
   const router = useRouter();
+  const [aiOptionEnabled, setAiOptionEnabled] = useState<boolean | null>(null);
   const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        setAiOptionEnabled(data.ai_option_enabled !== 'false');
+      })
+      .catch(() => setAiOptionEnabled(true));
+  }, []);
   const [form, setForm] = useState<FormData>({
     ageMin: 25,
     ageMax: 40,
@@ -147,6 +157,25 @@ export default function OptionApplyPage() {
         : [...prev.ngConditions, id],
     }));
   };
+
+  if (aiOptionEnabled === null) {
+    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-zinc-500" /></div>;
+  }
+
+  if (!aiOptionEnabled) {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center py-20">
+        <div className="w-20 h-20 bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Bot className="w-9 h-9 text-zinc-500" />
+        </div>
+        <h1 className="text-xl font-bold text-white mb-3">現在AIおすすめオプションはご利用いただけません</h1>
+        <p className="text-zinc-400 text-sm leading-relaxed">
+          ただいまサービスを一時停止しております。<br />
+          運営からのお知らせをお待ちください。
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">

@@ -137,6 +137,7 @@ function ResultCard({ member, rank }: { member: RecommendResult; rank: number })
 export default function RecommendPage() {
   const router = useRouter();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [aiOptionEnabled, setAiOptionEnabled] = useState<boolean | null>(null);
   const [status, setStatus] = useState<'idle' | 'preferences' | 'loading' | 'done' | 'error'>('idle');
   const [results, setResults] = useState<RecommendResult[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
@@ -156,6 +157,13 @@ export default function RecommendPage() {
   useEffect(() => {
     const auth = getAuthFromCookie();
     setHasAccess(auth?.hasAiOption === true);
+
+    fetch('/api/admin/settings')
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        setAiOptionEnabled(data.ai_option_enabled !== 'false');
+      })
+      .catch(() => setAiOptionEnabled(true));
   }, []);
 
   const handleSubmitPreferences = async () => {
@@ -189,8 +197,23 @@ export default function RecommendPage() {
     }
   };
 
-  if (hasAccess === null) {
+  if (hasAccess === null || aiOptionEnabled === null) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-8 h-8 animate-spin text-zinc-500" /></div>;
+  }
+
+  if (!aiOptionEnabled) {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center py-20">
+        <div className="w-20 h-20 bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Bot className="w-9 h-9 text-zinc-500" />
+        </div>
+        <h1 className="text-xl font-bold text-white mb-3">現在AIおすすめオプションはご利用いただけません</h1>
+        <p className="text-zinc-400 text-sm leading-relaxed">
+          ただいまサービスを一時停止しております。<br />
+          運営からのお知らせをお待ちください。
+        </p>
+      </div>
+    );
   }
 
   if (!hasAccess) {
