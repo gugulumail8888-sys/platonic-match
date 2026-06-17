@@ -24,7 +24,8 @@ interface Member {
   height: number | null;
   blood_type: string | null;
   education: string | null;
-  siblings: string | null;
+  siblings_exist: string | null;
+  siblings_position: string | null;
   smoking: string | null;
   income: string | null;
   living_arrangement: string | null;
@@ -414,7 +415,11 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
           <InfoRow icon={Ruler} label="身長" value={member.height ? `${member.height}cm` : null} />
           <InfoRow icon={GitMerge} label="血液型" value={member.blood_type} />
           <InfoRow icon={GraduationCap} label="学歴" value={member.education} />
-          <InfoRow icon={Users} label="兄弟姉妹" value={member.siblings} />
+          <InfoRow icon={Users} label="兄弟姉妹の有無" value={member.siblings_exist} />
+          {member.siblings_exist === 'あり' && (
+<InfoRow icon={Users} label="兄弟姉妹の詳細" value={member.siblings_detail} />
+            <InfoRow icon={Users} label="自分の続柄" value={member.siblings_position} />
+          )}
           <InfoRow icon={Cigarette} label="喫煙" value={member.smoking === 'true' ? '喫煙あり' : member.smoking === 'false' ? '喫煙なし' : member.smoking} />
           <InfoRow icon={Wallet} label="年収" value={member.income} />
           <InfoRow icon={Home} label="住まい" value={member.living_arrangement} />

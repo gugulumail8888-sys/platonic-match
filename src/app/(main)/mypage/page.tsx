@@ -74,7 +74,9 @@ interface MyProfile {
   marital_history: string | null;
   number_of_children: string | null;
   education: string | null;
-  siblings: string | null;
+  siblings_exist: string | null;
+  siblings_detail: string | null;
+  siblings_position: string | null;
   smoking: string | null;
   income: string | null;
   living_arrangement: string | null;
@@ -188,7 +190,11 @@ function ProfileTab() {
           <InfoRow icon={HeartHandshake} label="結婚歴"       value={yesNoLabel(p.marital_history)} />
           <InfoRow icon={Baby}           label="お子様の人数" value={p.number_of_children} />
           <InfoRow icon={GraduationCap}  label="学歴"         value={p.education} />
-          <InfoRow icon={Users}          label="兄弟姉妹"     value={p.siblings} />
+          <InfoRow icon={Users}          label="兄弟姉妹の有無"     value={p.siblings_exist} />
+          {p.siblings_exist === 'あり' && (
+<InfoRow icon={Users} label="兄弟姉妹の詳細" value={p.siblings_detail} />
+            <InfoRow icon={Users}        label="自分の続柄"         value={p.siblings_position} />
+          )}
         </div>
       </SectionCard>
 
