@@ -63,7 +63,9 @@ interface FormData {
   numberOfChildren: string;
   smoking: string;
   income: string;
-  siblings: string;
+  siblingsExist: string;
+  siblingsDetail: string;
+  siblingsPosition: string;
   education: string;
   marriageTiming: string;
   childrenDesire: string;
@@ -97,7 +99,7 @@ const INITIAL_FORM: FormData = {
   prefecture: '', addressDetail: '',
   occupation: '', height: '', bodyType: '', bloodType: '',
   maritalHistory: '', numberOfChildren: '', smoking: '', income: '',
-  siblings: '', education: '', marriageTiming: '', childrenDesire: '',
+  siblingsExist: '', siblingsDetail: '', siblingsPosition: '', education: '', marriageTiming: '', childrenDesire: '',
   fertilityMethod: [], fertilityMethodOther: '', sexualActivity: '',
   sexuality: '', sexualityOther: '',
   livingArrangement: '', livingArrangementOther: '',
@@ -561,12 +563,28 @@ function Step2({
           options={INCOME_OPTIONS} error={errors.income} />
       </Field>
 
-      {/* 兄弟姉妹 */}
-      <Field label="兄弟姉妹">
-        <FInput name="siblings" value={data.siblings} onChange={onChange}
-          placeholder="例：長男、次女など" />
+      {/* 兄弟姉妹の有無 */}
+      <Field label="兄弟姉妹の有無">
+        <FSelect name="siblingsExist" value={data.siblingsExist} onChange={onChange}
+          options={['なし', 'あり']} />
       </Field>
-
+      {data.siblingsExist === 'あり' && (
+        <Field label="兄弟姉妹の詳細">
+          <input
+            type="text"
+            name="siblingsDetail"
+            value={data.siblingsDetail ?? ''}
+            onChange={onChange}
+            placeholder="例：兄1人・妹2人など"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+          />
+        </Field>
+      )}
+      {/* 自分の続柄 */}
+      <Field label="自分の続柄">
+        <FSelect name="siblingsPosition" value={data.siblingsPosition} onChange={onChange}
+          options={['長男', '次男', '三男以降', '長女', '次女', '三女以降', '一人っ子']} />
+      </Field>
       {/* 学歴 */}
       <Field label="学歴" required error={errors.education}>
         <FSelect name="education" value={data.education} onChange={onChange}
@@ -1150,7 +1168,8 @@ export default function RegisterPage() {
           number_of_children: data.numberOfChildren,
           smoking: data.smoking === 'yes',
           income: data.income,
-          siblings: data.siblings,
+          siblings_exist: data.siblingsExist, siblings_detail: data.siblingsExist === 'あり' ? data.siblingsDetail : null, siblings_position:
+          data.siblingsPosition || null,
           education: data.education,
           marriage_timing: data.marriageTiming,
           children_desire: data.childrenDesire,

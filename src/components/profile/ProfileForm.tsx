@@ -62,7 +62,8 @@ const profileSchema = z.object({
   number_of_children: z.string().min(1, "お子様の人数を選択してください"),
   smoking: z.string().min(1, "喫煙の有無を選択してください"),
   income: z.string().min(1, "収入を選択してください"),
-  siblings: z.string().optional(),
+  siblings_exist: z.string().optional(), siblings_detail: z.string().optional(),
+  siblings_position: z.string().optional(),
   education: z.string().min(1, "学歴を選択してください"),
   marriage_timing: z.string().min(1, "結婚希望時期を選択してください"),
   children_desire: z.string().min(1, "子供の有無（希望）を選択してください"),
@@ -107,7 +108,8 @@ export interface ProfileEditData {
   number_of_children: string | null;
   smoking: boolean | null;
   income: string | null;
-  siblings: string | null;
+  siblings_exist: string | null; siblings_detail: string | null;
+  siblings_position: string | null;
   education: string | null;
   marriage_timing: string | null;
   children_desire: string | null;
@@ -300,7 +302,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       number_of_children: initialData?.number_of_children ?? "",
       smoking: boolToYesNo(initialData?.smoking),
       income: initialData?.income ?? "",
-      siblings: initialData?.siblings ?? "",
+      siblings_exist: initialData?.siblings_exist ?? "", siblings_detail: initialData?.siblings_detail ?? "",
+      siblings_position: initialData?.siblings_position ?? "",
       education: initialData?.education ?? "",
       marriage_timing: initialData?.marriage_timing ?? "",
       children_desire: initialData?.children_desire ?? "",
@@ -323,6 +326,7 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
   });
 
   const childrenDesire = watch("children_desire");
+  const siblingsExist = watch("siblings_exist");
   const sexuality = watch("sexuality");
   const livingArrangement = watch("living_arrangement");
   const postMarriageLiving = watch("post_marriage_living");
@@ -360,7 +364,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       number_of_children: data.number_of_children || null,
       smoking: data.smoking ? data.smoking === "yes" : null,
       income: data.income || null,
-      siblings: data.siblings || null,
+      siblings_exist: data.siblings_exist || null, siblings_detail: data.siblings_exist === 'あり' ? data.siblings_detail : null,
+      siblings_position: data.siblings_exist === 'あり' ? (data.siblings_position || null) : null,
       education: data.education || null,
       marriage_timing: data.marriage_timing || null,
       children_desire: data.children_desire || null,
@@ -467,7 +472,11 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           <Select label="最終学歴" options={toOptions(EDUCATION_OPTIONS)} placeholder="選択してください" error={errors.education?.message} required {...register("education")} />
           <Select label="収入（年収）" options={toOptions(INCOME_OPTIONS)} placeholder="選択してください" error={errors.income?.message} required {...register("income")} />
           <Select label="お子様の人数" options={toOptions(NUMBER_OF_CHILDREN_OPTIONS)} placeholder="選択してください" error={errors.number_of_children?.message} required {...register("number_of_children")} />
-          <Input label="兄弟姉妹" placeholder="例：長男、次女など" error={errors.siblings?.message} {...register("siblings")} />
+          <Select label="兄弟姉妹の有無" options={toOptions(['なし', 'あり'])} placeholder="選択してください" error={errors.siblings_exist?.message} {...register("siblings_exist")} />
+          {siblingsExist === 'あり' && (
+<Input label="兄弟姉妹の詳細" placeholder="例：兄1人・妹2人など" {...register("siblings_detail")} />
+            <Select label="自分の続柄" options={toOptions(['長男', '次男', '三男以降', '長女', '次女', '三女以降', '一人っ子'])} placeholder="選択してください" error={errors.siblings_position?.message} {...register("siblings_position")} />
+          )}
           <YesNoRadio label="結婚歴" name="marital_history" register={register} error={errors.marital_history?.message} required />
           <YesNoRadio label="喫煙" name="smoking" register={register} error={errors.smoking?.message} required />
         </div>
