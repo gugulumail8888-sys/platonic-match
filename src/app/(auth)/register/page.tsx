@@ -383,7 +383,7 @@ function Step1({
 
       {/* 氏名 */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="お名前（氏）" required error={errors.lastName}>
+        <Field label="お名前（姓）" required error={errors.lastName}>
           <FInput name="lastName" value={data.lastName} onChange={onChange}
             placeholder="例：山田" error={errors.lastName} />
         </Field>
@@ -395,7 +395,7 @@ function Step1({
 
       {/* フリガナ */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="フリガナ（氏）※カタカナまたはローマ字" required error={errors.lastNameKana}>
+        <Field label="フリガナ（姓）※カタカナまたはローマ字" required error={errors.lastNameKana}>
           <FInput name="lastNameKana" value={data.lastNameKana} onChange={onChange}
             placeholder="カタカナまたはローマ字" error={errors.lastNameKana} />
         </Field>
@@ -593,7 +593,7 @@ function Step2({
           options={['長男', '次男', '三男以降', '長女', '次女', '三女以降', '一人っ子']} />
       </Field>
       {/* 学歴 */}
-      <Field label="学歴" required error={errors.education}>
+      <Field label="最終学歴" required error={errors.education}>
         <FSelect name="education" value={data.education} onChange={onChange}
           options={['中学卒', '高校卒', '専門卒', '短大卒', '大学卒', '大学院卒']}
           error={errors.education} />

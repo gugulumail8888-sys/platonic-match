@@ -469,18 +469,18 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           基本情報
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <Input label="姓" placeholder="例：山田" error={errors.last_name?.message} required {...register("last_name")} />
-          <Input label="名" placeholder="例：太郎" error={errors.first_name?.message} required {...register("first_name")} />
-          <Input label="フリガナ（姓）" placeholder="例：ヤマダ" error={errors.furigana_last?.message} required {...register("furigana_last")} />
-          <Input label="フリガナ（名）" placeholder="例：タロウ" error={errors.furigana_first?.message} required {...register("furigana_first")} />
+          <Input label="お名前（姓）" placeholder="例：山田" error={errors.last_name?.message} required {...register("last_name")} />
+          <Input label="お名前（名）" placeholder="例：太郎" error={errors.first_name?.message} required {...register("first_name")} />
+          <Input label="フリガナ（姓）※カタカナまたはローマ字" placeholder="例：ヤマダ" error={errors.furigana_last?.message} required {...register("furigana_last")} />
+          <Input label="フリガナ（名）※カタカナまたはローマ字" placeholder="例：タロウ" error={errors.furigana_first?.message} required {...register("furigana_first")} />
           <Input label="電話番号" type="tel" placeholder="例：090-1234-5678" error={errors.phone?.message} {...phoneRegister} onChange={handlePhoneChange} />
           <Select label="飲酒" options={ALCOHOL_OPTIONS} placeholder="選択してください" error={errors.alcohol?.message} {...register("alcohol")} />
           <Input label="ニックネーム" placeholder="例：さくら" error={errors.nickname?.message} required {...register("nickname")} />
           <Input label="生年月日" type="date" error={errors.birth_date?.message} required {...register("birth_date")} />
           <Select label="性別" options={genderOptions} error={errors.gender?.message} required {...register("gender")} />
-          <Select label="都道府県" options={prefectureOptions} placeholder="選択してください" error={errors.prefecture?.message} required {...register("prefecture")} />
+          <Select label="住所（都道府県）" options={prefectureOptions} placeholder="選択してください" error={errors.prefecture?.message} required {...register("prefecture")} />
           <div className="md:col-span-2">
-            <Input label="住所" placeholder="例：東京都渋谷区..." error={errors.address?.message} {...register("address")} />
+            <Input label="住所（詳細）" placeholder="例：東京都渋谷区..." error={errors.address?.message} {...register("address")} />
           </div>
           <div className="md:col-span-2">
             <Input label="職業" placeholder="例：会社員、医師、教師..." error={errors.occupation?.message} required {...register("occupation")} />
