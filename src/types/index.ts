@@ -29,7 +29,7 @@ export type Profile = {
 };
 
 // 性別
-export type Gender = "male" | "female" | "other";
+export type Gender = "male" | "female";
 
 // 年収
 export type AnnualIncome =
@@ -186,7 +186,7 @@ export type Prefecture = typeof PREFECTURES[number];
 export const GENDER_LABELS: Record<Gender, string> = {
   male: "男性",
   female: "女性",
-  other: "その他",
+  
 };
 
 export const ANNUAL_INCOME_LABELS: Record<AnnualIncome, string> = {

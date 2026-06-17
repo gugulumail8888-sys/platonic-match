@@ -52,6 +52,7 @@ interface FormData {
   phone: string;
   email: string;
   password: string;
+  passwordConfirm: string;
   prefecture: string;
   addressDetail: string;
   // Step 2
@@ -95,7 +96,7 @@ type AnyChangeEvent = React.ChangeEvent<
 const INITIAL_FORM: FormData = {
   lastName: '', firstName: '', lastNameKana: '', firstNameKana: '',
   nickname: '', birthYear: '', birthMonth: '', birthDay: '',
-  gender: '', phone: '', email: '', password: '',
+  gender: '', phone: '', email: '', password: '', passwordConfirm: '',
   prefecture: '', addressDetail: '',
   occupation: '', height: '', bodyType: '', bloodType: '',
   maritalHistory: '', numberOfChildren: '', smoking: '', income: '',
@@ -468,6 +469,12 @@ function Step1({
           placeholder="8文字以上" type="password" error={errors.password} />
       </Field>
 
+      {/* パスワード確認 */}
+      <Field label="パスワード（確認）" required error={errors.passwordConfirm}>
+        <FInput name="passwordConfirm" value={data.passwordConfirm} onChange={onChange}
+          placeholder="もう一度入力してください" type="password" error={errors.passwordConfirm} />
+      </Field>
+
       {/* 都道府県 */}
       <Field label="住所（都道府県）" required error={errors.prefecture}>
         <FSelect name="prefecture" value={data.prefecture} onChange={onChange}
@@ -576,7 +583,7 @@ function Step2({
             value={data.siblingsDetail ?? ''}
             onChange={onChange}
             placeholder="例：兄1人・妹2人など"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+            className="w-full bg-zinc-800 border border-zinc-600 rounded-md px-3 py-2 text-sm text-white placeholder-zinc-400"
           />
         </Field>
       )}
@@ -1080,6 +1087,9 @@ export default function RegisterPage() {
     if (!data.password)             e.password      = 'パスワードを入力してください';
     else if (data.password.length < 8)
       e.password = '8文字以上で入力してください';
+    if (!data.passwordConfirm)      e.passwordConfirm = 'パスワード（確認）を入力してください';
+    else if (data.passwordConfirm !== data.password)
+      e.passwordConfirm = 'パスワードが一致しません';
     if (!data.prefecture)           e.prefecture    = '都道府県を選択してください';
     if (!data.addressDetail.trim()) e.addressDetail = '住所詳細を入力してください';
     setErrors(e);

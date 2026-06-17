@@ -52,7 +52,7 @@ const profileSchema = z.object({
   alcohol: z.string().optional(),
   nickname: z.string().min(2, "2文字以上で入力してください").max(20, "20文字以内で入力してください"),
   birth_date: z.string().min(1, "生年月日を選択してください"),
-  gender: z.enum(["male", "female", "other"]),
+  gender: z.enum(["male", "female"]),
   prefecture: z.string().min(1, "都道府県を選択してください"),
   occupation: z.string().min(1, "職業を入力してください"),
   height: z.coerce.number().min(140).max(220).optional().or(z.literal("")),
@@ -137,6 +137,29 @@ interface ProfileFormProps {
 
 const boolToYesNo = (v: boolean | string | null | undefined): string =>
   v === true || v === "true" ? "yes" : v === false || v === "false" ? "no" : "";
+
+const formatPhone = (value: string): string => {
+  const cleaned = value.replace(/[^\d-]/g, '');
+  const digits = cleaned.replace(/-/g, '');
+  if (/^(090|080|070)/.test(digits)) {
+    const d = digits.slice(0, 11);
+    if (d.length <= 3) return d;
+    if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`;
+    return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  }
+  let result = '';
+  let digitCount = 0;
+  for (const char of cleaned) {
+    if (result.length >= 13) break;
+    if (char === '-') {
+      result += char;
+    } else if (digitCount < 11) {
+      result += char;
+      digitCount++;
+    }
+  }
+  return result;
+};
 
 // ============================================================
 // 共通サブコンポーネント
@@ -341,6 +364,12 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
     );
   };
 
+  const { onChange: phoneOnChange, ...phoneRegister } = register("phone");
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = formatPhone(e.target.value);
+    phoneOnChange(e);
+  };
+
   const onSubmit = async (data: ProfileFormData) => {
     setServerError(null);
 
@@ -444,15 +473,15 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           <Input label="名" placeholder="例：太郎" error={errors.first_name?.message} required {...register("first_name")} />
           <Input label="フリガナ（姓）" placeholder="例：ヤマダ" error={errors.furigana_last?.message} required {...register("furigana_last")} />
           <Input label="フリガナ（名）" placeholder="例：タロウ" error={errors.furigana_first?.message} required {...register("furigana_first")} />
-          <Input label="電話番号" type="tel" placeholder="例：09012345678" error={errors.phone?.message} {...register("phone")} />
+          <Input label="電話番号" type="tel" placeholder="例：090-1234-5678" error={errors.phone?.message} {...phoneRegister} onChange={handlePhoneChange} />
           <Select label="飲酒" options={ALCOHOL_OPTIONS} placeholder="選択してください" error={errors.alcohol?.message} {...register("alcohol")} />
-          <div className="md:col-span-2">
-            <Input label="住所" placeholder="例：東京都渋谷区..." error={errors.address?.message} {...register("address")} />
-          </div>
           <Input label="ニックネーム" placeholder="例：さくら" error={errors.nickname?.message} required {...register("nickname")} />
           <Input label="生年月日" type="date" error={errors.birth_date?.message} required {...register("birth_date")} />
           <Select label="性別" options={genderOptions} error={errors.gender?.message} required {...register("gender")} />
           <Select label="都道府県" options={prefectureOptions} placeholder="選択してください" error={errors.prefecture?.message} required {...register("prefecture")} />
+          <div className="md:col-span-2">
+            <Input label="住所" placeholder="例：東京都渋谷区..." error={errors.address?.message} {...register("address")} />
+          </div>
           <div className="md:col-span-2">
             <Input label="職業" placeholder="例：会社員、医師、教師..." error={errors.occupation?.message} required {...register("occupation")} />
           </div>
