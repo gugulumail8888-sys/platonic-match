@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 type Person = {
   nickname: string;
   age: number;
@@ -39,6 +37,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as NotifyBody;
     const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl } = body;
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const dateStr = new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
     const amountStr = `¥${amount.toLocaleString()}（税込）`;
