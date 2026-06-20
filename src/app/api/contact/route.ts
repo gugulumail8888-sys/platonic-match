@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'amistasupport@gmail.com';
 
 const baseStyle = `font-family: sans-serif; font-size: 14px; line-height: 1.8; max-width: 600px; margin: 0 auto; padding: 24px;`;
@@ -23,6 +21,7 @@ export async function POST(req: NextRequest) {
     };
 
     const { name, email, type, subject, body: message } = body;
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     if (!name?.trim() || !email?.trim() || !type?.trim() || !subject?.trim() || !message?.trim()) {
       return NextResponse.json({ error: 'すべての項目を入力してください' }, { status: 400 });
