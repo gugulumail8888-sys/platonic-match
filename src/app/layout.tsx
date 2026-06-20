@@ -15,6 +15,11 @@ export const metadata: Metadata = {
     locale: "ja_JP",
     siteName: "amista",
   },
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export const viewport: Viewport = {

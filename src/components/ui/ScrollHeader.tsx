@@ -60,7 +60,7 @@ export function ScrollHeader() {
               ログイン
             </Button>
           </Link>
-          <Link href="/register">
+          <Link href="/signup">
             <Button size="sm">
               無料登録
             </Button>

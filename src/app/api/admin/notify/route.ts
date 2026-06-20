@@ -12,7 +12,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -336,6 +336,83 @@ export async function POST(req: NextRequest) {
           <p>${applicant.nickname} さん、申請いただきありがとうございました。</p>
           <p>7日間お相手からの返答がなかったため、今回のお見合い申請は自動的に不成立となりました。</p>
           <p>引き続きamistaをご利用いただき、素敵な出会いを見つけてください。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+    } else if (type === 'schedule_proposed_request') {
+      // 自動承認後、申請者に候補日提案を促すメール
+      emails.push({
+        to: applicant.email,
+        subject: '【amista】お見合いが承認されました！候補日をご提案ください',
+        html: wrap(`
+          <p>${applicant.nickname}さん、こんにちは。</p>
+          <p><strong>${member.nickname}さん</strong>がお見合い申請を承認されました！</p>
+          <p>次のステップとして、お見合いの候補日時を3〜5件ご提案ください。</p>
+          <p>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/schedule/request?id=${applicationId}&name=${encodeURIComponent(member.nickname)}"
+              style="display:inline-block;padding:12px 24px;background:#0d9488;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+              候補日を提案する
+            </a>
+          </p>
+          <p style="color:#888;font-size:12px;">※このリンクはログイン後に有効です。</p>
+        `),
+      });
+
+      // お相手にも承認済みの旨を通知
+      emails.push({
+        to: member.email,
+        subject: '【amista】お見合い申請を承認しました',
+        html: wrap(`
+          <p>${member.nickname}さん、こんにちは。</p>
+          <p><strong>${applicant.nickname}さん</strong>のお見合い申請を承認しました。</p>
+          <p>相手の方が候補日を提案次第、日程選択のご案内をお送りします。</p>
+          <p>もうしばらくお待ちください。</p>
+        `),
+      });
+
+    } else if (type === 'schedule_proposed') {
+      // 日程候補提案通知（お相手のみ）
+      emails.push({
+        to: member.email,
+        subject: `【amista】お見合いの日程候補が届きました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合いの日程候補が届きました</h2>
+          <p>${member.nickname} さん、${applicant.nickname} さんからお見合いの日程候補が届きました。</p>
+          <p>マイページから候補日時をご確認のうえ、ご都合の良い日程をお選びください。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+    } else if (type === 'schedule_confirmed') {
+      // 日程確定通知（両者へ）
+      const whenStr = scheduledDateStr ?? '';
+      const meetSection = meetUrl
+        ? `<p>Google Meet URL：<a href="${meetUrl}">${meetUrl}</a></p>`
+        : '<p>Google Meetリンクは別途事務局よりお送りします。</p>';
+
+      // 申請者
+      emails.push({
+        to: applicant.email,
+        subject: `【amista】お見合いの日程が確定しました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合いの日程が確定しました！</h2>
+          <p>${applicant.nickname} さん、${member.nickname} さんとのお見合い日程が確定しました。</p>
+          <p>日時：${whenStr}</p>
+          ${meetSection}
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+      // お相手
+      emails.push({
+        to: member.email,
+        subject: `【amista】お見合いの日程が確定しました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合いの日程が確定しました！</h2>
+          <p>${member.nickname} さん、${applicant.nickname} さんとのお見合い日程が確定しました。</p>
+          <p>日時：${whenStr}</p>
+          ${meetSection}
           <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
         `),
       });

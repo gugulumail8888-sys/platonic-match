@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Settings, Wallet, Users, Bell, Heart, Bot,
+  Settings, Wallet, Users, Bell, Heart, Bot, Megaphone,
 } from 'lucide-react';
 
 // ============================================================
@@ -124,11 +124,14 @@ export default function AdminSettingsPage() {
 
   // 5. マッチング設定
   const [zoomExpiryDays, setZoomExpiryDays] = useState(0);
+  const [matchingAutoCancelDays, setMatchingAutoCancelDays] = useState(0);
+  const [datingWishExpiryDays, setDatingWishExpiryDays] = useState(0);
 
   // 6. ベータ版設定
   const [aiOptionEnabled, setAiOptionEnabled] = useState(true);
-  const [matchingAutoCancelDays, setMatchingAutoCancelDays] = useState(0);
-  const [datingWishExpiryDays, setDatingWishExpiryDays] = useState(0);
+
+  // 7. キャンペーン設定
+  const [campaignBannerEnabled, setCampaignBannerEnabled] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -146,6 +149,16 @@ export default function AdminSettingsPage() {
         if (data.matching_fee_normal !== undefined) setMatchingFeeNormal(Number(data.matching_fee_normal));
         if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
         if (data.ai_option_enabled !== undefined) setAiOptionEnabled(data.ai_option_enabled !== 'false');
+        if (data.review_mode !== undefined) setReviewMode(data.review_mode === 'auto' ? 'auto' : 'manual');
+        if (data.registration_open !== undefined) setRegistrationOpen(data.registration_open !== 'false');
+        if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
+        if (data.campaign_banner_enabled !== undefined) setCampaignBannerEnabled(data.campaign_banner_enabled === 'true');
+        if (data.admin_notify_email !== undefined) setAdminNotifyEmail(data.admin_notify_email);
+        if (data.notify_new_member !== undefined) setNotifyNewMember(data.notify_new_member !== 'false');
+        if (data.notify_matching_apply !== undefined) setNotifyMatchingApply(data.notify_matching_apply !== 'false');
+        if (data.zoom_expiry_days !== undefined) setZoomExpiryDays(Number(data.zoom_expiry_days));
+        if (data.matching_auto_cancel_days !== undefined) setMatchingAutoCancelDays(Number(data.matching_auto_cancel_days));
+        if (data.dating_wish_expiry_days !== undefined) setDatingWishExpiryDays(Number(data.dating_wish_expiry_days));
       })
       .catch((err) => console.error('settings fetch error:', err));
   }, []);
@@ -179,6 +192,28 @@ export default function AdminSettingsPage() {
 
   const handleSaveBeta = () => saveSettings({
     ai_option_enabled: String(aiOptionEnabled),
+  });
+
+  const handleSaveMembers = () => saveSettings({
+    review_mode: reviewMode,
+    registration_open: String(registrationOpen),
+    daily_like_limit: String(likeLimit),
+  });
+
+  const handleSaveNotification = () => saveSettings({
+    admin_notify_email: adminNotifyEmail,
+    notify_new_member: String(notifyNewMember),
+    notify_matching_apply: String(notifyMatchingApply),
+  });
+
+  const handleSaveMatching = () => saveSettings({
+    zoom_expiry_days: String(zoomExpiryDays),
+    matching_auto_cancel_days: String(matchingAutoCancelDays),
+    dating_wish_expiry_days: String(datingWishExpiryDays),
+  });
+
+  const handleSaveCampaign = () => saveSettings({
+    campaign_banner_enabled: String(campaignBannerEnabled),
   });
 
   return (
@@ -266,7 +301,7 @@ export default function AdminSettingsPage() {
         </SettingsSection>
 
         {/* 3. 会員設定 */}
-        <SettingsSection icon={Users} title="会員設定" onSave={handleSave}>
+        <SettingsSection icon={Users} title="会員設定" onSave={handleSaveMembers}>
           <ToggleSwitch
             checked={registrationOpen}
             onChange={setRegistrationOpen}
@@ -294,7 +329,7 @@ export default function AdminSettingsPage() {
         </SettingsSection>
 
         {/* 4. 通知設定 */}
-        <SettingsSection icon={Bell} title="通知設定" onSave={handleSave}>
+        <SettingsSection icon={Bell} title="通知設定" onSave={handleSaveNotification}>
           <FieldRow label="管理者通知メールアドレス">
             <input
               type="email"
@@ -319,7 +354,7 @@ export default function AdminSettingsPage() {
         </SettingsSection>
 
         {/* 5. マッチング設定 */}
-        <SettingsSection icon={Heart} title="マッチング設定" onSave={handleSave}>
+        <SettingsSection icon={Heart} title="マッチング設定" onSave={handleSaveMatching}>
           <FieldRow label="Google Meet面談有効期限" unit="日">
             <input
               type="number"
@@ -344,6 +379,16 @@ export default function AdminSettingsPage() {
               className={inputCls}
             />
           </FieldRow>
+        </SettingsSection>
+
+        {/* 7. キャンペーン設定 */}
+        <SettingsSection icon={Megaphone} title="キャンペーン設定" onSave={handleSaveCampaign}>
+          <ToggleSwitch
+            checked={campaignBannerEnabled}
+            onChange={setCampaignBannerEnabled}
+            label="夏のキャンペーンバナーを表示"
+            description="7月〜9月限定｜AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーをトップページに表示します"
+          />
         </SettingsSection>
       </div>
 

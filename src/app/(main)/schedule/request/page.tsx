@@ -1,37 +1,74 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+
+const MIN_SLOTS = 3
+const MAX_SLOTS = 5
+const TIME_OPTIONS = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00']
+
+type Slot = { date: string; time: string }
 
 function ScheduleRequestContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const applicationId = searchParams.get('id') || 'APP-001'
+  const matchingId = searchParams.get('id') || ''
   const partnerName = searchParams.get('name') || 'お相手'
 
-  const [slots, setSlots] = useState([
+  const [slots, setSlots] = useState<Slot[]>([
     { date: '', time: '' },
     { date: '', time: '' },
     { date: '', time: '' },
   ])
-  const [message, setMessage] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const updateSlot = (index: number, field: 'date' | 'time', value: string) => {
     const updated = [...slots]
-    updated[index][field] = value
+    updated[index] = { ...updated[index], [field]: value }
     setSlots(updated)
   }
 
-  const isValid = slots.filter(s => s.date && s.time).length >= 1
+  const addSlot = () => {
+    if (slots.length >= MAX_SLOTS) return
+    setSlots([...slots, { date: '', time: '' }])
+  }
 
-  const handleSubmit = () => {
-    if (!isValid) return
-    setSubmitted(true)
-    setTimeout(() => {
-      router.push(`/schedule/complete?id=${applicationId}&type=request`)
-    }, 1500)
+  const removeSlot = (index: number) => {
+    if (slots.length <= MIN_SLOTS) return
+    setSlots(slots.filter((_, i) => i !== index))
+  }
+
+  const filledSlots = slots.filter(s => s.date && s.time)
+  const isValid = filledSlots.length >= MIN_SLOTS && !!matchingId
+
+  const handleSubmit = async () => {
+    if (!isValid || submitting) return
+    setSubmitting(true)
+    setError('')
+    try {
+      const proposedAtList = filledSlots.map(
+        (s) => new Date(`${s.date}T${s.time}:00+09:00`).toISOString()
+      )
+
+      const res = await fetch('/api/schedule/propose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchingId, proposedAtList }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error ?? '送信に失敗しました')
+        setSubmitting(false)
+        return
+      }
+
+      router.push('/matching')
+    } catch {
+      setError('送信に失敗しました')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -45,7 +82,6 @@ function ScheduleRequestContent() {
           <p className="text-zinc-400 mt-2">
             <span className="font-semibold text-pink-400">{partnerName}</span>さんとのお見合い日程を提案しましょう
           </p>
-          <div className="mt-2 text-xs text-zinc-500">申請番号：{applicationId}</div>
         </div>
 
         {/* 説明カード */}
@@ -55,7 +91,7 @@ function ScheduleRequestContent() {
             <div className="text-sm text-blue-300">
               <p className="font-semibold mb-1">日程調整の流れ</p>
               <ol className="list-decimal list-inside space-y-1 text-blue-400">
-                <li>希望日時を最大3つ入力してください</li>
+                <li>希望日時を{MIN_SLOTS}〜{MAX_SLOTS}個入力してください</li>
                 <li>お相手が都合の良い日時を選びます</li>
                 <li>確定後、Google Meetリンクをお送りします</li>
               </ol>
@@ -65,18 +101,28 @@ function ScheduleRequestContent() {
 
         {/* 日時入力 */}
         <div className="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-6 mb-6">
-          <h2 className="font-semibold text-zinc-200 mb-4">希望日時（最大3つ）</h2>
+          <h2 className="font-semibold text-zinc-200 mb-4">希望日時（{MIN_SLOTS}〜{MAX_SLOTS}個）</h2>
           <div className="space-y-4">
             {slots.map((slot, index) => (
               <div key={index} className="border border-zinc-700 rounded-xl p-4 bg-zinc-800/50">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold
-                    ${index === 0 ? 'bg-pink-500' : index === 1 ? 'bg-purple-500' : 'bg-indigo-400'}`}>
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-medium text-zinc-300">
-                    第{index + 1}希望{index === 0 ? '（必須）' : '（任意）'}
-                  </span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-bold
+                      ${index === 0 ? 'bg-pink-500' : index === 1 ? 'bg-purple-500' : 'bg-indigo-400'}`}>
+                      {index + 1}
+                    </span>
+                    <span className="text-sm font-medium text-zinc-300">
+                      第{index + 1}希望{index < MIN_SLOTS ? '（必須）' : '（任意）'}
+                    </span>
+                  </div>
+                  {slots.length > MIN_SLOTS && (
+                    <button
+                      onClick={() => removeSlot(index)}
+                      className="text-zinc-500 hover:text-red-400 text-xs"
+                    >
+                      削除
+                    </button>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -97,7 +143,7 @@ function ScheduleRequestContent() {
                       className="w-full bg-zinc-800 border border-zinc-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
                     >
                       <option value="" className="bg-zinc-800">選択してください</option>
-                      {['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'].map(t => (
+                      {TIME_OPTIONS.map(t => (
                         <option key={t} value={t} className="bg-zinc-800">{t}</option>
                       ))}
                     </select>
@@ -106,30 +152,33 @@ function ScheduleRequestContent() {
               </div>
             ))}
           </div>
+
+          {slots.length < MAX_SLOTS && (
+            <button
+              onClick={addSlot}
+              className="w-full mt-4 py-2.5 rounded-xl border border-dashed border-zinc-600 text-zinc-400 text-sm hover:border-pink-400 hover:text-pink-400 transition-colors"
+            >
+              ＋ 候補を追加する
+            </button>
+          )}
         </div>
 
-        {/* メッセージ */}
-        <div className="bg-zinc-800/50 border border-zinc-700 rounded-2xl p-6 mb-6">
-          <h2 className="font-semibold text-zinc-200 mb-3">ひとことメッセージ（任意）</h2>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="例：よろしくお願いします！週末が都合が良いです。"
-            rows={3}
-            className="w-full bg-zinc-800 border border-zinc-600 text-white placeholder-zinc-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 resize-none"
-          />
-        </div>
+        {error && (
+          <div className="bg-red-900/30 border border-red-700 rounded-xl p-3 mb-6 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
         {/* 送信ボタン */}
         <button
           onClick={handleSubmit}
-          disabled={!isValid || submitted}
+          disabled={!isValid || submitting}
           className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all
-            ${isValid && !submitted
+            ${isValid && !submitting
               ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg hover:shadow-xl hover:scale-105'
               : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'}`}
         >
-          {submitted ? '送信中...' : '日程候補を送る ✉️'}
+          {submitting ? '送信中...' : '日程候補を送る ✉️'}
         </button>
         <p className="text-center text-xs text-zinc-500 mt-3">
           送信後、お相手に通知が届きます

@@ -25,6 +25,7 @@ interface Member {
   blood_type: string | null;
   education: string | null;
   siblings_exist: string | null;
+  siblings_detail: string | null;
   siblings_position: string | null;
   smoking: string | null;
   income: string | null;

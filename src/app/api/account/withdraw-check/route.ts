@@ -52,9 +52,17 @@ export async function GET() {
 
   const receivedPendingCount = receivedRows?.length ?? 0;
 
+  // ④ キャンセル回数チェック（自分が関係したcancelled件数）
+  const { count: cancelCount } = await supabase
+    .from('matchings')
+    .select('id', { count: 'exact', head: true })
+    .or(`applicant_id.eq.${user.id},partner_id.eq.${user.id}`)
+    .eq('status', 'cancelled');
+
   return NextResponse.json({
     optionDaysRemaining,
     hasSentPending,
     receivedPendingCount,
+    cancelCount: cancelCount ?? 0,
   });
 }

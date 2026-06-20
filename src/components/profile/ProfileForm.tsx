@@ -47,9 +47,9 @@ const profileSchema = z.object({
   first_name: z.string().min(1, "名を入力してください"),
   furigana_last: z.string().min(1, "フリガナ（姓）を入力してください"),
   furigana_first: z.string().min(1, "フリガナ（名）を入力してください"),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  alcohol: z.string().optional(),
+  phone: z.string().min(1, "電話番号を入力してください"),
+  address_detail: z.string().min(1, "住所（詳細）を入力してください"),
+  alcohol: z.string().min(1, "飲酒を選択してください"),
   nickname: z.string().min(2, "2文字以上で入力してください").max(20, "20文字以内で入力してください"),
   birth_date: z.string().min(1, "生年月日を選択してください"),
   gender: z.enum(["male", "female"]),
@@ -94,7 +94,7 @@ export interface ProfileEditData {
   furigana_last: string | null;
   furigana_first: string | null;
   phone: string | null;
-  address: string | null;
+  address_detail: string | null;
   alcohol: string | null;
   nickname: string | null;
   birth_date: string | null;
@@ -311,7 +311,7 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       furigana_last: initialData?.furigana_last ?? "",
       furigana_first: initialData?.furigana_first ?? "",
       phone: initialData?.phone ?? "",
-      address: initialData?.address ?? "",
+      address_detail: initialData?.address_detail ?? "",
       alcohol: initialData?.alcohol ?? "",
       nickname: initialData?.nickname ?? "",
       birth_date: initialData?.birth_date ?? "",
@@ -349,7 +349,6 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
   });
 
   const childrenDesire = watch("children_desire");
-  const siblingsExist = watch("siblings_exist");
   const sexuality = watch("sexuality");
   const livingArrangement = watch("living_arrangement");
   const postMarriageLiving = watch("post_marriage_living");
@@ -379,8 +378,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       furigana_last: data.furigana_last || null,
       furigana_first: data.furigana_first || null,
       phone: data.phone || null,
-      address: data.address || null,
-      alcohol: data.alcohol || null,
+      address_detail: data.address_detail || null,
+      alcohol: data.alcohol || "never",
       nickname: data.nickname,
       birth_date: data.birth_date,
       gender: data.gender,
@@ -473,14 +472,14 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           <Input label="お名前（名）" placeholder="例：太郎" error={errors.first_name?.message} required {...register("first_name")} />
           <Input label="フリガナ（姓）※カタカナまたはローマ字" placeholder="例：ヤマダ" error={errors.furigana_last?.message} required {...register("furigana_last")} />
           <Input label="フリガナ（名）※カタカナまたはローマ字" placeholder="例：タロウ" error={errors.furigana_first?.message} required {...register("furigana_first")} />
-          <Input label="電話番号" type="tel" placeholder="例：090-1234-5678" error={errors.phone?.message} {...phoneRegister} onChange={handlePhoneChange} />
-          <Select label="飲酒" options={ALCOHOL_OPTIONS} placeholder="選択してください" error={errors.alcohol?.message} {...register("alcohol")} />
+          <Input label="電話番号" type="tel" placeholder="例：090-1234-5678" error={errors.phone?.message} required {...phoneRegister} onChange={handlePhoneChange} />
+          <Select label="飲酒" options={ALCOHOL_OPTIONS} placeholder="選択してください" error={errors.alcohol?.message} required {...register("alcohol")} />
           <Input label="ニックネーム" placeholder="例：さくら" error={errors.nickname?.message} required {...register("nickname")} />
           <Input label="生年月日" type="date" error={errors.birth_date?.message} required {...register("birth_date")} />
           <Select label="性別" options={genderOptions} error={errors.gender?.message} required {...register("gender")} />
           <Select label="住所（都道府県）" options={prefectureOptions} placeholder="選択してください" error={errors.prefecture?.message} required {...register("prefecture")} />
           <div className="md:col-span-2">
-            <Input label="住所（詳細）" placeholder="例：東京都渋谷区..." error={errors.address?.message} {...register("address")} />
+            <Input label="住所（詳細）" placeholder="例：東京都渋谷区..." error={errors.address_detail?.message} required {...register("address_detail")} />
           </div>
           <div className="md:col-span-2">
             <Input label="職業" placeholder="例：会社員、医師、教師..." error={errors.occupation?.message} required {...register("occupation")} />
@@ -502,11 +501,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           <Select label="収入（年収）" options={toOptions(INCOME_OPTIONS)} placeholder="選択してください" error={errors.income?.message} required {...register("income")} />
           <Select label="お子様の人数" options={toOptions(NUMBER_OF_CHILDREN_OPTIONS)} placeholder="選択してください" error={errors.number_of_children?.message} required {...register("number_of_children")} />
           <Select label="兄弟姉妹の有無" options={toOptions(['なし', 'あり'])} placeholder="選択してください" error={errors.siblings_exist?.message} {...register("siblings_exist")} />
-          {siblingsExist === 'あり' && (<>
-<Input label="兄弟姉妹の詳細" placeholder="例：兄1人・妹2人など" {...register("siblings_detail")} />
-            <Select label="自分の続柄" options={toOptions(['長男', '次男', '三男以降', '長女', '次女', '三女以降', '一人っ子'])} placeholder="選択してください" error={errors.siblings_position?.message} {...register("siblings_position")} />
-            </>
-          )}
+          <Input label="兄弟姉妹の詳細" placeholder="例：兄1人・妹2人など" {...register("siblings_detail")} />
+          <Select label="自分の続柄" options={toOptions(['長男', '次男', '三男以降', '長女', '次女', '三女以降', '一人っ子'])} placeholder="選択してください" error={errors.siblings_position?.message} {...register("siblings_position")} />
           <YesNoRadio label="結婚歴" name="marital_history" register={register} error={errors.marital_history?.message} required />
           <YesNoRadio label="喫煙" name="smoking" register={register} error={errors.smoking?.message} required />
         </div>

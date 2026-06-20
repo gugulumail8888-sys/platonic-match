@@ -142,7 +142,7 @@ export default function TermsPage() {
         <ArticleSection number={6} title="月額オプション">
           <BulletList items={[
             'AIおすすめプランは月額料金が発生',
-            '料金は別途定める（変更予定）',
+            '月額料金は980円（税込1,078円）',
             '解約は月末までに申請',
           ]} />
         </ArticleSection>

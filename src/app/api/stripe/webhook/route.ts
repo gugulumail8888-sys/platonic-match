@@ -10,6 +10,15 @@ const PLAN_BY_PRICE_ID: Record<string, string> = {
   [process.env.STRIPE_PRICE_STANDARD ?? '']: 'standard',
 };
 
+function calcAge(birthDate: string): number {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
@@ -49,7 +58,7 @@ export async function POST(req: NextRequest) {
           subscription_started_at: new Date().toISOString(),
           is_premium: true,
         })
-        .eq('user_id', userId);
+        .eq('id', userId);
     }
 
     const matchingId = session.metadata?.matchingId;
@@ -61,10 +70,86 @@ export async function POST(req: NextRequest) {
         : session.payment_intent?.id;
 
       const supabase = createAdminClient();
-      await supabase
+      const { data: matching, error: matchingUpdateError } = await supabase
         .from('matchings')
         .update({ payment_intent_id: paymentIntentId })
-        .eq('id', matchingId);
+        .eq('id', matchingId)
+        .select('applicant_id, partner_id, applied_at, amount')
+        .single();
+
+      if (matchingUpdateError) {
+        console.error('omiai_fee matching update error:', matchingUpdateError);
+      } else if (matching) {
+        try {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, nickname, birth_date, prefecture, occupation')
+            .in('id', [matching.applicant_id, matching.partner_id]);
+
+          const profApplicant = profiles?.find((p) => p.id === matching.applicant_id);
+          const profPartner = profiles?.find((p) => p.id === matching.partner_id);
+
+          const [{ data: authApplicant }, { data: authPartner }] = await Promise.all([
+            supabase.auth.admin.getUserById(matching.applicant_id),
+            supabase.auth.admin.getUserById(matching.partner_id),
+          ]);
+
+          await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'matching_approved',
+              applicationId: matchingId,
+              appliedAt: matching.applied_at ?? new Date().toISOString(),
+              applicant: {
+                nickname: profApplicant?.nickname ?? '',
+                age: calcAge(profApplicant?.birth_date ?? '2000-01-01'),
+                prefecture: profApplicant?.prefecture ?? '',
+                occupation: profApplicant?.occupation ?? '',
+                email: authApplicant?.user?.email ?? '',
+              },
+              member: {
+                nickname: profPartner?.nickname ?? '',
+                age: calcAge(profPartner?.birth_date ?? '2000-01-01'),
+                prefecture: profPartner?.prefecture ?? '',
+                occupation: profPartner?.occupation ?? '',
+                email: authPartner?.user?.email ?? '',
+              },
+              amount: matching.amount ?? 0,
+            }),
+          });
+        } catch (notifyError) {
+          console.error('omiai_fee notify error:', notifyError);
+        }
+      }
+    }
+  } else if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object as Stripe.Subscription;
+    let userId = subscription.metadata?.userId;
+
+    const supabase = createAdminClient();
+
+    if (!userId) {
+      const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
+      if (customerId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('stripe_customer_id', customerId)
+          .maybeSingle();
+        userId = profile?.id;
+      }
+    }
+
+    if (userId) {
+      const { error: cancelError } = await supabase
+        .from('profiles')
+        .update({ is_premium: false, subscription_status: 'cancelled' })
+        .eq('id', userId);
+
+      if (cancelError) {
+        console.error('subscription cancel update error:', cancelError);
+      }
     }
   }
 

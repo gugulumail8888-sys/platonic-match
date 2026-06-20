@@ -6,7 +6,7 @@ import { MapPin, X, ChevronRight } from 'lucide-react';
 
 // ── 型定義 ────────────────────────────────────────────────────
 
-export type AppStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed';
+export type AppStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled' | 'rejected';
 
 export interface MatchingProfile {
   id: string;
@@ -36,6 +36,8 @@ export const APP_STATUS_CONFIG: Record<AppStatus, { label: string; className: st
   scheduling:     { label: '日程調整中', className: 'bg-blue-900/50  text-blue-300  border border-blue-800'  },
   completed:      { label: '完了',       className: 'bg-green-900/50 text-green-300 border border-green-800' },
   zoom_completed: { label: 'Google Meet完了',   className: 'bg-blue-900    text-blue-300'                           },
+  cancelled:      { label: 'キャンセル', className: 'bg-red-900/50 text-red-300 border border-red-800' },
+  rejected:       { label: '拒否',       className: 'bg-zinc-700 text-zinc-400 border border-zinc-600' },
 };
 
 const NEXT_STATUS: Partial<Record<AppStatus, AppStatus>> = {
@@ -58,6 +60,8 @@ const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'scheduling',     label: '日程調整中' },
   { value: 'zoom_completed', label: 'Google Meet完了' },
   { value: 'completed',      label: '完了' },
+  { value: 'cancelled',      label: 'キャンセル' },
+  { value: 'rejected',       label: '拒否' },
 ];
 
 // ── ヘルパー ──────────────────────────────────────────────────
@@ -75,6 +79,7 @@ function calcAge(birthDate: string) {
 
 function StatusBadge({ status }: { status: AppStatus }) {
   const cfg = APP_STATUS_CONFIG[status];
+  if (!cfg) return <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-zinc-700 text-zinc-300">{status}</span>;
   return (
     <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${cfg.className}`}>
       {cfg.label}
@@ -234,12 +239,14 @@ export default function AdminMatchingClient({
     statusFilter === 'all' ? true : r.status === statusFilter
   );
 
-  const counts = {
+  const counts: Record<StatusFilter, number> = {
     all:            matchings.length,
     pending:        matchings.filter((r) => r.status === 'pending').length,
     scheduling:     matchings.filter((r) => r.status === 'scheduling').length,
     zoom_completed: matchings.filter((r) => r.status === 'zoom_completed').length,
     completed:      matchings.filter((r) => r.status === 'completed').length,
+    cancelled:      matchings.filter((r) => r.status === 'cancelled').length,
+    rejected:       matchings.filter((r) => r.status === 'rejected').length,
   };
 
   return (

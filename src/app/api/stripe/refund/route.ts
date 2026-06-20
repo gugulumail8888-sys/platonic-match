@@ -4,8 +4,6 @@ import { stripe } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 
-const REFUND_AMOUNT = 3000;
-
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -34,13 +32,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'パラメータが不足しています' }, { status: 400 });
   }
 
+  const admin = createAdminClient();
+
+  const { data: matching } = await admin
+    .from('matchings')
+    .select('amount')
+    .eq('id', matching_id)
+    .maybeSingle();
+
+  const refundAmount = matching?.amount;
+  if (!refundAmount) {
+    return NextResponse.json({ error: '返金額が取得できませんでした' }, { status: 400 });
+  }
+
   try {
     const refund = await stripe.refunds.create({
       payment_intent: stripe_payment_intent_id,
-      amount: REFUND_AMOUNT,
+      amount: refundAmount,
     });
 
-    const admin = createAdminClient();
     const { error: dbError } = await admin
       .from('refunds')
       .insert({
@@ -49,7 +59,7 @@ export async function POST(req: NextRequest) {
         cancelled_by_user_id,
         stripe_payment_intent_id,
         stripe_refund_id: refund.id,
-        amount: REFUND_AMOUNT,
+        amount: refundAmount,
         status: refund.status,
         reason: reason ?? 'ドタキャンによる返金',
       });

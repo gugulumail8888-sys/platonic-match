@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Check, Upload, X, ShieldCheck, Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { ScrollHeader } from '@/components/ui/ScrollHeader';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 // ============================================================
 // Constants
@@ -32,6 +32,12 @@ const INCOME_OPTIONS = [
   '100万未満', '100万〜200万未満', '200万〜300万未満', '300万〜400万未満',
   '400万〜500万未満', '500万〜600万未満', '600万〜700万未満', '700万〜800万未満',
   '800万〜900万未満', '900万〜1000万未満', '1000万以上',
+];
+const ALCOHOL_OPTIONS = [
+  { value: 'never', label: '飲まない' },
+  { value: 'sometimes', label: 'たまに' },
+  { value: 'often', label: 'よく飲む' },
+  { value: 'every_day', label: '毎日' },
 ];
 
 // ============================================================
@@ -63,6 +69,7 @@ interface FormData {
   maritalHistory: string;
   numberOfChildren: string;
   smoking: string;
+  alcohol: string;
   income: string;
   siblingsExist: string;
   siblingsDetail: string;
@@ -99,7 +106,7 @@ const INITIAL_FORM: FormData = {
   gender: '', phone: '', email: '', password: '', passwordConfirm: '',
   prefecture: '', addressDetail: '',
   occupation: '', height: '', bodyType: '', bloodType: '',
-  maritalHistory: '', numberOfChildren: '', smoking: '', income: '',
+  maritalHistory: '', numberOfChildren: '', smoking: '', alcohol: '', income: '',
   siblingsExist: '', siblingsDetail: '', siblingsPosition: '', education: '', marriageTiming: '', childrenDesire: '',
   fertilityMethod: [], fertilityMethodOther: '', sexualActivity: '',
   sexuality: '', sexualityOther: '',
@@ -142,8 +149,10 @@ const formatPhone = (value: string) => {
 const baseCls =
   'w-full bg-zinc-800 border rounded-lg px-3 py-2.5 text-white text-sm placeholder-zinc-500 ' +
   'focus:outline-none focus:ring-1 transition-colors';
-const fieldCls = (err?: string) =>
-  `${baseCls} ${err
+const fieldCls = (err?: string, disabled?: boolean) =>
+  `${baseCls} ${disabled
+    ? 'bg-zinc-900 text-zinc-400 cursor-not-allowed border-zinc-700 opacity-50'
+    : err
     ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
     : 'border-zinc-700 focus:border-teal-600 focus:ring-teal-600'}`;
 
@@ -175,11 +184,12 @@ function Field({
 }
 
 function FInput({
-  name, value, onChange, type = 'text', placeholder, error, autoComplete, inputMode, lang,
+  name, value, onChange, type = 'text', placeholder, error, autoComplete, inputMode, lang, disabled,
 }: {
   name: string; value: string; onChange: (e: AnyChangeEvent) => void;
   type?: string; placeholder?: string; error?: string;
   autoComplete?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']; lang?: string;
+  disabled?: boolean;
 }) {
   return (
     <input
@@ -191,7 +201,8 @@ function FInput({
       autoComplete={autoComplete}
       inputMode={inputMode}
       lang={lang}
-      className={fieldCls(error)}
+      disabled={disabled}
+      className={fieldCls(error, disabled)}
     />
   );
 }
@@ -367,13 +378,14 @@ function StepIndicator({ step }: { step: number }) {
 // ============================================================
 
 function Step1({
-  data, onChange, onPhoneChange, onRadio, errors,
+  data, onChange, onPhoneChange, onRadio, errors, isGoogleUser,
 }: {
   data: FormData;
   onChange: (e: AnyChangeEvent) => void;
   onPhoneChange: (e: AnyChangeEvent) => void;
   onRadio: (name: keyof FormData, val: string) => void;
   errors: Errors;
+  isGoogleUser: boolean;
 }) {
   return (
     <div className="space-y-5">
@@ -458,21 +470,40 @@ function Step1({
       </Field>
 
       {/* メールアドレス */}
-      <Field label="メールアドレス" required error={errors.email}>
+      <Field
+        label={isGoogleUser ? 'メールアドレス（Googleの情報を自動記載の為、入力不可）' : 'メールアドレス'}
+        required error={errors.email}
+      >
         <FInput name="email" value={data.email} onChange={onChange}
-          placeholder="例：example@email.com" type="email" error={errors.email} />
+          placeholder="例：example@email.com" type="email" error={errors.email}
+          disabled={isGoogleUser} />
       </Field>
 
       {/* パスワード */}
-      <Field label="パスワード" required error={errors.password}>
+      <Field
+        label={isGoogleUser ? 'パスワード（Googleの情報を自動記載の為、入力不可）' : 'パスワード'}
+        required error={errors.password}
+      >
         <FInput name="password" value={data.password} onChange={onChange}
-          placeholder="8文字以上" type="password" error={errors.password} />
+          placeholder="8文字以上" type="password" error={errors.password}
+          disabled={isGoogleUser} />
       </Field>
 
       {/* パスワード確認 */}
-      <Field label="パスワード（確認）" required error={errors.passwordConfirm}>
-        <FInput name="passwordConfirm" value={data.passwordConfirm} onChange={onChange}
-          placeholder="もう一度入力してください" type="password" error={errors.passwordConfirm} />
+      <Field
+        label={isGoogleUser ? 'パスワード（確認）（Googleの情報を自動記載の為、入力不可）' : 'パスワード（確認）'}
+        required
+        error={errors.passwordConfirm}
+      >
+        <FInput
+          name="passwordConfirm"
+          value={data.passwordConfirm}
+          onChange={onChange}
+          placeholder="もう一度入力してください"
+          type="password"
+          error={errors.passwordConfirm}
+          disabled={isGoogleUser}
+        />
       </Field>
 
       {/* 都道府県 */}
@@ -562,6 +593,12 @@ function Step2({
           options={[{ value: 'yes', label: 'あり' }, { value: 'no', label: 'なし' }]}
           onChange={(v) => onRadio('smoking', v)} error={errors.smoking}
         />
+      </Field>
+
+      {/* 飲酒 */}
+      <Field label="飲酒" required error={errors.alcohol}>
+        <FSelect name="alcohol" value={data.alcohol} onChange={onChange}
+          options={ALCOHOL_OPTIONS} error={errors.alcohol} />
       </Field>
 
       {/* 収入 */}
@@ -1012,6 +1049,28 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Errors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  const [googleUser, setGoogleUser] = useState<{ id: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isGoogle = params.get('google') === '1';
+    const emailParam = decodeURIComponent(params.get('email') ?? '');
+
+    if (isGoogle && emailParam) {
+      setIsGoogleUser(true);
+      setData((prev) => ({ ...prev, email: emailParam, password: '', passwordConfirm: '' }));
+
+      // @supabase/ssr のクライアントでセッション取得
+      const client = createClient();
+      client.auth.getSession().then(({ data: { session } }) => {
+        const user = session?.user;
+        if (user) {
+          setGoogleUser({ id: user.id, email: emailParam });
+        }
+      });
+    }
+  }, []);
 
   // Step3 用
   const [docType, setDocType]           = useState<DocType>('');
@@ -1084,12 +1143,14 @@ export default function RegisterPage() {
     if (!data.email.trim())         e.email         = 'メールアドレスを入力してください';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
       e.email = '正しいメールアドレスを入力してください';
-    if (!data.password)             e.password      = 'パスワードを入力してください';
-    else if (data.password.length < 8)
-      e.password = '8文字以上で入力してください';
-    if (!data.passwordConfirm)      e.passwordConfirm = 'パスワード（確認）を入力してください';
-    else if (data.passwordConfirm !== data.password)
-      e.passwordConfirm = 'パスワードが一致しません';
+    if (!isGoogleUser) {
+      if (!data.password)             e.password      = 'パスワードを入力してください';
+      else if (data.password.length < 8)
+        e.password = '8文字以上で入力してください';
+      if (!data.passwordConfirm)      e.passwordConfirm = 'パスワード（確認）を入力してください';
+      else if (data.passwordConfirm !== data.password)
+        e.passwordConfirm = 'パスワードが一致しません';
+    }
     if (!data.prefecture)           e.prefecture    = '都道府県を選択してください';
     if (!data.addressDetail.trim()) e.addressDetail = '住所詳細を入力してください';
     setErrors(e);
@@ -1107,6 +1168,7 @@ export default function RegisterPage() {
     if (!data.maritalHistory)        e.maritalHistory    = '結婚歴を選択してください';
     if (!data.numberOfChildren)      e.numberOfChildren  = 'お子様の人数を選択してください';
     if (!data.smoking)               e.smoking           = '喫煙を選択してください';
+    if (!data.alcohol)               e.alcohol           = '飲酒を選択してください';
     if (!data.income)                e.income            = '収入を選択してください';
     if (!data.education)             e.education         = '学歴を選択してください';
     if (!data.marriageTiming)        e.marriageTiming    = '結婚希望時期を選択してください';
@@ -1145,27 +1207,51 @@ export default function RegisterPage() {
       setIsLoading(true);
       setSubmitError(null);
       try {
-        const { data: authData, error: signUpError } = await supabase.auth.signUp({
-          email: data.email,
-          password: data.password,
+        const client = createClient();
+        let userId: string | undefined;
+
+        if (isGoogleUser) {
+          userId = googleUser?.id;
+          if (!userId) {
+            setSubmitError('ユーザー情報の取得に失敗しました');
+            return;
+          }
+        } else {
+          const { data: authData, error: signUpError } = await client.auth.signUp({
+            email: data.email,
+            password: data.password,
+          });
+          if (signUpError) {
+            setSubmitError(signUpError.message);
+            return;
+          }
+          userId = authData.user?.id;
+          if (!userId) {
+            setSubmitError('ユーザーIDの取得に失敗しました');
+            return;
+          }
+        }
+
+        const birthDate = `${data.birthYear}-${String(data.birthMonth).padStart(2, '0')}-${String(data.birthDay).padStart(2, '0')}`;
+        const ageRes = await fetch('/api/auth/validate-age', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ birth_date: birthDate }),
         });
-        if (signUpError) {
-          setSubmitError(signUpError.message);
+        if (!ageRes.ok) {
+          const ageBody = await ageRes.json().catch(() => null) as { error?: string } | null;
+          setSubmitError(ageBody?.error ?? '年齢の確認に失敗しました');
           return;
         }
-        const userId = authData.user?.id;
-        if (!userId) {
-          setSubmitError('ユーザーIDの取得に失敗しました');
-          return;
-        }
-        const { error: insertError } = await supabase.from('profiles').insert({
+
+        const { error: insertError } = await client.from('profiles').insert({
           id: userId,
           last_name: data.lastName,
           first_name: data.firstName,
           last_name_kana: data.lastNameKana,
           first_name_kana: data.firstNameKana,
           nickname: data.nickname,
-          birth_date: `${data.birthYear}-${String(data.birthMonth).padStart(2, '0')}-${String(data.birthDay).padStart(2, '0')}`,
+          birth_date: birthDate,
           gender: data.gender,
           phone: data.phone,
           prefecture: data.prefecture,
@@ -1177,6 +1263,7 @@ export default function RegisterPage() {
           marital_history: data.maritalHistory === 'yes',
           number_of_children: data.numberOfChildren,
           smoking: data.smoking === 'yes',
+          alcohol: data.alcohol,
           income: data.income,
           siblings_exist: data.siblingsExist, siblings_detail: data.siblingsExist === 'あり' ? data.siblingsDetail : null, siblings_position:
           data.siblingsPosition || null,
@@ -1203,6 +1290,28 @@ export default function RegisterPage() {
           setSubmitError(insertError.message);
           return;
         }
+
+        // 本人確認書類のアップロード（front・back両方必須）
+        const uploadDocument = async (file: File, side: 'front' | 'back') => {
+          const docForm = new FormData();
+          docForm.append('file', file);
+          docForm.append('side', side);
+          const res = await fetch('/api/upload/document', { method: 'POST', body: docForm });
+          if (!res.ok) {
+            const body = await res.json().catch(() => null) as { error?: string } | null;
+            throw new Error(body?.error ?? '書類のアップロードに失敗しました');
+          }
+        };
+
+        try {
+          if (!frontFile || !backFile) throw new Error('書類が選択されていません');
+          await uploadDocument(frontFile, 'front');
+          await uploadDocument(backFile, 'back');
+        } catch (uploadErr) {
+          setSubmitError(uploadErr instanceof Error ? uploadErr.message : '書類のアップロードに失敗しました');
+          return;
+        }
+
         setStep(4);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } finally {
@@ -1255,7 +1364,7 @@ export default function RegisterPage() {
         {/* フォームカード */}
         <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-6 md:p-8">
           {step === 1 && (
-            <Step1 data={data} onChange={onChange} onPhoneChange={onPhoneChange} onRadio={onRadio} errors={errors} />
+            <Step1 data={data} onChange={onChange} onPhoneChange={onPhoneChange} onRadio={onRadio} errors={errors} isGoogleUser={isGoogleUser} />
           )}
           {step === 2 && (
             <Step2 data={data} onChange={onChange} onRadio={onRadio} onCheckbox={onCheckbox} errors={errors} />

@@ -184,7 +184,7 @@ export default function TokushoPage() {
                 label: 'AIおすすめプラン',
                 value: (
                   <span className="text-teal-300 font-semibold">
-                    月額料金（別途定める・変更予定）
+                    月額980円（税込1,078円）
                   </span>
                 ),
               },

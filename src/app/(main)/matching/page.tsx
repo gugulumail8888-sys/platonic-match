@@ -26,6 +26,7 @@ interface Matching {
   partner_id: string;
   applicant_dating_wish: boolean;
   partner: PartnerProfile;
+  hasSlots: boolean;
 }
 
 function calcAge(birthDate: string) {
@@ -214,15 +215,37 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           </button>
         )}
 
-        {/* 日程調整ボタン（日程調整中のみ） */}
+        {/* 日程調整ボタン（日程調整中のみ・役割で分岐） */}
         {status === 'scheduling' && (
-          <Link
-            href={`/schedule/request?id=${id}&name=${encodeURIComponent(partner.nickname)}`}
-            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md hover:scale-[1.02]"
-            style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
-          >
-            📅 日程を調整する
-          </Link>
+          isReceiver ? (
+            matching.hasSlots ? (
+              <Link
+                href={`/schedule/select?id=${id}&name=${encodeURIComponent(partner.nickname)}`}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md hover:scale-[1.02]"
+                style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
+              >
+                📅 日程を選ぶ
+              </Link>
+            ) : (
+              <div className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-zinc-700 text-zinc-400 cursor-not-allowed">
+                ⏳ 相手が候補日を提案中
+              </div>
+            )
+          ) : (
+            matching.hasSlots ? (
+              <div className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-zinc-700 text-zinc-400 cursor-not-allowed">
+                ⏳ 相手の返答待ち
+              </div>
+            ) : (
+              <Link
+                href={`/schedule/request?id=${id}&name=${encodeURIComponent(partner.nickname)}`}
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shadow-sm hover:shadow-md hover:scale-[1.02]"
+                style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
+              >
+                📅 候補日を提案する
+              </Link>
+            )
+          )
         )}
 
         {/* プロフィールリンク */}
@@ -287,12 +310,33 @@ export default function MatchingPage() {
           const partnerUserId = r.applicant_id === user.id ? r.partner_id : r.applicant_id;
           const partner = profileMap.get(partnerUserId);
           if (!partner) return null;
-          return { ...r, partner } as Matching;
+          return { ...r, partner, hasSlots: false } as Matching;
         })
         .filter((r): r is Matching => r !== null);
 
       setMatchings(combined);
       setLoading(false);
+
+      // 日程調整中のマッチングのみ、候補日程の有無を確認
+      const schedulingIds = combined.filter((m) => m.status === 'scheduling').map((m) => m.id);
+      if (schedulingIds.length === 0) return;
+
+      const slotResults = await Promise.all(
+        schedulingIds.map(async (matchingId) => {
+          try {
+            const res = await fetch(`/api/schedule/slots?matchingId=${matchingId}`);
+            const slots = await res.json();
+            return { matchingId, hasSlots: Array.isArray(slots) && slots.length > 0 };
+          } catch {
+            return { matchingId, hasSlots: false };
+          }
+        })
+      );
+
+      const hasSlotsMap = new Map(slotResults.map((r) => [r.matchingId, r.hasSlots]));
+      setMatchings((prev) =>
+        prev.map((m) => (hasSlotsMap.has(m.id) ? { ...m, hasSlots: hasSlotsMap.get(m.id)! } : m))
+      );
     }
 
     fetchMatchings();

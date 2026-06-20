@@ -17,6 +17,7 @@ type WithdrawCheck = {
   optionDaysRemaining: number | null;
   hasSentPending: boolean;
   receivedPendingCount: number;
+  cancelCount: number;
 };
 
 type Step = 'loading' | 'option-warning' | 'sent-blocked' | 'received-blocked' | 'form';
@@ -202,6 +203,16 @@ export default function WithdrawPage() {
         </div>
         <h1 className="text-xl font-bold text-white">退会のお手続き</h1>
       </div>
+
+      {/* キャンセル多発警告 */}
+      {(check?.cancelCount ?? 0) >= 3 && (
+        <div className="bg-yellow-900/30 border border-yellow-700 text-yellow-300 rounded-xl p-4 mb-6">
+          <p className="font-medium mb-1">⚠️ キャンセルについてのお願い</p>
+          <p className="text-sm">
+            お見合いのキャンセルが3回以上確認されています。キャンセルが続くと、他のユーザーへの影響が大きくなります。引き続きamistaをご利用いただける場合は、ぜひ誠実なマッチング活動をお願いいたします。
+          </p>
+        </div>
+      )}
 
       {/* 注意文 */}
       <div className="bg-red-950/20 border border-red-900/50 rounded-2xl p-4 mb-6">

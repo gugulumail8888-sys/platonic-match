@@ -4,13 +4,32 @@ import { Users, Shield, MessageCircle, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ScrollHeader } from "@/components/ui/ScrollHeader";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: '友情から始まる本物のパートナーシップ | amista',
   description: 'amistaは友情・信頼・パートナーシップを大切にする友情婚活マッチングサービス。AIおすすめ機能とGoogle Meetで効率よくお見合いができます。',
 };
 
-export default function HomePage() {
+async function isCampaignBannerActive(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('key', 'campaign_banner_enabled')
+    .maybeSingle();
+
+  if (data?.value !== 'true') return false;
+
+  const now = new Date();
+  const start = new Date('2026-07-01T00:00:00+09:00');
+  const end = new Date('2026-09-30T23:59:59+09:00');
+  return now >= start && now <= end;
+}
+
+export default async function HomePage() {
+  const showCampaignBanner = await isCampaignBannerActive();
+
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* スクロール対応ヘッダー（クライアントコンポーネント） */}
@@ -66,7 +85,7 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register">
+            <Link href="/signup">
               <Button size="lg" className="min-w-[200px] shadow-lg">
                 <Heart className="w-5 h-5 fill-white" />
                 無料で始める
@@ -84,6 +103,34 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+
+      {/* 夏のキャンペーンバナー */}
+      {showCampaignBanner && (
+        <section className="px-4 -mt-px">
+          <div
+            className="max-w-4xl mx-auto rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-5 md:gap-8 text-white"
+            style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}
+          >
+            <div className="text-5xl flex-shrink-0">🎉</div>
+            <div className="flex-1 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center md:items-baseline gap-2 mb-2">
+                <h2 className="text-xl md:text-2xl font-bold">オープン記念！初期限定キャンペーン</h2>
+                <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                  期間限定
+                </span>
+              </div>
+              <p className="text-white/90 text-sm md:text-base leading-relaxed">
+                7月〜9月にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！
+              </p>
+            </div>
+            <Link href="/option-apply" className="flex-shrink-0">
+              <button className="bg-white text-orange-600 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-colors whitespace-nowrap">
+                AIおすすめ機能を見る
+              </button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* 友情婚活とは */}
       <section id="about" className="py-16 px-4 bg-zinc-900">
@@ -228,7 +275,7 @@ export default function HomePage() {
                 ))}
               </ul>
 
-              <Link href="/register">
+              <Link href="/signup">
                 <Button variant="outline" fullWidth>
                   無料で始める
                 </Button>
@@ -377,7 +424,7 @@ export default function HomePage() {
           <p className="text-white/80 mb-8">
             amistaで、あなたと価値観の合うパートナーを見つけましょう。
           </p>
-          <Link href="/register">
+          <Link href="/signup">
             <Button
               size="lg"
               className="bg-white text-primary-700 hover:bg-white/90 min-w-[200px]"

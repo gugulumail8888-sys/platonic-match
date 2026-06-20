@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ShieldX, Clock, FileText, MapPin } from 'lucide-react';
 
 // ============================================================
-// Types & Data
+// Types
 // ============================================================
 
 type VerifyStatus = 'pending' | 'approved' | 'rejected';
@@ -15,12 +15,11 @@ interface VerifyItem {
   nickname: string;
   age: number;
   prefecture: string;
-  gender: 'male' | 'female';
-  submittedAt: string;
-  docType: string;
+  gender: string | null;
+  createdAt: string;
   status: VerifyStatus;
-  avatarColor: string;
-  initials: string;
+  frontUrl: string | null;
+  backUrl: string | null;
 }
 
 const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; icon: React.ElementType }> = {
@@ -29,68 +28,16 @@ const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; ic
   rejected: { label: '否認',     className: 'bg-red-900/50 text-red-300 border border-red-800',        icon: ShieldX },
 };
 
-const DUMMY_VERIFY: VerifyItem[] = [
-  {
-    id: 'VRF-001',
-    nickname: 'さくら',
-    age: 30,
-    prefecture: '東京都',
-    gender: 'female',
-    submittedAt: '2026-05-25',
-    docType: '運転免許証',
-    status: 'pending',
-    avatarColor: '#e879a0',
-    initials: 'さ',
-  },
-  {
-    id: 'VRF-002',
-    nickname: 'たける',
-    age: 28,
-    prefecture: '大阪府',
-    gender: 'male',
-    submittedAt: '2026-05-24',
-    docType: 'マイナンバーカード',
-    status: 'pending',
-    avatarColor: '#2563eb',
-    initials: 'た',
-  },
-  {
-    id: 'VRF-003',
-    nickname: 'みらい',
-    age: 26,
-    prefecture: '神奈川県',
-    gender: 'female',
-    submittedAt: '2026-05-23',
-    docType: 'パスポート',
-    status: 'pending',
-    avatarColor: '#7c3aed',
-    initials: 'み',
-  },
-  {
-    id: 'VRF-004',
-    nickname: 'けんじ',
-    age: 32,
-    prefecture: '東京都',
-    gender: 'male',
-    submittedAt: '2026-05-20',
-    docType: '運転免許証',
-    status: 'approved',
-    avatarColor: '#0d9488',
-    initials: 'け',
-  },
-  {
-    id: 'VRF-005',
-    nickname: 'あかね',
-    age: 27,
-    prefecture: '愛知県',
-    gender: 'female',
-    submittedAt: '2026-05-18',
-    docType: '健康保険証',
-    status: 'rejected',
-    avatarColor: '#dc2626',
-    initials: 'あ',
-  },
+const AVATAR_COLORS = [
+  '#0d9488', '#7c3aed', '#db2777', '#ea580c', '#16a34a',
+  '#2563eb', '#d97706', '#dc2626', '#0891b2', '#65a30d',
 ];
+
+function getAvatarColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
 
 // ============================================================
 // Sub-components
@@ -123,16 +70,33 @@ const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
 export default function AdminVerifyPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<FilterTab>('all');
+  const [items, setItems] = useState<VerifyItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const filtered = DUMMY_VERIFY.filter((v) =>
+  useEffect(() => {
+    fetch('/api/admin/verify')
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => null) as { error?: string } | null;
+          throw new Error(body?.error ?? '取得に失敗しました');
+        }
+        return res.json() as Promise<{ items: VerifyItem[] }>;
+      })
+      .then((data) => setItems(data.items))
+      .catch((err) => setLoadError(err instanceof Error ? err.message : '取得に失敗しました'))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const filtered = items.filter((v) =>
     filter === 'all' ? true : v.status === filter
   );
 
   const counts = {
-    all:      DUMMY_VERIFY.length,
-    pending:  DUMMY_VERIFY.filter((v) => v.status === 'pending').length,
-    approved: DUMMY_VERIFY.filter((v) => v.status === 'approved').length,
-    rejected: DUMMY_VERIFY.filter((v) => v.status === 'rejected').length,
+    all:      items.length,
+    pending:  items.filter((v) => v.status === 'pending').length,
+    approved: items.filter((v) => v.status === 'approved').length,
+    rejected: items.filter((v) => v.status === 'rejected').length,
   };
 
   return (
@@ -141,7 +105,7 @@ export default function AdminVerifyPage() {
       <div>
         <h1 className="text-2xl font-bold text-white">本人確認審査</h1>
         <p className="text-sm text-zinc-400 mt-0.5">
-          全 {DUMMY_VERIFY.length} 件（ダミーデータ）
+          全 {items.length} 件
         </p>
       </div>
 
@@ -170,8 +134,12 @@ export default function AdminVerifyPage() {
         })}
       </div>
 
-      {/* カード一覧 */}
-      {filtered.length === 0 ? (
+      {/* 一覧 */}
+      {isLoading ? (
+        <div className="text-center py-16 text-zinc-500">読み込み中...</div>
+      ) : loadError ? (
+        <div className="text-center py-16 text-red-400">{loadError}</div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-500">該当する申請が見つかりませんでした</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -184,9 +152,9 @@ export default function AdminVerifyPage() {
               <div className="flex items-start gap-3 mb-4">
                 <div
                   className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 select-none"
-                  style={{ background: item.avatarColor }}
+                  style={{ background: getAvatarColor(item.id) }}
                 >
-                  {item.initials}
+                  {item.nickname.slice(0, 1)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
@@ -200,7 +168,7 @@ export default function AdminVerifyPage() {
                           {item.prefecture}
                         </span>
                         <span>·</span>
-                        <span>{item.gender === 'male' ? '男性' : '女性'}</span>
+                        <span>{item.gender === 'male' ? '男性' : item.gender === 'female' ? '女性' : '不明'}</span>
                       </div>
                     </div>
                     <StatusBadge status={item.status} />
@@ -213,19 +181,35 @@ export default function AdminVerifyPage() {
                 <div className="flex justify-between">
                   <span className="text-zinc-500 flex items-center gap-1.5">
                     <FileText className="w-3 h-3" />
-                    書類種類
+                    書類
                   </span>
-                  <span className="text-zinc-200 font-medium">{item.docType}</span>
+                  <span className="text-zinc-200 font-medium">
+                    {item.frontUrl && item.backUrl ? '提出済み' : '未提出'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-500">提出日</span>
-                  <span className="text-zinc-200">{item.submittedAt}</span>
+                  <span className="text-zinc-500">登録日</span>
+                  <span className="text-zinc-200">{new Date(item.createdAt).toLocaleDateString('ja-JP')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-zinc-500">審査番号</span>
-                  <span className="text-zinc-400 font-mono">{item.id}</span>
+                  <span className="text-zinc-400 font-mono">{item.id.slice(0, 8)}</span>
                 </div>
               </div>
+
+              {/* 書類画像プレビュー */}
+              {(item.frontUrl || item.backUrl) && (
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {item.frontUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.frontUrl} alt="表面" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
+                  )}
+                  {item.backUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.backUrl} alt="裏面" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
+                  )}
+                </div>
+              )}
 
               {/* 審査ボタン */}
               <button

@@ -76,11 +76,64 @@ export async function POST(req: NextRequest) {
       status: 'pending',
       amount,
       applied_at: appliedAt,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
     if (insertError) {
       console.error('Matching insert error:', insertError);
       return NextResponse.json({ error: 'お見合い申請の保存に失敗しました' }, { status: 500 });
+    }
+
+    // ── 審査モード確認（autoなら即承認） ──
+    const { data: reviewModeSetting } = await adminSupabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'review_mode')
+      .maybeSingle();
+
+    const isAutoApprove = reviewModeSetting?.value === 'auto';
+
+    if (isAutoApprove) {
+      await adminSupabase
+        .from('matchings')
+        .update({
+          status: 'scheduling',
+          responded_at: new Date().toISOString(),
+        })
+        .eq('applicant_id', user.id)
+        .eq('partner_id', member.id)
+        .eq('status', 'pending');
+
+      // 自動承認時：両者に承認通知メールを送信
+      const [{ data: authApplicantAuto }, { data: authMemberAuto }] = await Promise.all([
+        adminSupabase.auth.admin.getUserById(user.id),
+        adminSupabase.auth.admin.getUserById(member.id),
+      ]);
+
+      await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'schedule_proposed_request',
+          applicationId,
+          appliedAt,
+          applicant: {
+            nickname:   applicant.nickname,
+            age:        applicant.age,
+            prefecture: applicant.prefecture,
+            occupation: applicant.occupation,
+            email:      authApplicantAuto?.user?.email ?? '',
+          },
+          member: {
+            nickname:   member.nickname,
+            age:        member.age,
+            prefecture: member.prefecture,
+            occupation: member.occupation,
+            email:      authMemberAuto?.user?.email ?? '',
+          },
+          amount,
+        }),
+      });
     }
 
     let notifyMessage: string;

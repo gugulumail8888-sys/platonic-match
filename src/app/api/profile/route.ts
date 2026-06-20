@@ -25,8 +25,14 @@ export async function PATCH(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
 
-  const updates = await req.json();
+  const { alcohol, ...updates } = await req.json();
   const admin = createAdminClient();
+
+  if (alcohol !== undefined) {
+    const { error: alcoholError } = await supabase.rpc('update_profile_alcohol', { alcohol_value: alcohol });
+    if (alcoholError) return NextResponse.json({ error: alcoholError.message }, { status: 400 });
+  }
+
   const { data: profile, error } = await admin
     .from('profiles')
     .update(updates)

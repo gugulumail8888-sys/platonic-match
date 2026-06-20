@@ -25,13 +25,13 @@ export async function GET() {
     return NextResponse.json({ error: '未認証' }, { status: 401 });
   }
 
-  const isAdmin = ADMIN_EMAILS.includes(user.email);
-
   const { data: profile } = await supabase
     .from('profiles')
-    .select('nickname, birth_date, prefecture, occupation, hobbies, pr, is_premium')
+    .select('nickname, birth_date, prefecture, occupation, hobbies, pr, is_premium, role')
     .eq('id', user.id)
     .maybeSingle();
+
+  const isAdmin = ADMIN_EMAILS.includes(user.email) || profile?.role === 'admin';
 
   const hasAiOption = !isAdmin && (profile?.is_premium ?? false);
 

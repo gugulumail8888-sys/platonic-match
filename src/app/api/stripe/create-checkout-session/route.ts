@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
       success_url: `${SITE_URL}/payment/success`,
       cancel_url: `${SITE_URL}/payment/cancel`,
       metadata: { userId: user.id },
+      subscription_data: { metadata: { userId: user.id } },
     });
 
     return NextResponse.json({ url: session.url });
