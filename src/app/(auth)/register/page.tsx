@@ -77,9 +77,8 @@ interface FormData {
   education: string;
   marriageTiming: string;
   childrenDesire: string;
-  fertilityMethod: string[];
-  fertilityMethodOther: string;
   sexualActivity: string;
+  fertilityMethods: string[];
   sexuality: string;
   sexualityOther: string;
   livingArrangement: string;
@@ -108,7 +107,7 @@ const INITIAL_FORM: FormData = {
   occupation: '', height: '', bodyType: '', bloodType: '',
   maritalHistory: '', numberOfChildren: '', smoking: '', alcohol: '', income: '',
   siblingsExist: '', siblingsDetail: '', siblingsPosition: '', education: '', marriageTiming: '', childrenDesire: '',
-  fertilityMethod: [], fertilityMethodOther: '', sexualActivity: '',
+  sexualActivity: '', fertilityMethods: [],
   sexuality: '', sexualityOther: '',
   livingArrangement: '', livingArrangementOther: '',
   postMarriageLiving: '', postMarriageLivingOther: '',
@@ -527,12 +526,12 @@ function Step1({
 // ============================================================
 
 function Step2({
-  data, onChange, onRadio, onCheckbox, errors,
+  data, onChange, onRadio, onFertilityMethodToggle, errors,
 }: {
   data: FormData;
   onChange: (e: AnyChangeEvent) => void;
   onRadio: (name: keyof FormData, val: string) => void;
-  onCheckbox: (name: keyof FormData, val: string) => void;
+  onFertilityMethodToggle: (val: string) => void;
   errors: Errors;
 }) {
   return (
@@ -656,42 +655,32 @@ function Step2({
         />
       </Field>
 
+      {/* 性交渉の有無 */}
+      <Field label="性交渉の有無" required error={errors.sexualActivity}>
+        <FRadioGroup
+          name="sexualActivity" value={data.sexualActivity}
+          options={[
+            { value: 'あり',     label: 'あり' },
+            { value: 'なし',     label: 'なし' },
+            { value: 'その他・未定', label: 'その他・未定' },
+          ]}
+          onChange={(v) => onRadio('sexualActivity', v)} error={errors.sexualActivity}
+        />
+      </Field>
+
       {/* 妊活方法（「ほしい」選択時のみ表示） */}
       {data.childrenDesire === 'want' && (
-        <Field label="妊活方法">
+        <Field label="妊活方法" required error={errors.fertilityMethods}>
           <FCheckboxGroup
-            value={data.fertilityMethod}
+            value={data.fertilityMethods}
             options={[
-              { value: '自然妊娠',        label: '自然妊娠' },
-              { value: '人工授精（AIH）', label: '人工授精（AIH）' },
-              { value: '体外受精（IVF）', label: '体外受精（IVF）' },
-              { value: '特別養子縁組',    label: '特別養子縁組' },
-              { value: '里親',            label: '里親' },
-              { value: '未定',            label: '未定' },
-              { value: 'その他',          label: 'その他' },
+              { value: '人工授精',     label: '人工授精' },
+              { value: '体外受精',     label: '体外受精' },
+              { value: '養子縁組',     label: '養子縁組' },
+              { value: '里親',         label: '里親' },
+              { value: 'その他・未定', label: 'その他・未定' },
             ]}
-            onChange={(v) => onCheckbox('fertilityMethod', v)}
-          />
-          {data.fertilityMethod.includes('その他') && (
-            <div className="mt-2">
-              <FInput
-                name="fertilityMethodOther"
-                value={data.fertilityMethodOther}
-                onChange={onChange}
-                placeholder="自由に記述してください"
-              />
-            </div>
-          )}
-        </Field>
-      )}
-
-      {/* 性交渉の有無 */}
-      {data.childrenDesire === 'want' && (
-        <Field label="性交渉の有無">
-          <FRadioGroup
-            name="sexualActivity" value={data.sexualActivity}
-            options={[{ value: 'yes', label: 'あり' }, { value: 'no', label: 'なし' }]}
-            onChange={(v) => onRadio('sexualActivity', v)}
+            onChange={onFertilityMethodToggle}
           />
         </Field>
       )}
@@ -1103,14 +1092,17 @@ export default function RegisterPage() {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const onCheckbox = (name: keyof FormData, val: string) => {
+  // 妊活方法：「その他・未定」は他の選択肢と排他
+  const onFertilityMethodToggle = (val: string) => {
     setData((prev) => {
-      const current = prev[name] as string[];
-      const updated = current.includes(val)
-        ? current.filter((x) => x !== val)
-        : [...current, val];
-      return { ...prev, [name]: updated };
+      const current = prev.fertilityMethods;
+      if (current.includes(val)) {
+        return { ...prev, fertilityMethods: current.filter((x) => x !== val) };
+      }
+      const updated = val === 'その他・未定' ? [val] : [...current.filter((x) => x !== 'その他・未定'), val];
+      return { ...prev, fertilityMethods: updated };
     });
+    setErrors((prev) => ({ ...prev, fertilityMethods: undefined }));
   };
 
   const handleFile = (side: 'front' | 'back') => (file: File) => {
@@ -1173,6 +1165,9 @@ export default function RegisterPage() {
     if (!data.education)             e.education         = '学歴を選択してください';
     if (!data.marriageTiming)        e.marriageTiming    = '結婚希望時期を選択してください';
     if (!data.childrenDesire)        e.childrenDesire    = '子供の希望を選択してください';
+    if (!data.sexualActivity)        e.sexualActivity    = '性交渉の有無を選択してください';
+    if (data.childrenDesire === 'want' && data.fertilityMethods.length === 0)
+      e.fertilityMethods = '妊活方法を選択してください';
     if (!data.sexuality)             e.sexuality         = 'セクシュアリティを選択してください';
     if (!data.livingArrangement)     e.livingArrangement = '居住形態を選択してください';
     if (!data.postMarriageLiving)    e.postMarriageLiving = '結婚後の居住形態を選択してください';
@@ -1270,9 +1265,8 @@ export default function RegisterPage() {
           education: data.education,
           marriage_timing: data.marriageTiming,
           children_desire: data.childrenDesire,
-          fertility_method: data.fertilityMethod,
-          fertility_method_other: data.fertilityMethodOther,
           sexual_activity: data.sexualActivity,
+          fertility_methods: data.childrenDesire === 'want' ? data.fertilityMethods : null,
           sexuality: data.sexuality,
           sexuality_other: data.sexualityOther,
           living_arrangement: data.livingArrangement,
@@ -1367,7 +1361,7 @@ export default function RegisterPage() {
             <Step1 data={data} onChange={onChange} onPhoneChange={onPhoneChange} onRadio={onRadio} errors={errors} isGoogleUser={isGoogleUser} />
           )}
           {step === 2 && (
-            <Step2 data={data} onChange={onChange} onRadio={onRadio} onCheckbox={onCheckbox} errors={errors} />
+            <Step2 data={data} onChange={onChange} onRadio={onRadio} onFertilityMethodToggle={onFertilityMethodToggle} errors={errors} />
           )}
           {step === 3 && (
             <Step3

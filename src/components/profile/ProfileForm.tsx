@@ -29,8 +29,11 @@ const SEXUALITY_OPTIONS = ['異性愛', '同性愛', 'バイセクシュアル',
 const LIVING_ARRANGEMENT_OPTIONS = ['一人暮らし', '実家', '家族と同居', 'その他'];
 const POST_MARRIAGE_LIVING_OPTIONS = ['同居', '別居', 'その他'];
 const FINANCE_MANAGEMENT_OPTIONS = ['完全折半', '相談次第', 'その他'];
-const FERTILITY_METHOD_OPTIONS = [
-  '自然妊娠', '人工授精（AIH）', '体外受精（IVF）', '特別養子縁組', '里親', '未定', 'その他',
+const FERTILITY_METHODS_OPTIONS = ['人工授精', '体外受精', '養子縁組', '里親', 'その他・未定'];
+const SEXUAL_ACTIVITY_OPTIONS = [
+  { value: 'あり', label: 'あり' },
+  { value: 'なし', label: 'なし' },
+  { value: 'その他・未定', label: 'その他・未定' },
 ];
 const ALCOHOL_OPTIONS = [
   { value: 'never', label: '飲まない' },
@@ -68,9 +71,8 @@ const profileSchema = z.object({
   education: z.string().min(1, "学歴を選択してください"),
   marriage_timing: z.string().min(1, "結婚希望時期を選択してください"),
   children_desire: z.string().min(1, "子供の有無（希望）を選択してください"),
-  fertility_method: z.array(z.string()).optional(),
-  fertility_method_other: z.string().optional(),
-  sexual_activity: z.string().optional(),
+  sexual_activity: z.string().min(1, "性交渉の有無を選択してください"),
+  fertility_methods: z.array(z.string()).optional(),
   sexuality: z.string().min(1, "セクシュアリティを選択してください"),
   sexuality_other: z.string().optional(),
   living_arrangement: z.string().min(1, "現在の居住形態を選択してください"),
@@ -84,6 +86,14 @@ const profileSchema = z.object({
   pr: z.string().max(1000, "1000文字以内で入力してください").optional(),
   desired_conditions: z.string().max(1000, "1000文字以内で入力してください").optional(),
   avatar_color: z.string().nullable().optional(),
+}).superRefine((data, ctx) => {
+  if (data.children_desire === "want" && !data.fertility_methods?.length) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "妊活方法を選択してください",
+      path: ["fertility_methods"],
+    });
+  }
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -115,9 +125,8 @@ export interface ProfileEditData {
   education: string | null;
   marriage_timing: string | null;
   children_desire: string | null;
-  fertility_method: string[] | null;
-  fertility_method_other: string | null;
   sexual_activity: string | null;
+  fertility_methods: string[] | null;
   sexuality: string | null;
   sexuality_other: string | null;
   living_arrangement: string | null;
@@ -233,16 +242,18 @@ function RadioGroupField({
 }
 
 function CheckboxGroupField({
-  label, value, options, onToggle,
+  label, value, options, onToggle, error, required,
 }: {
   label: string;
   value: string[];
   options: string[];
   onToggle: (v: string) => void;
+  error?: string;
+  required?: boolean;
 }) {
   return (
     <div>
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabel required={required}>{label}</FieldLabel>
       <div className="flex flex-wrap gap-x-5 gap-y-3 pt-0.5">
         {options.map((o) => (
           <label key={o} className="flex items-center gap-2 cursor-pointer group">
@@ -262,6 +273,7 @@ function CheckboxGroupField({
           </label>
         ))}
       </div>
+      <FieldError msg={error} />
     </div>
   );
 }
@@ -333,9 +345,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       education: initialData?.education ?? "",
       marriage_timing: initialData?.marriage_timing ?? "",
       children_desire: initialData?.children_desire ?? "",
-      fertility_method: initialData?.fertility_method ?? [],
-      fertility_method_other: initialData?.fertility_method_other ?? "",
       sexual_activity: initialData?.sexual_activity ?? "",
+      fertility_methods: initialData?.fertility_methods ?? [],
       sexuality: initialData?.sexuality ?? "",
       sexuality_other: initialData?.sexuality_other ?? "",
       living_arrangement: initialData?.living_arrangement ?? "",
@@ -357,14 +368,17 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
   const livingArrangement = watch("living_arrangement");
   const postMarriageLiving = watch("post_marriage_living");
   const financeManagement = watch("finance_management");
-  const fertilityMethod = watch("fertility_method") ?? [];
+  const fertilityMethods = watch("fertility_methods") ?? [];
 
+  // 「その他・未定」は他の選択肢と排他
   const toggleFertilityMethod = (v: string) => {
-    const current = fertilityMethod;
-    setValue(
-      "fertility_method",
-      current.includes(v) ? current.filter((x) => x !== v) : [...current, v]
-    );
+    const current = fertilityMethods;
+    if (current.includes(v)) {
+      setValue("fertility_methods", current.filter((x) => x !== v));
+      return;
+    }
+    const updated = v === "その他・未定" ? [v] : [...current.filter((x) => x !== "その他・未定"), v];
+    setValue("fertility_methods", updated);
   };
 
   const { onChange: phoneOnChange, ...phoneRegister } = register("phone");
@@ -401,9 +415,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       education: data.education || null,
       marriage_timing: data.marriage_timing || null,
       children_desire: data.children_desire || null,
-      fertility_method: data.fertility_method?.length ? data.fertility_method : null,
-      fertility_method_other: data.fertility_method_other || null,
       sexual_activity: data.sexual_activity || null,
+      fertility_methods: data.children_desire === "want" && data.fertility_methods?.length ? data.fertility_methods : null,
       sexuality: data.sexuality || null,
       sexuality_other: data.sexuality_other || null,
       living_arrangement: data.living_arrangement || null,
@@ -535,19 +548,24 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
             required
           />
 
+          <RadioGroupField
+            label="性交渉の有無"
+            name="sexual_activity"
+            register={register}
+            options={SEXUAL_ACTIVITY_OPTIONS}
+            error={errors.sexual_activity?.message}
+            required
+          />
+
           {childrenDesire === "want" && (
-            <>
-              <CheckboxGroupField
-                label="妊活方法"
-                value={fertilityMethod}
-                options={FERTILITY_METHOD_OPTIONS}
-                onToggle={toggleFertilityMethod}
-              />
-              {fertilityMethod.includes("その他") && (
-                <Input placeholder="自由に記述してください" error={errors.fertility_method_other?.message} {...register("fertility_method_other")} />
-              )}
-              <YesNoRadio label="性交渉の有無" name="sexual_activity" register={register} error={errors.sexual_activity?.message} />
-            </>
+            <CheckboxGroupField
+              label="妊活方法"
+              value={fertilityMethods}
+              options={FERTILITY_METHODS_OPTIONS}
+              onToggle={toggleFertilityMethod}
+              error={errors.fertility_methods?.message}
+              required
+            />
           )}
 
           <div>
