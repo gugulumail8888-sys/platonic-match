@@ -69,7 +69,7 @@ services:
       timeout: 5s
       retries: 10
     ports:
-      - "54322:5432"
+      - "15432:5432"
     environment:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: 5432
@@ -184,13 +184,13 @@ services:
 
   # ==========================================
   # Supabase Studio (管理ダッシュボード)
-  # http://localhost:54323
+  # http://localhost:15433
   # ==========================================
   studio:
     image: supabase/studio:2026.04.27-sha-5f60601
     container_name: konkatsu_studio
     ports:
-      - "54323:3000"
+      - "15433:3000"
     environment:
       STUDIO_PG_META_URL: http://meta:8080
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -232,14 +232,14 @@ services:
 
   # ==========================================
   # Inbucket (メール受信テスト)
-  # Web UI: http://localhost:54324
+  # Web UI: http://localhost:54424
   # ==========================================
   inbucket:
     image: inbucket/inbucket:stable
     container_name: konkatsu_inbucket
     ports:
-      - "54324:9000"
-      - "54325:2500"
+      - "54424:9000"
+      - "54425:2500"
     mem_limit: 128m
     networks:
       - konkatsu_network

@@ -121,25 +121,24 @@ export default function TokushoPage() {
         <SectionCard title="事業者情報">
           <InfoTable
             rows={[
-              { label: '販売業者',         value: '〇〇〇〇（後で修正）' },
-              { label: '運営責任者',        value: '〇〇〇〇（後で修正）' },
+              { label: '販売業者',         value: '福祉のユーメイド合同会社' },
+              { label: '運営責任者',        value: '竹島　直伸' },
               {
                 label: '所在地',
-                value: '〇〇県〇〇市〇〇（後で修正）',
-                note:  '※ 請求があれば遅滞なく開示します',
+                value: '宮崎県宮崎市大坪西二丁目10-13',
               },
               {
                 label: '電話番号',
-                value: 'お問い合わせいただいた後に開示します',
+                value: '0985-86-6782',
               },
               {
                 label: 'メールアドレス',
                 value: (
                   <a
-                    href="mailto:amistasupport@gmail.com"
+                    href="mailto:fukushino.youmade@gmail.com"
                     className="text-teal-400 hover:text-teal-300 underline underline-offset-2 transition-colors"
                   >
-                    amistasupport@gmail.com
+                    fukushino.youmade@gmail.com
                   </a>
                 ),
               },

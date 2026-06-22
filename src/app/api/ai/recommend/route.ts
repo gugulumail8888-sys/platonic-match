@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getAvatarColor, AVATAR_COLORS } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -19,17 +20,6 @@ const DEMO_REASONS = [
   'お互いの希望条件が合致しており、自然な形で関係を深められそうです。',
 ];
 
-const AVATAR_COLORS = [
-  '#0d9488','#7c3aed','#db2777','#ea580c','#16a34a',
-  '#2563eb','#d97706','#dc2626','#0891b2','#65a30d',
-];
-
-function getAvatarColor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
 function calcAge(birthDate: string | null): number {
   if (!birthDate) return 0;
   const today = new Date();
@@ -40,11 +30,39 @@ function calcAge(birthDate: string | null): number {
   return age;
 }
 
+const DAILY_LIMIT = 3;
+
+// JST（日本時間）の「今日」の開始・終了をUTCのDateで返す
+function getJstDayRange(): { start: Date; end: Date } {
+  const jstDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Tokyo' });
+  const start = new Date(`${jstDateStr}T00:00:00+09:00`);
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+  return { start, end };
+}
+
 export async function POST() {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
+
+    // 1日3回までの利用制限（JST基準）
+    const { start, end } = getJstDayRange();
+    const { count: usageCount } = await supabase
+      .from('ai_usage_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString());
+
+    if ((usageCount ?? 0) >= DAILY_LIMIT) {
+      return NextResponse.json(
+        { error: '1日3回までご利用いただけます', limitExceeded: true },
+        { status: 429 }
+      );
+    }
+
+    await supabase.from('ai_usage_logs').insert({ user_id: user.id });
 
     // ログインユーザーのプロフィール取得
     const { data: myProfile } = await supabase

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Select } from "@/components/ui/Input";
 import { PREFECTURES, GENDER_LABELS } from "@/types";
 import { CheckCircle, Check } from "lucide-react";
+import { AVATAR_COLORS } from "@/lib/utils";
 
 // ============================================================
 // 選択肢（登録フォームと同じ内容）
@@ -82,6 +83,7 @@ const profileSchema = z.object({
   hobbies: z.string().max(1000, "1000文字以内で入力してください").optional(),
   pr: z.string().max(1000, "1000文字以内で入力してください").optional(),
   desired_conditions: z.string().max(1000, "1000文字以内で入力してください").optional(),
+  avatar_color: z.string().nullable().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -128,6 +130,7 @@ export interface ProfileEditData {
   hobbies: string | null;
   pr: string | null;
   desired_conditions: string | null;
+  avatar_color: string | null;
 }
 
 interface ProfileFormProps {
@@ -345,6 +348,7 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       hobbies: initialData?.hobbies ?? "",
       pr: initialData?.pr ?? "",
       desired_conditions: initialData?.desired_conditions ?? "",
+      avatar_color: initialData?.avatar_color ?? null,
     },
   });
 
@@ -412,6 +416,7 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
       hobbies: data.hobbies || null,
       pr: data.pr || null,
       desired_conditions: data.desired_conditions || null,
+      avatar_color: data.avatar_color ?? null,
       updated_at: new Date().toISOString(),
     };
 
@@ -597,6 +602,41 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           <FormTextarea label="希望条件" name="desired_conditions" register={register} placeholder="パートナーへの希望条件があれば記入してください" maxLength={1000} error={errors.desired_conditions?.message} />
         </div>
       </section>
+
+      {/* アバターカラー選択 */}
+      <div className="space-y-3 pt-4 border-t border-zinc-800">
+        <label className="block text-sm font-medium text-zinc-300">
+          アバターカラー
+        </label>
+        <p className="text-xs text-zinc-500">アイコンの色を選択できます</p>
+        <div className="flex gap-3 flex-wrap">
+          {AVATAR_COLORS.map((color) => {
+            const selected = watch('avatar_color') === color;
+            return (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setValue('avatar_color', color)}
+                className={`w-8 h-8 rounded-full border-4 transition-all ${
+                  selected ? 'border-white scale-110' : 'border-transparent'
+                }`}
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            );
+          })}
+          {watch('avatar_color') && (
+            <button
+              type="button"
+              onClick={() => setValue('avatar_color', null)}
+              className="w-8 h-8 rounded-full border-4 border-transparent bg-zinc-700 text-zinc-400 text-xs flex items-center justify-center hover:bg-zinc-600"
+              title="リセット"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
         {!isNew && (

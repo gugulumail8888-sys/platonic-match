@@ -57,13 +57,14 @@ export async function POST(req: NextRequest) {
     // ── matchingsテーブルに申請を保存 ──
     const adminSupabase = createAdminClient();
 
-    // ── 重複チェック ──
+    // ── 重複チェック（双方向） ──
     const { data: existing } = await adminSupabase
       .from('matchings')
       .select('id')
-      .eq('applicant_id', user.id)
-      .eq('partner_id', member.id)
       .in('status', ['pending', 'scheduling'])
+      .or(
+        `and(applicant_id.eq.${user.id},partner_id.eq.${member.id}),and(applicant_id.eq.${member.id},partner_id.eq.${user.id})`
+      )
       .maybeSingle();
 
     if (existing) {

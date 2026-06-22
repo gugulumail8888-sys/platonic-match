@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -150,8 +151,23 @@ export default function RecommendPage() {
   const [priorityPoints, setPriorityPoints] = useState<string[]>([]);
   const [freeMessage, setFreeMessage] = useState('');
 
-  const toggleValue = (arr: string[], value: string, setter: (v: string[]) => void) => {
-    setter(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
+  const toggleValue = (arr: string[], val: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+    // 排他ペアの定義
+    const exclusivePairs: [string, string][] = [
+      ['子供ほしい', '子供ほしくない'],
+      ['外部パートナーあり', '外部パートナーなし'],
+      ['同居希望', '別居希望'],
+    ];
+    setter(prev => {
+      if (prev.includes(val)) {
+        return prev.filter(v => v !== val);
+      }
+      // 排他ペアの相手を除外してから追加
+      const pair = exclusivePairs.find(p => p.includes(val));
+      const opponent = pair ? pair.find(p => p !== val) : null;
+      const filtered = opponent ? prev.filter(v => v !== opponent) : prev;
+      return [...filtered, val];
+    });
   };
 
   useEffect(() => {

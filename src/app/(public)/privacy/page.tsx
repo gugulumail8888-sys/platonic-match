@@ -231,8 +231,8 @@ export default function PrivacyPage() {
         <InfoTable
           rows={[
             { label: 'サービス名', value: 'amista' },
-            { label: '運営者',    value: '〇〇〇〇（後で修正）' },
-            { label: 'メール',    value: 'amistasupport@gmail.com' },
+            { label: '運営者',    value: '福祉のユーメイド合同会社' },
+            { label: 'メール',    value: 'fukushino.youmade@gmail.com' },
             { label: '制定日',    value: '2026年5月27日' },
           ]}
         />

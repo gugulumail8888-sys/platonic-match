@@ -195,7 +195,7 @@ export default function TermsPage() {
         <ArticleSection number={11} title="準拠法・管轄">
           <BulletList items={[
             '本規約は日本法に準拠',
-            '紛争は〇〇地方裁判所を第一審の専属管轄',
+            '紛争は宮崎地方裁判所を第一審の専属管轄',
           ]} />
         </ArticleSection>
 
@@ -209,9 +209,9 @@ export default function TermsPage() {
         </h2>
         <InfoTable rows={[
           { label: 'サービス名', value: 'amista' },
-          { label: '運営者',    value: '〇〇〇〇（後で修正）' },
-          { label: '所在地',    value: '〇〇県〇〇市（後で修正）' },
-          { label: 'メール',    value: 'amistasupport@gmail.com' },
+          { label: '運営者',    value: '福祉のユーメイド合同会社' },
+          { label: '所在地',    value: '宮崎県宮崎市大坪西二丁目10-13' },
+          { label: 'メール',    value: 'fukushino.youmade@gmail.com' },
           { label: '制定日',    value: '2026年5月27日' },
         ]} />
       </div>

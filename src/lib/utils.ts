@@ -55,3 +55,15 @@ export function translateAuthError(error: string): string {
   };
   return errorMap[error] ?? "エラーが発生しました。しばらく経ってから再度お試しください。";
 }
+
+export const AVATAR_COLORS = [
+  '#0d9488','#7c3aed','#db2777','#ea580c','#16a34a',
+  '#2563eb','#d97706','#dc2626','#0891b2','#65a30d',
+];
+
+export function getAvatarColor(id: string, overrideColor?: string | null): string {
+  if (overrideColor) return overrideColor;
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}

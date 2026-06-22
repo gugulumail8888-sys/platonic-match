@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ShieldX, Clock, FileText, MapPin } from 'lucide-react';
+import { getAvatarColor, AVATAR_COLORS } from '@/lib/utils';
 
 // ============================================================
 // Types
@@ -27,17 +28,6 @@ const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; ic
   approved: { label: '承認済み', className: 'bg-green-900/50 text-green-300 border border-green-800',  icon: ShieldCheck },
   rejected: { label: '否認',     className: 'bg-red-900/50 text-red-300 border border-red-800',        icon: ShieldX },
 };
-
-const AVATAR_COLORS = [
-  '#0d9488', '#7c3aed', '#db2777', '#ea580c', '#16a34a',
-  '#2563eb', '#d97706', '#dc2626', '#0891b2', '#65a30d',
-];
-
-function getAvatarColor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
 
 // ============================================================
 // Sub-components

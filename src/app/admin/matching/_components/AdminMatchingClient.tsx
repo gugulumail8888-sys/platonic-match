@@ -340,11 +340,11 @@ export default function AdminMatchingClient({
                       </td>
 
                       {/* 操作 */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
+                      <td className="px-4 py-3 w-48">
+                        <div className="flex items-center gap-3">
                           <button
                             onClick={() => setSelectedRow(row)}
-                            className="text-xs px-2.5 py-1 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors"
+                            className="text-xs w-8 py-1 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors text-center"
                           >
                             詳細
                           </button>
@@ -354,7 +354,7 @@ export default function AdminMatchingClient({
                               <input type="hidden" name="status" value={nextStatus} />
                               <button
                                 type="submit"
-                                className="text-xs px-2.5 py-1 rounded-lg border border-teal-800 text-teal-400 hover:bg-teal-900/40 transition-colors"
+                                className="text-xs px-2.5 py-1 rounded-lg border border-teal-800 text-teal-400 hover:bg-teal-900/40 transition-colors whitespace-nowrap"
                               >
                                 {nextLabel.replace(' →', '')}
                               </button>

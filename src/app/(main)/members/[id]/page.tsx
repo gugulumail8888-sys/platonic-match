@@ -9,6 +9,7 @@ import {
   Wallet, Home, GitMerge, Calendar, Baby, Sparkles, HeartHandshake,
   Loader2, Bot, Receipt, TriangleAlert,
 } from 'lucide-react';
+import { getAvatarColor, AVATAR_COLORS } from '@/lib/utils';
 
 interface Member {
   id: string;
@@ -57,17 +58,6 @@ function calcAge(birthDate: string | null): number {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
-}
-
-const AVATAR_COLORS = [
-  '#0d9488','#7c3aed','#db2777','#ea580c','#16a34a',
-  '#2563eb','#d97706','#dc2626','#0891b2','#65a30d',
-];
-
-function getAvatarColor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 function InfoRow({ icon: Icon, label, value }: {
