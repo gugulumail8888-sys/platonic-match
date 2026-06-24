@@ -12,9 +12,9 @@ export default async function PublicLayout({
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pt-9">
       {/* ヘッダー */}
-      <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
+      <header className="sticky top-9 z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           {user ? (
             <Link href="/dashboard" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">

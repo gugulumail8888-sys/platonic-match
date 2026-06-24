@@ -20,7 +20,7 @@ export function ScrollHeader() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+        "fixed top-10 left-0 right-0 z-50 transition-all duration-500",
         scrolled
           ? "bg-zinc-950/85 backdrop-blur-md border-b border-zinc-800/60 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
           : "bg-transparent border-b border-transparent"

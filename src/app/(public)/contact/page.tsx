@@ -242,9 +242,13 @@ export default function ContactPage() {
                 value={form.body}
                 onChange={(e) => set('body', e.target.value)}
                 rows={6}
+                maxLength={1000}
                 placeholder="お問い合わせの内容を詳しくご記入ください"
                 className={`${inputCls} resize-none`}
               />
+              <div className="text-right text-xs text-zinc-500 mt-1">
+                残り {1000 - form.body.length}文字
+              </div>
             </div>
 
             {/* 送信ボタン */}

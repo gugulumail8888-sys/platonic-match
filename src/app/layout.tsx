@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { BetaBanner } from "@/components/layout/BetaBanner";
+import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,7 +38,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        <BetaBanner />
+        {children}
+        <FeedbackWidget />
+      </body>
     </html>
   );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe';
+import { createGoogleMeetUrl } from '@/lib/google-meet';
 import type Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
@@ -94,6 +95,17 @@ export async function POST(req: NextRequest) {
             supabase.auth.admin.getUserById(matching.partner_id),
           ]);
 
+          // Google Meet URL を自動生成
+          let meetUrl: string | null = null;
+          try {
+            meetUrl = await createGoogleMeetUrl(
+              matching.applied_at ?? new Date().toISOString(),
+              `amista お見合い（${matchingId}）`
+            );
+          } catch (e) {
+            console.error('Meet URL生成エラー:', e);
+          }
+
           await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -116,6 +128,7 @@ export async function POST(req: NextRequest) {
                 email: authPartner?.user?.email ?? '',
               },
               amount: matching.amount ?? 0,
+              meetUrl: meetUrl ?? undefined,
             }),
           });
         } catch (notifyError) {

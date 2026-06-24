@@ -107,10 +107,10 @@ export default function LpPage() {
         :root { --teal:#0d9488;--teal-light:#14b8a6;--teal-dim:#0d948820;--teal-mid:#0d948840;--dark:#1a2540;--dark-2:#1f2d4e;--light:#f7f8fa;--light-2:#ffffff;--light-border:#d8dde6;--dark-text:#1a2540;--muted:#4a5670;--white:#ffffff; }
         html { scroll-behavior: smooth; }
         body { background: var(--dark); color: var(--white); font-family: "Noto Sans JP", sans-serif; font-weight: 300; line-height: 1.7; overflow-x: hidden; }
-        nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 20px 48px; background: linear-gradient(to bottom, #1a254099 0%, transparent 100%); backdrop-filter: blur(2px); transition: background .3s; }
+        nav { position: fixed; top: 40px; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 48px; background: linear-gradient(to bottom, #1a254099 0%, transparent 100%); backdrop-filter: blur(2px); transition: background .3s; }
         nav.scrolled { background: rgba(26,37,64,.97); }
-        .logo { font-family: "DM Serif Display", serif; font-size: 1.6rem; letter-spacing: .12em; color: var(--white); }
-        .logo span { color: var(--teal-light); }
+        .logo { font-family: inherit; font-size: 1.25rem; font-weight: 700; letter-spacing: normal; color: var(--white); display: flex; align-items: center; gap: 0; }
+        .logo span { color: var(--teal-light); letter-spacing: normal; }
         nav ul { list-style: none; display: flex; gap: 32px; }
         nav ul a { color: rgba(255,255,255,.6); font-size: .82rem; letter-spacing: .08em; text-decoration: none; transition: color .2s; }
         nav ul a:hover { color: var(--teal-light); }
@@ -245,7 +245,7 @@ export default function LpPage() {
       `}</style>
 
       <nav id="mainNav">
-        <div className="logo">ami<span>sta</span></div>
+        <div className="logo" style={{display:'flex',alignItems:'center',gap:'0'}}><div style={{width:'32px',height:'32px',background:'#0d9488',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>ami<span>sta</span></div>
         <ul>
           <li><a href="#concept">サービスについて</a></li>
           <li><a href="#how">ご利用の流れ</a></li>
