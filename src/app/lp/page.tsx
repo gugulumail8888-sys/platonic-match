@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 
 export default function LpPage() {
   const [mounted, setMounted] = useState(false);
@@ -245,7 +246,7 @@ export default function LpPage() {
       `}</style>
 
       <nav id="mainNav">
-        <div className="logo" style={{display:'flex',alignItems:'center',gap:'0'}}><div style={{width:'32px',height:'32px',background:'#0d9488',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>ami<span>sta</span></div>
+        <div className="logo" style={{display:'flex',alignItems:'center',gap:'8px'}}><div style={{width:'32px',height:'32px',background:'#0d9488',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><span>ami<span style={{color:'var(--teal-light)'}}>sta</span></span></div>
         <ul>
           <li><a href="#concept">サービスについて</a></li>
           <li><a href="#how">ご利用の流れ</a></li>
@@ -420,7 +421,7 @@ export default function LpPage() {
       <footer>
         <div className="footer-inner">
           <div className="footer-brand">
-            <div className="logo">ami<span>sta</span></div>
+            <div className="logo" style={{display:'flex',alignItems:'center',gap:'8px'}}><div style={{width:'32px',height:'32px',background:'#0d9488',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><span>ami<span style={{color:'var(--teal-light)'}}>sta</span></span></div>
             <p>友情婚活マッチングサービス。<br />信頼できる友人から、ライフパートナーへ。</p>
           </div>
           <div className="footer-links">
@@ -443,10 +444,11 @@ export default function LpPage() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© 2025 amista. All rights reserved.</span>
+          <span>© 2026 amista. All rights reserved.</span>
           <span>友情婚活マッチングサービス</span>
         </div>
       </footer>
+      <ScrollToTop />
     </>
   );
 }

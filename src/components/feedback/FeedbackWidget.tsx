@@ -35,7 +35,7 @@ export default function FeedbackWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+    <div className="fixed bottom-20 right-6 z-50 flex flex-col items-end gap-2">
       {/* ポップアップ */}
       {isOpen && (
         <div className="bg-white rounded-2xl shadow-2xl w-80 p-4 border border-gray-200">

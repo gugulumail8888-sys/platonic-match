@@ -442,8 +442,8 @@ export default function HomePage() {
                 amista: '自分のペースで自然に関係を築く',
               },
             ].map((item) => (
-              <div key={item.title} className="bg-teal-800/60 rounded-2xl border border-teal-700/60 overflow-hidden">
-                <div className="bg-zinc-800 px-5 py-4 flex items-center gap-2">
+              <div key={item.title} className="bg-teal-900 rounded-2xl border border-teal-700/60 overflow-hidden">
+                <div className="px-5 py-4 flex items-center gap-2">
                   <span className="text-xl">{item.icon}</span>
                   <h3 className="font-bold text-white text-sm">{item.title}</h3>
                 </div>
@@ -470,7 +470,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA セクション */}
-      <section className="py-20 px-4 bg-gradient-primary">
+      <section className="py-20 px-4" style={{ background: '#14b8a6' }}>
         <div className="max-w-2xl mx-auto text-center text-white">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             信頼できる友人から、<br />ライフパートナーへ。
@@ -491,14 +491,14 @@ export default function HomePage() {
       </section>
 
       {/* フッター */}
-      <footer className="bg-gradient-primary border-t border-teal-600 text-white py-12 px-4">
+      <footer className="text-white py-12 px-4" style={{ background: '#14b8a6' }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-gradient-primary rounded-full flex items-center justify-center">
                 <Heart className="w-3 h-3 text-white fill-white" />
               </div>
-              <span className="font-bold text-white tracking-wide">
+              <span className="font-bold text-teal-900 tracking-wide">
                 ami<span className="text-primary-400">sta</span>
               </span>
             </div>

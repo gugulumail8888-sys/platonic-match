@@ -18,14 +18,14 @@ export default async function AdminFeedbackPage() {
       ) : (
         <div className="space-y-4">
           {feedbacks.map((fb) => (
-            <div key={fb.id} className="bg-white rounded-lg border border-gray-200 p-4">
+            <div key={fb.id} className="bg-zinc-400 rounded-lg border border-gray-300 p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">{fb.page}</span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-700 bg-gray-300 px-2 py-1 rounded">{fb.page}</span>
+                <span className="text-xs text-gray-700">
                   {new Date(fb.created_at).toLocaleString('ja-JP')}
                 </span>
               </div>
-              <p className="text-gray-800 text-sm whitespace-pre-wrap">{fb.content}</p>
+              <p className="text-black text-sm whitespace-pre-wrap">{fb.content}</p>
             </div>
           ))}
         </div>
