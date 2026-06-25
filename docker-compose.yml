@@ -2,7 +2,7 @@ services:
   # ==========================================
   # Next.js アプリケーション
   # ==========================================
-  app:
+  amista:
     build:
       context: .
       dockerfile: Dockerfile
