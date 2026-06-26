@@ -82,7 +82,7 @@ export default function FeedbackWidget() {
       {/* フローティングボタン */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-4 py-3 shadow-lg text-sm font-medium flex items-center gap-2 transition-colors"
+        className="bg-orange-400 hover:bg-orange-500 text-white rounded-full px-4 py-3 shadow-lg text-sm font-medium flex items-center gap-2 transition-colors"
       >
         💬 <span>ご意見・ご要望（一言でもOK）</span>
       </button>

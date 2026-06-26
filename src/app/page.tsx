@@ -108,7 +108,7 @@ export default function HomePage() {
           <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-2 leading-relaxed">
             親や周囲からの結婚プレッシャー、感じていませんか？
           </p>
-          <p className="text-base text-zinc-400 max-w-xl mx-auto mb-8 leading-relaxed">
+          <p className="text-base text-white/90 max-w-xl mx-auto mb-8 leading-relaxed font-medium">
             amistaは「恋愛なし・価値観が合う生涯のパートナー」と出会える<br className="hidden sm:block" />
             友情婚活サービスです。
           </p>
