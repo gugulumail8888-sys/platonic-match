@@ -126,7 +126,7 @@ export function Navbar() {
   return (
     <>
       {/* デスクトップ サイドバー */}
-      <aside className="hidden lg:flex flex-col w-64 bg-zinc-900 border-r border-zinc-800 min-h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden lg:flex flex-col w-64 bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-2.5rem)] fixed left-0 top-10 z-40">
         <div className="p-6 border-b border-zinc-800">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">

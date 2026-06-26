@@ -99,18 +99,10 @@ export default function HomePage() {
             友情から始まる、新しい婚活のかたち
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
-            「結婚しなきゃ」から
+          <h1 className="text-5xl md:text-7xl font-black leading-tight mb-6 drop-shadow-lg">
+            <span className="text-white">「結婚しなきゃ」</span><span className="text-white/40">から</span>
             <br />
-            <span style={{
-              background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              display: 'inline-block',
-            }}>
-              解放される、新しい選択。
-            </span>
+            <span className="text-white">解放される、</span><span className="text-white/40">新しい選択。</span>
           </h1>
 
           <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-2 leading-relaxed">
@@ -124,29 +116,32 @@ export default function HomePage() {
           {/* 3つのポイント */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-10">
             {[
-              { emoji: '😮‍💨', text: '「結婚しなきゃ」のプレッシャーから解放' },
-              { emoji: '🤝',   text: '恋愛感情なしで一緒に生きるパートナーを探す' },
-              { emoji: '✨',   text: '自分らしい人生の形を、自分で選ぶ' },
-            ].map(({ emoji, text }) => (
+              { emoji: '😮‍💨', line1: '「結婚しなきゃ」', line2: 'のプレッシャーから解放' },
+              { emoji: '🤝',   line1: '「恋愛感情なしで」', line2: '一緒に生きるパートナーを探す' },
+              { emoji: '✨',   line1: '「自分らしい人生の形を」', line2: '自分で選ぶ' },
+            ].map(({ emoji, line1, line2 }) => (
               <div
-                key={text}
-                className="flex items-center gap-2 bg-zinc-900/60 border border-zinc-700/60 rounded-full px-4 py-2 text-sm text-zinc-300 backdrop-blur-sm"
+                key={line1}
+                className="flex items-center gap-2 bg-white border border-white rounded-full px-5 py-2.5 text-sm text-teal-700 font-medium shadow-lg"
               >
                 <span>{emoji}</span>
-                <span>{text}</span>
+                <div className="flex flex-col text-center">
+                  <span className="font-bold text-teal-800 text-base">{line1}</span>
+                  <span className="font-normal text-teal-600 text-xs">{line2}</span>
+                </div>
               </div>
             ))}
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/signup">
-              <Button size="lg" className="min-w-[200px] shadow-lg">
+              <Button size="lg" className="min-w-[200px] shadow-lg bg-teal-500 hover:bg-teal-400 text-white font-bold border-2 border-white">
                 <Heart className="w-5 h-5 fill-white" />
                 無料で始める
               </Button>
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="lg" className="min-w-[200px]">
+              <Button variant="outline" size="lg" className="min-w-[200px] text-white/70 border-white/30 hover:bg-white/10 hover:text-white">
                 ログイン
               </Button>
             </Link>
@@ -187,7 +182,7 @@ export default function HomePage() {
       )}
 
       {/* 友情婚活とは */}
-      <section id="about" className="py-16 px-4 bg-teal-100">
+      <section id="about" className="py-16 px-4 bg-teal-100 scroll-mt-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl md:text-3xl font-bold text-teal-900 mb-3">
@@ -239,7 +234,7 @@ export default function HomePage() {
       </section>
 
       {/* 特徴セクション */}
-      <section id="features" className="py-20 px-4 bg-teal-100">
+      <section id="features" className="py-20 px-4 bg-teal-100 scroll-mt-24">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-teal-900 mb-4">
@@ -295,7 +290,7 @@ export default function HomePage() {
       </section>
 
       {/* 料金プラン */}
-      <section id="pricing" className="py-20 px-4 bg-teal-200">
+      <section id="pricing" className="py-20 px-4 bg-teal-200 scroll-mt-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-teal-900 mb-3">
@@ -412,7 +407,7 @@ export default function HomePage() {
       </section>
 
       {/* 他サービスとの違い */}
-      <section id="voice" className="py-20 px-4 bg-teal-100">
+      <section id="voice" className="py-20 px-4 bg-teal-100 scroll-mt-24">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-teal-900 mb-3">

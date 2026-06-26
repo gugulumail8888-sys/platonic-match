@@ -8,7 +8,7 @@ export default async function AdminFeedbackPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="p-6 pt-16">
+    <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">ご意見・ご要望一覧</h1>
       {error && (
         <p className="text-red-500 text-sm mb-4">エラー: {error.message}</p>

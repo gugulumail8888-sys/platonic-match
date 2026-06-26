@@ -38,7 +38,7 @@ export function ScrollHeader() {
         </div>
 
         {/* ナビゲーション */}
-        <nav className="hidden md:flex items-center gap-6 text-sm text-zinc-300">
+        <nav className="hidden md:flex items-center gap-6 text-sm text-white">
           <Link href="#about" className="hover:text-primary-400 transition-colors">
             友情婚活とは
           </Link>

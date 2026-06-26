@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, Clock, CheckCircle2, Video, RefreshCw, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle2, Video, RefreshCw, AlertCircle } from 'lucide-react';
 
 // ============================================================
 // Types
@@ -12,8 +12,8 @@ type ScheduleStatus = 'scheduling' | 'confirmed' | 'zoom_sent';
 
 interface ScheduleItem {
   id: string;
-  applicant: { nickname: string; avatarColor: string; initials: string };
-  target:    { nickname: string; avatarColor: string; initials: string };
+  applicant: { nickname: string; avatarColor: string; initials: string; email: string };
+  target:    { nickname: string; avatarColor: string; initials: string; email: string };
   scheduledAt: string | null;
   status: ScheduleStatus;
   zoomSent: boolean;
@@ -44,7 +44,7 @@ function StatusBadge({ status }: { status: ScheduleStatus }) {
   );
 }
 
-function MemberChip({ nickname, avatarColor, initials }: { nickname: string; avatarColor: string; initials: string }) {
+function MemberChip({ nickname, avatarColor, initials, email }: { nickname: string; avatarColor: string; initials: string; email?: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <div
@@ -53,7 +53,10 @@ function MemberChip({ nickname, avatarColor, initials }: { nickname: string; ava
       >
         {initials}
       </div>
-      <span className="text-zinc-200 text-sm">{nickname}</span>
+      <div className="flex flex-col">
+        <span className="text-zinc-200 text-sm">{nickname}</span>
+        {email && <span className="text-zinc-500 text-xs">{email}</span>}
+      </div>
     </div>
   );
 }
@@ -192,86 +195,75 @@ export default function AdminSchedulePage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-500">該当する日程がありません</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((item) => (
-            <div
-              key={item.id}
-              className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 hover:border-zinc-700 transition-all"
-            >
-              {/* ステータス */}
-              <div className="flex items-center justify-between mb-4">
-
-                <StatusBadge status={item.status} />
-              </div>
-
-              {/* 両者のニックネーム */}
-              <div className="bg-zinc-800 rounded-xl p-3 mb-4 space-y-2">
-                <div className="flex justify-between text-xs text-zinc-500 mb-1">
-                  <span>申請者</span>
-                  <span>お相手</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <MemberChip {...item.applicant} />
-                  <span className="text-zinc-600 text-xs flex-shrink-0">↔</span>
-                  <MemberChip {...item.target} />
-                </div>
-              </div>
-
-              {/* 日時・ZOOM */}
-              <div className="mb-4 text-xs space-y-1.5">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500 flex items-center gap-1.5">
-                    <Calendar className="w-3 h-3" />確定日時
-                  </span>
-                  <span className={item.scheduledAt ? 'text-zinc-200 font-medium' : 'text-zinc-600'}>
-                    {item.scheduledAt ?? '未確定'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500 flex items-center gap-1.5">
-                    <Video className="w-3 h-3" />Google Meetリンク
-                  </span>
-                  <span className={item.status === 'zoom_sent' ? 'text-green-400' : 'text-zinc-500'}>
-                    {item.status === 'zoom_sent' ? '送信済' : '未送信'}
-                  </span>
-                </div>
-              </div>
-
-              {/* ボタンエリア */}
-              <div className="space-y-2">
-                {/* Google Meetリンク送信ボタン */}
-                <button
-                  onClick={() => router.push(`/admin/schedule/${item.id}`)}
-                  disabled={item.status === 'scheduling'}
-                  className={`w-full py-2 rounded-xl text-sm font-medium transition-colors ${
-                    item.status === 'zoom_sent'
-                      ? 'border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-                      : item.status !== 'scheduling'
-                      ? 'bg-teal-700 text-white hover:bg-teal-600'
-                      : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                  }`}
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 text-zinc-500 text-xs">
+                <th className="text-left p-4">申請者</th>
+                <th className="text-left p-4">お相手</th>
+                <th className="text-left p-4">ステータス</th>
+                <th className="text-left p-4">確定日時</th>
+                <th className="text-left p-4">Google Meet</th>
+                <th className="text-left p-4">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((item) => (
+                <tr
+                  key={item.id}
+                  className="border-b border-zinc-800 hover:bg-zinc-800 transition-all"
                 >
-                  {item.status === 'zoom_sent' ? '詳細を見る' : item.status !== 'scheduling' ? 'Google Meetリンクを送る' : '日程未確定'}
-                </button>
+                  <td className="p-4"><MemberChip {...item.applicant} /></td>
+                  <td className="p-4"><MemberChip {...item.target} /></td>
+                  <td className="p-4"><StatusBadge status={item.status} /></td>
+                  <td className="p-4">
+                    <span className={item.scheduledAt ? 'text-zinc-200 font-medium' : 'text-zinc-600'}>
+                      {item.scheduledAt ?? '未確定'}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <span className={item.status === 'zoom_sent' ? 'text-green-400' : 'text-zinc-500'}>
+                      {item.status === 'zoom_sent' ? '送信済' : '未送信'}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex flex-col gap-2 min-w-[160px]">
+                      {/* Google Meetリンク送信ボタン */}
+                      <button
+                        onClick={() => router.push(`/admin/schedule/${item.id}`)}
+                        disabled={item.status === 'scheduling'}
+                        className={`w-full py-2 rounded-xl text-sm font-medium transition-colors ${
+                          item.status === 'zoom_sent'
+                            ? 'border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                            : item.status !== 'scheduling'
+                            ? 'bg-teal-700 text-white hover:bg-teal-600'
+                            : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                        }`}
+                      >
+                        {item.status === 'zoom_sent' ? '詳細を見る' : item.status !== 'scheduling' ? 'Google Meetリンクを送る' : '日程未確定'}
+                      </button>
 
-                {/* 返金ボタン */}
-                {item.paymentIntentId && !item.refunded && (
-                  <button
-                    onClick={() => handleRefund(item)}
-                    disabled={refunding === item.id}
-                    className="w-full py-2 rounded-xl text-sm font-medium border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {refunding === item.id ? '返金処理中...' : '⚠ 返金する'}
-                  </button>
-                )}
-                {item.refunded && (
-                  <div className="w-full py-2 rounded-xl text-sm font-medium text-center bg-zinc-800 text-zinc-500">
-                    返金済み
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+                      {/* 返金ボタン */}
+                      {item.paymentIntentId && !item.refunded && (
+                        <button
+                          onClick={() => handleRefund(item)}
+                          disabled={refunding === item.id}
+                          className="w-full py-2 rounded-xl text-sm font-medium border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {refunding === item.id ? '返金処理中...' : '⚠ 返金する'}
+                        </button>
+                      )}
+                      {item.refunded && (
+                        <div className="w-full py-2 rounded-xl text-sm font-medium text-center bg-zinc-800 text-zinc-500">
+                          返金済み
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

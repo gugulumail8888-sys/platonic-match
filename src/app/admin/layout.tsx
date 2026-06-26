@@ -29,7 +29,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-zinc-950">
       <AdminSidebar />
-      <main className="lg:ml-56 min-h-screen">
+      <main className="lg:ml-56 min-h-screen pt-10">
         {children}
       </main>
       <ScrollToTop />

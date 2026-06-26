@@ -14,8 +14,8 @@ const NAV_ITEMS = [
   { href: '/admin/schedule', label: '日程管理',       icon: Calendar,      exact: false },
   { href: '/admin/dormant',  label: '休眠会員',       icon: Moon,          exact: false },
   { href: '/admin/export',   label: 'データ出力',     icon: Download,      exact: false },
-  { href: '/admin/settings', label: '設定',           icon: Settings,      exact: false },
   { href: '/admin/feedback', label: 'ご意見・ご要望', icon: MessageSquare, exact: false },
+  { href: '/admin/settings', label: '設定',           icon: Settings,      exact: false },
 ];
 
 export function AdminSidebar() {
@@ -24,7 +24,7 @@ export function AdminSidebar() {
   return (
     <>
       {/* ========== デスクトップ サイドバー ========== */}
-      <aside className="hidden lg:flex flex-col w-56 bg-zinc-900 border-r border-zinc-800 min-h-screen fixed left-0 top-0 z-40">
+      <aside className="hidden lg:flex flex-col w-56 bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-2.5rem)] fixed left-0 top-10 z-40 overflow-hidden">
         {/* ロゴ */}
         <div className="p-5 border-b border-zinc-800">
           <div className="flex items-center gap-2.5">

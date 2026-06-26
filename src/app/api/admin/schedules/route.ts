@@ -65,6 +65,14 @@ export async function GET() {
 
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]))
 
+  // ③-2 auth.usersからemail取得
+  const emailResults = await Promise.all(
+    profileIds.map((id) => admin.auth.admin.getUserById(id))
+  )
+  const emailMap = new Map(
+    profileIds.map((id, i) => [id, emailResults[i].data.user?.email ?? ''])
+  )
+
   // ④ マッピング
   const result = matchings.map((m) => {
     const applicant = profileMap.get(m.applicant_id)
@@ -78,11 +86,13 @@ export async function GET() {
         nickname:    applicantNickname,
         avatarColor: colorFromId(m.applicant_id),
         initials:    applicantNickname.charAt(0),
+        email:       emailMap.get(m.applicant_id) ?? '',
       },
       target: {
         nickname:    partnerNickname,
         avatarColor: colorFromId(m.partner_id),
         initials:    partnerNickname.charAt(0),
+        email:       emailMap.get(m.partner_id) ?? '',
       },
       scheduledAt:     m.scheduled_at
         ? new Date(m.scheduled_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })
