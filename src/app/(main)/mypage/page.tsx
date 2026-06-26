@@ -427,6 +427,94 @@ const inputCls =
   'bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-white text-sm ' +
   'placeholder-zinc-500 focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors w-full';
 
+function AIOptionSection() {
+  const [isPremium, setIsPremium] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_premium')
+        .eq('id', user.id)
+        .single();
+      setIsPremium(data?.is_premium ?? false);
+      setLoading(false);
+    });
+  }, []);
+
+  const handleCancel = async () => {
+    if (!window.confirm('AIおすすめオプションを解約しますか？\n現在の請求期間終了後に解約されます。')) return;
+    setCancelling(true);
+    try {
+      const res = await fetch('/api/stripe/cancel-subscription', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? '解約処理に失敗しました');
+        return;
+      }
+      setCancelled(true);
+    } catch {
+      alert('解約処理に失敗しました');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5">
+      <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <span className="w-1 h-4 bg-teal-500 rounded-full inline-block" />
+        AIおすすめオプション
+      </h3>
+      {isPremium ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-teal-900/50 text-teal-300 border border-teal-800 font-medium">
+              加入中
+            </span>
+            <span className="text-sm text-zinc-300">AIおすすめプラン（月額¥1,078）</span>
+          </div>
+          {cancelled ? (
+            <div className="text-sm text-amber-400 bg-amber-950/30 border border-amber-800 rounded-xl px-4 py-3">
+              解約申請を受け付けました。現在の請求期間終了後に解約されます。
+            </div>
+          ) : (
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="px-4 py-2 rounded-xl border border-red-900 text-red-400 text-sm font-medium hover:bg-red-950/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {cancelling ? '処理中...' : '解約する'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-zinc-700 text-zinc-400 border border-zinc-600 font-medium">
+              未加入
+            </span>
+            <span className="text-sm text-zinc-400">AIおすすめプランに加入していません</span>
+          </div>
+          <Link
+            href="/option-apply"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium transition-colors"
+          >
+            AIおすすめプランに申し込む
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SettingsTab() {
   const [email, setEmail] = useState('');
   const [currentPw, setCurrentPw] = useState('');
@@ -516,6 +604,9 @@ function SettingsTab() {
 
   return (
     <div className="space-y-4">
+      {/* AIおすすめオプション */}
+      <AIOptionSection />
+
         {/* アカウント設定 */}
         <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5">
           <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider mb-5 flex items-center gap-2">
