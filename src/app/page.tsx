@@ -105,7 +105,7 @@ export default function HomePage() {
             <span className="text-white">解放される、</span><span className="text-white/40">新しい選択。</span>
           </h1>
 
-          <p className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto mb-2 leading-relaxed">
+          <p className="text-lg md:text-xl text-white font-bold max-w-2xl mx-auto mt-4 mb-4 leading-relaxed" style={{textDecoration: 'underline double', textUnderlineOffset: '4px'}}>
             親や周囲からの結婚プレッシャー、感じていませんか？
           </p>
           <p className="text-base text-white/90 max-w-xl mx-auto mb-8 leading-relaxed font-medium">
