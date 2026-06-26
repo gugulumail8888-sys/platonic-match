@@ -191,6 +191,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
   const [aiIsDemo, setAiIsDemo] = useState(false);
   const [applying, setApplying] = useState(false);
   const [myProfile, setMyProfile] = useState<MyProfile | null>(null);
+  const [omiaiOpen, setOmiaiOpen] = useState(false);
 
   useEffect(() => {
     fetch(`/api/members/${params.id}`)
@@ -221,6 +222,10 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
         setIsBlocked((data.blocked ?? []).includes(params.id));
       })
       .catch(() => {});
+
+    fetch('/api/settings/omiai')
+      .then(res => res.json())
+      .then(data => setOmiaiOpen(data.omiai_open));
   }, [params.id]);
 
   const handleToggleLike = async () => {
@@ -386,11 +391,16 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
                 {likeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
                 {isLiked ? 'いいね済み' : 'いいね'}
               </button>
-            {!applied && (
+            {!applied && omiaiOpen && (
               <button onClick={handleOpenApply}
                 className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors">
                 <Heart className="w-4 h-4" />お見合いを申請する
               </button>
+            )}
+            {!applied && !omiaiOpen && (
+              <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-700 text-zinc-400 text-sm cursor-not-allowed">
+                <Heart className="w-4 h-4" />お見合い申請は8月開始予定
+              </div>
             )}
             {applied && (
               <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-700 text-zinc-400 text-sm">

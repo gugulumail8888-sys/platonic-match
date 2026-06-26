@@ -114,6 +114,7 @@ export default function AdminSettingsPage() {
 
   // 3. 会員設定
   const [registrationOpen, setRegistrationOpen] = useState(true);
+  const [omiaiOpen, setOmiaiOpen] = useState(false);
   const [reviewMode, setReviewMode] = useState<'auto' | 'manual'>('manual');
   const [likeLimit, setLikeLimit] = useState(0);
 
@@ -151,6 +152,7 @@ export default function AdminSettingsPage() {
         if (data.ai_option_enabled !== undefined) setAiOptionEnabled(data.ai_option_enabled !== 'false');
         if (data.review_mode !== undefined) setReviewMode(data.review_mode === 'auto' ? 'auto' : 'manual');
         if (data.registration_open !== undefined) setRegistrationOpen(data.registration_open !== 'false');
+      if (data.omiai_open !== undefined) setOmiaiOpen(data.omiai_open === 'true');
         if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
         if (data.campaign_banner_enabled !== undefined) setCampaignBannerEnabled(data.campaign_banner_enabled === 'true');
         if (data.admin_notify_email !== undefined) setAdminNotifyEmail(data.admin_notify_email);
@@ -197,6 +199,7 @@ export default function AdminSettingsPage() {
   const handleSaveMembers = () => saveSettings({
     review_mode: reviewMode,
     registration_open: String(registrationOpen),
+    omiai_open: String(omiaiOpen),
     daily_like_limit: String(likeLimit),
   });
 
@@ -307,6 +310,12 @@ export default function AdminSettingsPage() {
             onChange={setRegistrationOpen}
             label="新規登録受付"
             description="無効にすると新規会員登録を停止します"
+          />
+          <ToggleSwitch
+            checked={omiaiOpen}
+            onChange={setOmiaiOpen}
+            label="お見合い申請受付"
+            description="無効にすると「8月開始予定」と表示されます"
           />
           <FieldRow label="審査モード">
             <select
