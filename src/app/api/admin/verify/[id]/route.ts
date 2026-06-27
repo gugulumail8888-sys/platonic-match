@@ -95,8 +95,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (error) return error;
 
   const body = await req.json() as { status?: string };
-  if (body.status !== 'approved' && body.status !== 'rejected') {
-    return NextResponse.json({ error: 'statusはapprovedまたはrejectedを指定してください' }, { status: 400 });
+  if (!['approved', 'rejected', 'verified', 'pending'].includes(body.status ?? '')) {
+    return NextResponse.json({ error: 'statusはapproved/rejected/verified/pendingを指定してください' }, { status: 400 });
   }
 
   const { error: updateError } = await admin

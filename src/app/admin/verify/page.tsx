@@ -1,15 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ShieldX, Clock, FileText, MapPin } from 'lucide-react';
-import { getAvatarColor, AVATAR_COLORS } from '@/lib/utils';
+import { ShieldCheck, ShieldX, Clock, FileText, MapPin, RefreshCw, CheckSquare } from 'lucide-react';
+import { getAvatarColor } from '@/lib/utils';
 
-// ============================================================
-// Types
-// ============================================================
-
-type VerifyStatus = 'pending' | 'approved' | 'rejected';
+type VerifyStatus = 'pending' | 'approved' | 'verified' | 'rejected';
 
 interface VerifyItem {
   id: string;
@@ -24,14 +20,11 @@ interface VerifyItem {
 }
 
 const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; icon: React.ElementType }> = {
-  pending:  { label: '審査待ち', className: 'bg-amber-900/50 text-amber-300 border border-amber-800',  icon: Clock },
-  approved: { label: '承認済み', className: 'bg-green-900/50 text-green-300 border border-green-800',  icon: ShieldCheck },
-  rejected: { label: '否認',     className: 'bg-red-900/50 text-red-300 border border-red-800',        icon: ShieldX },
+  pending:  { label: '審査待ち',       className: 'bg-amber-900/50 text-amber-300 border border-amber-800', icon: Clock },
+  approved: { label: '自動承認済み',   className: 'bg-blue-900/50 text-blue-300 border border-blue-800',   icon: ShieldCheck },
+  verified: { label: '手動チェック済み', className: 'bg-green-900/50 text-green-300 border border-green-800', icon: CheckSquare },
+  rejected: { label: '否認',           className: 'bg-red-900/50 text-red-300 border border-red-800',      icon: ShieldX },
 };
-
-// ============================================================
-// Sub-components
-// ============================================================
 
 function StatusBadge({ status }: { status: VerifyStatus }) {
   const cfg = STATUS_CONFIG[status];
@@ -44,27 +37,27 @@ function StatusBadge({ status }: { status: VerifyStatus }) {
   );
 }
 
-// ============================================================
-// Page
-// ============================================================
-
 type FilterTab = 'all' | VerifyStatus;
 
 const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
   { value: 'all',      label: 'すべて' },
   { value: 'pending',  label: '審査待ち' },
-  { value: 'approved', label: '承認済み' },
+  { value: 'approved', label: '自動承認済み' },
+  { value: 'verified', label: '手動チェック済み' },
   { value: 'rejected', label: '否認' },
 ];
 
 export default function AdminVerifyPage() {
   const router = useRouter();
-  const [filter, setFilter] = useState<FilterTab>('all');
+  const [filter, setFilter] = useState<FilterTab>('approved');
   const [items, setItems] = useState<VerifyItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [checkingId, setCheckingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchItems = useCallback(() => {
+    setIsLoading(true);
+    setLoadError(null);
     fetch('/api/admin/verify')
       .then(async (res) => {
         if (!res.ok) {
@@ -78,6 +71,28 @@ export default function AdminVerifyPage() {
       .finally(() => setIsLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+
+  const handleManualCheck = async (id: string) => {
+    if (!window.confirm('この会員を手動チェック済みにしますか？')) return;
+    setCheckingId(id);
+    try {
+      const res = await fetch(`/api/admin/verify/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'verified' }),
+      });
+      if (!res.ok) throw new Error('更新に失敗しました');
+      setItems((prev) => prev.map((v) => v.id === id ? { ...v, status: 'verified' } : v));
+    } catch {
+      alert('更新に失敗しました');
+    } finally {
+      setCheckingId(null);
+    }
+  };
+
   const filtered = items.filter((v) =>
     filter === 'all' ? true : v.status === filter
   );
@@ -86,17 +101,26 @@ export default function AdminVerifyPage() {
     all:      items.length,
     pending:  items.filter((v) => v.status === 'pending').length,
     approved: items.filter((v) => v.status === 'approved').length,
+    verified: items.filter((v) => v.status === 'verified').length,
     rejected: items.filter((v) => v.status === 'rejected').length,
   };
 
   return (
     <div className="p-6 md:p-8 space-y-6">
       {/* ヘッダー */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">本人確認審査</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">
-          全 {items.length} 件
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">本人確認審査</h1>
+          <p className="text-sm text-zinc-400 mt-0.5">全 {items.length} 件</p>
+        </div>
+        <button
+          onClick={fetchItems}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          更新
+        </button>
       </div>
 
       {/* フィルタータブ */}
@@ -138,7 +162,7 @@ export default function AdminVerifyPage() {
               key={item.id}
               className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 hover:border-zinc-700 transition-all"
             >
-              {/* 上段: アバター + 基本情報 + バッジ */}
+              {/* 上段 */}
               <div className="flex items-start gap-3 mb-4">
                 <div
                   className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 select-none"
@@ -191,27 +215,33 @@ export default function AdminVerifyPage() {
               {(item.frontUrl || item.backUrl) && (
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {item.frontUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.frontUrl} alt="表面" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
                   )}
                   {item.backUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.backUrl} alt="裏面" className="w-full h-20 object-cover rounded-lg border border-zinc-700" />
                   )}
                 </div>
               )}
 
-              {/* 審査ボタン */}
-              <button
-                onClick={() => router.push(`/admin/verify/${item.id}`)}
-                className={`w-full py-2 rounded-xl text-sm font-medium transition-colors ${
-                  item.status === 'pending'
-                    ? 'bg-teal-700 text-white hover:bg-teal-600'
-                    : 'border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-                }`}
-              >
-                {item.status === 'pending' ? '審査する' : '詳細を見る'}
-              </button>
+              {/* ボタンエリア */}
+              <div className="space-y-2">
+                {item.status === 'approved' && (
+                  <button
+                    onClick={() => handleManualCheck(item.id)}
+                    disabled={checkingId === item.id}
+                    className="w-full py-2 rounded-xl text-sm font-medium bg-teal-700 text-white hover:bg-teal-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <CheckSquare className="w-4 h-4" />
+                    {checkingId === item.id ? '処理中...' : '手動チェック済みにする'}
+                  </button>
+                )}
+                <button
+                  onClick={() => router.push(`/admin/verify/${item.id}`)}
+                  className="w-full py-2 rounded-xl text-sm font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+                >
+                  {item.status === 'pending' ? '審査する' : '詳細を見る'}
+                </button>
+              </div>
             </div>
           ))}
         </div>

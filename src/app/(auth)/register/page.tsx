@@ -1279,6 +1279,7 @@ export default function RegisterPage() {
           hobbies: data.hobbies,
           pr: data.pr,
           desired_conditions: data.desiredConditions,
+          status: 'approved',
         });
         if (insertError) {
           setSubmitError(insertError.message);
