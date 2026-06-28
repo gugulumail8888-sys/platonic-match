@@ -1,10 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useRouter } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
-export default function PaymentSuccessPage() {
+export default function OmiaiPaymentSuccessPage() {
   const router = useRouter();
 
   return (
@@ -15,10 +15,11 @@ export default function PaymentSuccessPage() {
         </div>
         <h1 className="text-2xl font-bold text-white mb-3">お支払いが完了しました</h1>
         <p className="text-zinc-400 text-sm leading-relaxed mb-8">
-          ご登録ありがとうございます。プランの利用が開始されました。
+          お見合い料のお支払いが完了しました。<br />
+          当日2時間前にGoogle MeetのURLをメールでお送りします。
         </p>
-        <Button fullWidth onClick={() => router.push('/mypage')}>
-          マイページへ
+        <Button fullWidth onClick={() => router.push('/matching')}>
+          マッチングページへ
         </Button>
       </div>
     </div>

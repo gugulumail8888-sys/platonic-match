@@ -89,6 +89,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '日程確定処理に失敗しました' }, { status: 500 });
     }
 
+    // 日程確定後にschedule_slotsを全削除
+    await admin
+      .from('schedule_slots')
+      .delete()
+      .eq('matching_id', matching.id);
+
     // 両者のプロフィール・メールアドレス取得
     const { data: profiles } = await admin
       .from('profiles')

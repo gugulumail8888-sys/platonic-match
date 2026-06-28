@@ -10,7 +10,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -24,8 +24,14 @@ type NotifyBody = {
   meetUrl?: string;
   // survey_reminder用
   surveyUrl?: string;
+  // re_request_schedule用
+  to?: string;
+  applicantNickname?: string;
+  partnerNickname?: string;
+  re_request_message?: string;
 };
 
+const FROM_EMAIL = 'amista <onboarding@resend.dev>';
 const baseStyle = `font-family: sans-serif; font-size: 14px; line-height: 1.8; max-width: 600px; margin: 0 auto; padding: 24px;`;
 const footer = `<hr><p style="color: #888; font-size: 12px;">このメールはamistaシステムから自動送信されています。</p>`;
 
@@ -39,8 +45,8 @@ export async function POST(req: NextRequest) {
     const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl } = body;
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const dateStr = new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
-    const amountStr = `¥${amount.toLocaleString()}（税込）`;
+    const dateStr = appliedAt ? new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : '';
+    const amountStr = `¥${amount != null ? amount.toLocaleString() : ''}（税込）`;
     const scheduledDateStr = scheduledAt
       ? new Date(scheduledAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })
       : null;
@@ -444,6 +450,25 @@ export async function POST(req: NextRequest) {
           <p>今後のサービス向上のため、アンケートのご協力をお願いいたします。</p>
           ${surveySection}
         `),
+      });
+    } else if (type === 're_request_schedule') {
+      const { to, applicantNickname, partnerNickname, re_request_message } = body;
+      await resend.emails.send({
+        from: FROM_EMAIL,
+        to: to!,
+        subject: `【amista】${partnerNickname}さんから日程の再提案依頼が届きました`,
+        html: `
+          <p>${applicantNickname} さん</p>
+          <p>${partnerNickname}さんから、候補日の再提案をお願いしたいとのご連絡が届きました。</p>
+          <br/>
+          <p><strong>【希望の曜日・時間帯】</strong></p>
+          <p style="background:#f5f5f5;padding:12px;border-radius:6px;">${re_request_message}</p>
+          <br/>
+          <p>マイページの「マッチング」から新しい候補日を提案してください。</p>
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}/matching" style="display:inline-block;margin-top:12px;padding:10px 20px;background:#0d9488;color:white;border-radius:6px;text-decoration:none;">マイページへ</a>
+          <br/><br/>
+          <p style="color:#999;font-size:12px;">※ このメールはamistaから自動送信されています。</p>
+        `,
       });
     }
 

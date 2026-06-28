@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
 
   const { priceId: requestedPriceId } = (await req.json().catch(() => ({}))) as { priceId?: string };
-  const priceId = requestedPriceId ?? process.env.STRIPE_PRICE_LIGHT;
+  const priceId = requestedPriceId ?? process.env.STRIPE_PRICE_STANDARD;
 
   if (!priceId || !/^price_[a-zA-Z0-9]+$/.test(priceId)) {
     return NextResponse.json({ error: '決済プランが未設定です。しばらくしてから再度お試しください' }, { status: 503 });
@@ -29,10 +29,15 @@ export async function POST(req: NextRequest) {
       cancel_url: `${SITE_URL}/payment/cancel`,
       metadata: { userId: user.id },
       subscription_data: { metadata: { userId: user.id } },
+      ...(process.env.STRIPE_CAMPAIGN_COUPON_ID ? {
+        discounts: [{ coupon: process.env.STRIPE_CAMPAIGN_COUPON_ID }],
+      } : {}),
     });
 
     return NextResponse.json({ url: session.url });
-  } catch {
-    return NextResponse.json({ error: '決済セッションの作成に失敗しました' }, { status: 502 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : '決済セッションの作成に失敗しました';
+    console.error('Stripe checkout error:', message);
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }

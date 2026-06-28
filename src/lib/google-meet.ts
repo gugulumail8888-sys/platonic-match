@@ -17,6 +17,7 @@ async function getAccessToken(email: string, privateKey: string): Promise<string
   const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const claim = base64url(JSON.stringify({
     iss: email,
+    sub: process.env.GOOGLE_WORKSPACE_USER ?? email,
     scope: CALENDAR_SCOPE,
     aud: TOKEN_URL,
     iat: nowSec,
@@ -52,6 +53,13 @@ export async function createGoogleMeetUrl(scheduledAt: string, title: string): P
   const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
   const calendarId = process.env.GOOGLE_CALENDAR_ID;
 
+  console.log('Google Meet 環境変数チェック:', {
+    hasEmail: !!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    hasKey: !!process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY,
+    hasCalendarId: !!process.env.GOOGLE_CALENDAR_ID,
+    keyLength: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.length,
+  });
+
   if (!email || !privateKey || !calendarId) {
     return null;
   }
@@ -64,7 +72,7 @@ export async function createGoogleMeetUrl(scheduledAt: string, title: string): P
     const end = new Date(start.getTime() + MEETING_DURATION_MS);
 
     const res = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=none`,
       {
         method: 'POST',
         headers: {
@@ -81,20 +89,31 @@ export async function createGoogleMeetUrl(scheduledAt: string, title: string): P
               conferenceSolutionKey: { type: 'hangoutsMeet' },
             },
           },
+          guestsCanModify: false,
         }),
       }
     );
 
+    const responseText = await res.text();
+    console.log('Google Calendar API response status:', res.status);
+    console.log('Google Calendar API response body:', responseText);
+
     if (!res.ok) {
-      console.error('Google Calendar API error:', await res.text());
+      console.error('Google Calendar API error:', responseText);
       return null;
     }
 
-    const data = await res.json() as {
+    const data = JSON.parse(responseText) as {
       conferenceData?: { entryPoints?: { uri?: string }[] };
+      hangoutLink?: string;
     };
 
-    return data.conferenceData?.entryPoints?.[0]?.uri ?? null;
+    const meetUrl = data.conferenceData?.entryPoints?.[0]?.uri
+      ?? data.hangoutLink
+      ?? null;
+    console.log('conferenceData:', JSON.stringify(data.conferenceData));
+    console.log('hangoutLink:', data.hangoutLink);
+    return meetUrl;
   } catch (error) {
     console.error('createGoogleMeetUrl error:', error);
     return null;
