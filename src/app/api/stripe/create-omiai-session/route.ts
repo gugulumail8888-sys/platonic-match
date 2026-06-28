@@ -1,52 +1,59 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { stripe } from '@/lib/stripe';
+import { createAdminClient } from '@/lib/supabase/server';
+import Stripe from 'stripe';
 
-export const dynamic = 'force-dynamic';
-
-const OMIAI_FEE = 3000; // お見合い料（円）
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2026-05-27.dahlia',
+});
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
 
-  const { matchingId } = (await req.json()) as { matchingId: string };
-  if (!matchingId) {
-    return NextResponse.json({ error: 'matchingIdが必要です' }, { status: 400 });
-  }
+  const { matchingId } = await req.json();
+  if (!matchingId) return NextResponse.json({ error: 'matchingIdが必要です' }, { status: 400 });
 
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'jpy',
-            unit_amount: OMIAI_FEE,
-            product_data: {
-              name: 'Google Meetお見合い料',
-              description: 'amistaのGoogle Meetお見合いに参加するための料金です',
-            },
+  const adminSupabase = createAdminClient();
+
+  // マッチング情報を取得
+  const { data: matching } = await adminSupabase
+    .from('matchings')
+    .select('id, applicant_id, amount, status, scheduled_at')
+    .eq('id', matchingId)
+    .single();
+
+  if (!matching) return NextResponse.json({ error: 'マッチングが見つかりません' }, { status: 404 });
+  if (matching.applicant_id !== user.id) return NextResponse.json({ error: '権限がありません' }, { status: 403 });
+  if (!matching.scheduled_at) return NextResponse.json({ error: '日程が確定していません' }, { status: 400 });
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+
+  // Stripe Checkoutセッション作成（一回払い）
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [
+      {
+        price_data: {
+          currency: 'jpy',
+          product_data: {
+            name: 'お見合い料',
+            description: `お見合い日程：${new Date(matching.scheduled_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`,
           },
-          quantity: 1,
+          unit_amount: matching.amount,
         },
-      ],
-      client_reference_id: user.id,
-      metadata: {
-        userId: user.id,
-        matchingId,
-        type: 'omiai_fee',
+        quantity: 1,
       },
-      customer_email: user.email,
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/schedule/complete?payment=success&id=${matchingId}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/schedule/complete?payment=cancel&id=${matchingId}`,
-    });
+    ],
+    success_url: `${appUrl}/payment/omiai/success?matchingId=${matchingId}`,
+    cancel_url: `${appUrl}/matching`,
+    metadata: {
+      matchingId,
+      userId: user.id,
+      type: 'omiai_fee',
+    },
+  });
 
-    return NextResponse.json({ url: session.url });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : '決済セッションの作成に失敗しました';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  return NextResponse.json({ url: session.url });
 }

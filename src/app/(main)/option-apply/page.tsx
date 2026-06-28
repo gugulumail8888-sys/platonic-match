@@ -77,6 +77,8 @@ export default function OptionApplyPage() {
   const router = useRouter();
   const [aiOptionEnabled, setAiOptionEnabled] = useState<boolean | null>(null);
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -112,19 +114,26 @@ export default function OptionApplyPage() {
     if (validate()) setStep(2);
   };
 
-  const handleSubmit = () => {
-    console.log('AIオプション申し込みデータ:', {
-      ageMin: form.ageMin,
-      ageMax: form.ageMax,
-      prefectures: form.prefectures,
-      priorities: form.priorities.map((id, i) => ({
-        rank: i + 1,
-        label: PRIORITY_ITEMS.find(p => p.id === id)?.label,
-      })),
-      ngConditions: form.ngConditions.map(id => NG_CONDITIONS.find(n => n.id === id)?.label),
-      message: form.message,
-    });
-    setStep(3);
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setSubmitError(data.error ?? '決済セッションの作成に失敗しました');
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setSubmitError('決済処理に失敗しました');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const adjustAge = (field: 'ageMin' | 'ageMax', delta: number) => {
@@ -453,12 +462,16 @@ export default function OptionApplyPage() {
             >
               <ChevronLeft className="w-4 h-4" /> 修正する
             </button>
-            <button
-              onClick={handleSubmit}
-              className="flex-1 py-3 bg-teal-700 hover:bg-teal-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all"
-            >
-              申し込む <ChevronRight className="w-4 h-4" />
-            </button>
+            <div className="flex-1 space-y-2">
+              {submitError && <p className="text-red-400 text-sm text-center">{submitError}</p>}
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full py-3 bg-teal-700 hover:bg-teal-600 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? '処理中...' : '決済へ進む'} <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}

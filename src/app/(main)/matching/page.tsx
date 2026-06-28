@@ -27,6 +27,7 @@ interface Matching {
   applicant_dating_wish: boolean;
   partner: PartnerProfile;
   hasSlots: boolean;
+  scheduled_at: string | null;
 }
 
 function calcAge(birthDate: string) {
@@ -232,7 +233,30 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
               </div>
             )
           ) : (
-            matching.hasSlots ? (
+            matching.scheduled_at !== null ? (
+              <>
+                <div className="mb-3 p-3 bg-teal-900/30 border border-teal-700 rounded-lg">
+                  <p className="text-teal-400 text-sm font-medium">✅ 日程が確定しました！</p>
+                  <p className="text-white text-sm mt-1">
+                    📅 {new Date(matching.scheduled_at!).toLocaleString('ja-JP', {
+                      timeZone: 'Asia/Tokyo',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      weekday: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}〜
+                  </p>
+                </div>
+                <Link
+                  href={`/payment/omiai?matchingId=${id}`}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm"
+                >
+                  💳 お見合い料を支払う
+                </Link>
+              </>
+            ) : matching.hasSlots ? (
               <div className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-zinc-700 text-zinc-400 cursor-not-allowed">
                 ⏳ 相手の返答待ち
               </div>
@@ -284,7 +308,7 @@ export default function MatchingPage() {
 
       const { data: rows, error } = await supabase
         .from('matchings')
-        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish')
+        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at')
         .or(`applicant_id.eq.${user.id},partner_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 

@@ -30,6 +30,9 @@ function ScheduleSelectContent() {
   const [selected, setSelected] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [showReRequest, setShowReRequest] = useState(false);
+  const [reRequestMessage, setReRequestMessage] = useState('');
+  const [reRequestSending, setReRequestSending] = useState(false);
 
   useEffect(() => {
     if (!matchingId) {
@@ -65,6 +68,26 @@ function ScheduleSelectContent() {
     } catch {
       setError('確定に失敗しました')
       setSubmitting(false)
+    }
+  }
+
+  async function handleReRequest() {
+    if (!reRequestMessage.trim()) return;
+    setReRequestSending(true);
+    try {
+      const res = await fetch('/api/schedule/re-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchingId, message: reRequestMessage }),
+      });
+      if (res.ok) {
+        alert('再提案の依頼を送りました。相手からの新しい候補日をお待ちください。');
+        router.push('/matching');
+      } else {
+        alert('送信に失敗しました。もう一度お試しください。');
+      }
+    } finally {
+      setReRequestSending(false);
     }
   }
 
@@ -140,6 +163,42 @@ function ScheduleSelectContent() {
         <p className="text-center text-xs text-zinc-500 mt-3">
           確定後、Google Meetリンクをお送りします
         </p>
+
+        {!showReRequest ? (
+          <button
+            onClick={() => setShowReRequest(true)}
+            className="w-full mt-3 py-3 px-4 border border-zinc-600 text-zinc-300 rounded-lg text-sm hover:border-zinc-400 hover:text-white transition-colors"
+          >
+            候補日が合わない場合はこちら
+          </button>
+        ) : (
+          <div className="mt-3 p-4 bg-zinc-800 border border-zinc-600 rounded-lg">
+            <p className="text-sm text-zinc-300 mb-2 font-medium">📅 希望の曜日・時間帯を相手に伝える</p>
+            <p className="text-xs text-zinc-400 mb-3">例：平日の夜20時以降、または土日の午前中を希望します</p>
+            <textarea
+              value={reRequestMessage}
+              onChange={(e) => setReRequestMessage(e.target.value)}
+              placeholder="希望の曜日や時間帯を入力してください"
+              className="w-full bg-zinc-700 border border-zinc-500 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+              rows={3}
+            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => setShowReRequest(false)}
+                className="flex-1 py-2 px-3 border border-zinc-600 text-zinc-400 rounded-lg text-sm hover:text-white transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleReRequest}
+                disabled={!reRequestMessage.trim() || reRequestSending}
+                className="flex-1 py-2 px-3 bg-teal-600 text-white rounded-lg text-sm hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {reRequestSending ? '送信中...' : '再提案を依頼する'}
+              </button>
+            </div>
+          </div>
+        )}
         <p className="text-center text-xs text-zinc-600 mt-2">
           <button
             onClick={() => router.push('/zoom-guide')}

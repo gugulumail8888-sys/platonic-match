@@ -94,6 +94,7 @@ function ScheduleRequestContent() {
                 <li>希望日時を{MIN_SLOTS}〜{MAX_SLOTS}個入力してください</li>
                 <li>お相手が都合の良い日時を選びます</li>
                 <li>確定後、Google Meetリンクをお送りします</li>
+                <li className="list-none">⚠️ 候補日は本日から3日後以降の日付を選択してください</li>
               </ol>
             </div>
           </div>
@@ -131,7 +132,7 @@ function ScheduleRequestContent() {
                       type="date"
                       value={slot.date}
                       onChange={(e) => updateSlot(index, 'date', e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                      min={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                       className="w-full bg-zinc-800 border border-zinc-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 [color-scheme:dark]"
                     />
                   </div>

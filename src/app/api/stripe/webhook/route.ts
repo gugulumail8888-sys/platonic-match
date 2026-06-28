@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
         .from('matchings')
         .update({ payment_intent_id: paymentIntentId })
         .eq('id', matchingId)
-        .select('applicant_id, partner_id, applied_at, amount')
+        .select('applicant_id, partner_id, applied_at, amount, scheduled_at')
         .single();
 
       if (matchingUpdateError) {
@@ -99,11 +99,20 @@ export async function POST(req: NextRequest) {
           let meetUrl: string | null = null;
           try {
             meetUrl = await createGoogleMeetUrl(
-              matching.applied_at ?? new Date().toISOString(),
+              matching.scheduled_at ?? matching.applied_at ?? new Date().toISOString(),
               `amista お見合い（${matchingId}）`
             );
           } catch (e) {
             console.error('Meet URL生成エラー:', e);
+          }
+          console.log('Meet URL生成結果:', meetUrl);
+
+          // zoom_urlをmatchingsテーブルに保存
+          if (meetUrl) {
+            await supabase
+              .from('matchings')
+              .update({ zoom_url: meetUrl })
+              .eq('id', matchingId);
           }
 
           await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
