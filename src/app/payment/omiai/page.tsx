@@ -20,6 +20,16 @@ export default function OmiaiPaymentPage() {
 
   async function handlePayment() {
     if (!matchingId) return;
+    const confirmed = window.confirm(
+      'お支払い画面に進みます。\n\n' +
+      'クレジットカードでお支払いの方は\n' +
+      '・カード番号\n' +
+      '・有効期限\n' +
+      '・セキュリティコード（CVV）\n\n' +
+      'をお手元にご用意ください。\n\n' +
+      'よろしければ「OK」を押してお進みください。'
+    );
+    if (!confirmed) return;
     setLoading(true);
     setError('');
     try {
