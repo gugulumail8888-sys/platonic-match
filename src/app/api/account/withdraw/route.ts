@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { getStripe } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,19 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
 
   const admin = createAdminClient();
+
+  // Stripe サブスクリプションのキャンセル
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('is_premium, stripe_subscription_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (profile?.is_premium && profile.stripe_subscription_id) {
+    const stripe = getStripe();
+    await stripe.subscriptions.cancel(profile.stripe_subscription_id);
+  }
+
   const { error } = await admin
     .from('profiles')
     .update({
