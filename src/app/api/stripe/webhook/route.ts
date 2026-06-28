@@ -109,10 +109,15 @@ export async function POST(req: NextRequest) {
 
           // zoom_urlをmatchingsテーブルに保存
           if (meetUrl) {
-            await supabase
+            const { error: updateError } = await supabase
               .from('matchings')
-              .update({ zoom_url: meetUrl })
+              .update({ zoom_url: meetUrl, status: 'zoom_completed' })
               .eq('id', matchingId);
+            if (updateError) {
+              console.error('zoom_url保存エラー:', updateError);
+            } else {
+              console.log('zoom_url保存成功:', meetUrl);
+            }
           }
 
           await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
