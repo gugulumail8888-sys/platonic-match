@@ -56,9 +56,23 @@ export default function MarriageReportPage() {
   const [message, setMessage] = useState('');
   const [done, setDone] = useState(false);
 
-  const handleSubmit = () => {
-    console.log('成婚報告アンケート:', { period, trigger, satisfaction, message });
-    setDone(true);
+  const handleSubmit = async () => {
+    if (!period || !trigger || !satisfaction) {
+      alert('必須項目を入力してください');
+      return;
+    }
+    try {
+      const res = await fetch('/api/marriage-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ period, trigger, satisfaction, message }),
+      });
+      if (!res.ok) throw new Error('送信失敗');
+      setDone(true);
+    } catch (e) {
+      console.error(e);
+      alert('送信に失敗しました。もう一度お試しください。');
+    }
   };
 
   if (done) {
