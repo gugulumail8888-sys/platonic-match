@@ -87,7 +87,7 @@ function LoginFormInner() {
     <div className="w-full max-w-md">
       {/* ロゴ */}
       <div className="text-center mb-8">
-        <Link href="/" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mb-4">
+        <Link href="/" className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-teal-400 transition-colors mb-4">
           ← トップページへ
         </Link>
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-lg">
