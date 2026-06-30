@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Heart, Mail } from 'lucide-react';
+import { Heart, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function SignupPage() {
@@ -16,17 +16,12 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12 relative">
-      <Link
-        href="/"
-        className="absolute top-6 left-6 flex items-center gap-1.5 text-sm text-zinc-400 hover:text-teal-400 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        トップページへ
-      </Link>
-
       <div className="w-full max-w-md">
         {/* ロゴ */}
         <div className="text-center mb-8">
+          <Link href="/" className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-teal-400 transition-colors mb-4">
+            ← トップページへ
+          </Link>
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-2xl mb-4 shadow-lg">
             <Heart className="w-8 h-8 text-white fill-white" />
           </div>

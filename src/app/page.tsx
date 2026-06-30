@@ -388,7 +388,7 @@ export default function HomePage() {
                 ))}
               </ul>
 
-              <Link href="/register">
+              <Link href="/how-it-works?plan=ai&from=top">
                 <button
                   className="w-full py-2.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 hover:shadow-lg"
                   style={{ background: 'linear-gradient(to right, #ec4899, #a855f7)' }}
