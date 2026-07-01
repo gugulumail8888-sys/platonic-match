@@ -10,7 +10,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'approval_document' | 'deficiency_document';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -29,6 +29,9 @@ type NotifyBody = {
   applicantNickname?: string;
   partnerNickname?: string;
   re_request_message?: string;
+  // approval_document / deficiency_document用
+  user?: { nickname: string; email: string };
+  reason?: string;
 };
 
 const FROM_EMAIL = 'amista <onboarding@resend.dev>';
@@ -469,6 +472,44 @@ export async function POST(req: NextRequest) {
           <br/><br/>
           <p style="color:#999;font-size:12px;">※ このメールはamistaから自動送信されています。</p>
         `,
+      });
+    }
+
+    if (type === 'approval_document' && body.user) {
+      emails.push({
+        to: body.user.email,
+        subject: '【amista】本人確認が完了しました',
+        html: wrap(`
+          <p>${body.user.nickname} さん</p>
+          <p>本人確認書類の審査が完了し、承認されました。</p>
+          <p>これですべての機能をご利用いただけます。</p>
+          <p>ぜひマイページからプロフィールを確認し、活動を始めてください。</p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/mypage"
+              style="background:#0d9488;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">
+              マイページへ
+            </a>
+          </div>
+        `),
+      });
+    }
+
+    if (type === 'deficiency_document' && body.user) {
+      emails.push({
+        to: body.user.email,
+        subject: '【amista】本人確認書類に不備があります',
+        html: wrap(`
+          <p>${body.user.nickname} さん</p>
+          <p>提出いただいた本人確認書類を確認いたしましたが、以下の理由により再提出をお願いいたします。</p>
+          ${body.reason ? `<div style="background:#1e293b;padding:16px;border-radius:8px;margin:16px 0;">${body.reason}</div>` : ''}
+          <p>マイページの設定タブから書類を再アップロードしてください。</p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/mypage"
+              style="background:#0d9488;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">
+              マイページへ
+            </a>
+          </div>
+        `),
       });
     }
 

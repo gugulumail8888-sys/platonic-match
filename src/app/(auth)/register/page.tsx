@@ -7,6 +7,7 @@ import { ScrollHeader } from '@/components/ui/ScrollHeader';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
+import { AVATAR_COLORS } from '@/lib/utils';
 
 // ============================================================
 // Constants
@@ -91,6 +92,7 @@ interface FormData {
   hobbies: string;
   pr: string;
   desiredConditions: string;
+  avatarColor: string | null;
 }
 
 type Errors = Partial<Record<keyof FormData, string>>;
@@ -113,6 +115,7 @@ const INITIAL_FORM: FormData = {
   postMarriageLiving: '', postMarriageLivingOther: '',
   externalPartner: '',
   financeManagement: '', financeManagementOther: '', hobbies: '', pr: '', desiredConditions: '',
+  avatarColor: null,
 };
 
 const formatPhone = (value: string) => {
@@ -526,12 +529,13 @@ function Step1({
 // ============================================================
 
 function Step2({
-  data, onChange, onRadio, onFertilityMethodToggle, errors,
+  data, onChange, onRadio, onFertilityMethodToggle, onAvatarColorChange, errors,
 }: {
   data: FormData;
   onChange: (e: AnyChangeEvent) => void;
   onRadio: (name: keyof FormData, val: string) => void;
   onFertilityMethodToggle: (val: string) => void;
+  onAvatarColorChange: (color: string | null) => void;
   errors: Errors;
 }) {
   return (
@@ -782,6 +786,43 @@ function Step2({
           placeholder="パートナーへの希望条件があれば記入してください"
           maxLength={1000} />
       </Field>
+
+      {/* アバターカラー選択 */}
+      <div className="space-y-3 pt-4 border-t border-zinc-800">
+        <label className="block text-sm font-medium text-zinc-300">
+          アバターカラー（任意）
+        </label>
+        <p className="text-xs text-zinc-500">
+          選択しない場合は自動で色が割り当てられます。ログイン後にいつでも変更できます。
+        </p>
+        <div className="flex gap-3 flex-wrap">
+          {AVATAR_COLORS.map((color) => {
+            const selected = data.avatarColor === color;
+            return (
+              <button
+                key={color}
+                type="button"
+                onClick={() => onAvatarColorChange(color)}
+                className={`w-8 h-8 rounded-full border-4 transition-all ${
+                  selected ? 'border-white scale-110' : 'border-transparent'
+                }`}
+                style={{ backgroundColor: color }}
+                title={color}
+              />
+            );
+          })}
+          {data.avatarColor && (
+            <button
+              type="button"
+              onClick={() => onAvatarColorChange(null)}
+              className="w-8 h-8 rounded-full border-4 border-transparent bg-zinc-700 text-zinc-400 text-xs flex items-center justify-center hover:bg-zinc-600"
+              title="リセット"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1105,6 +1146,10 @@ export default function RegisterPage() {
     setErrors((prev) => ({ ...prev, fertilityMethods: undefined }));
   };
 
+  const onAvatarColorChange = (color: string | null) => {
+    setData((prev) => ({ ...prev, avatarColor: color }));
+  };
+
   const handleFile = (side: 'front' | 'back') => (file: File) => {
     const url = URL.createObjectURL(file);
     if (side === 'front') { setFrontPreview(url); setFrontFile(file); }
@@ -1279,7 +1324,8 @@ export default function RegisterPage() {
           hobbies: data.hobbies,
           pr: data.pr,
           desired_conditions: data.desiredConditions,
-          status: 'approved',
+          avatar_color: data.avatarColor,
+          status: 'pending',
         });
         if (insertError) {
           setSubmitError(insertError.message);
@@ -1306,6 +1352,13 @@ export default function RegisterPage() {
           setSubmitError(uploadErr instanceof Error ? uploadErr.message : '書類のアップロードに失敗しました');
           return;
         }
+
+        // AI年齢チェック（非同期・結果を待たずにSTEP4へ進む）
+        fetch('/api/ai/verify-age', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId }),
+        }).catch((e) => console.error('verify-age error:', e));
 
         setStep(4);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1362,7 +1415,7 @@ export default function RegisterPage() {
             <Step1 data={data} onChange={onChange} onPhoneChange={onPhoneChange} onRadio={onRadio} errors={errors} isGoogleUser={isGoogleUser} />
           )}
           {step === 2 && (
-            <Step2 data={data} onChange={onChange} onRadio={onRadio} onFertilityMethodToggle={onFertilityMethodToggle} errors={errors} />
+            <Step2 data={data} onChange={onChange} onRadio={onRadio} onFertilityMethodToggle={onFertilityMethodToggle} onAvatarColorChange={onAvatarColorChange} errors={errors} />
           )}
           {step === 3 && (
             <Step3

@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder' | 'survey_reminder' | 'matching_expired';
+type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder' | 'survey_reminder' | 'matching_expired' | 'approval_email';
 
 type Matching = {
   id: string;
@@ -268,6 +268,53 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json({ ok: true, count: matchings.length });
+    }
+
+    // ── approval_email: AI承認から15〜30分経過した未送信ユーザーに承認メール送信 ──
+    if (type === 'approval_email') {
+      const now = new Date();
+
+      const { data: profiles, error } = await admin
+        .from('profiles')
+        .select('id, nickname, ai_verified_at')
+        .eq('status', 'approved')
+        .is('approval_email_sent_at', null)
+        .not('ai_verified_at', 'is', null);
+
+      if (error) {
+        console.error('approval_email fetch error:', error);
+        return NextResponse.json({ error: 'データ取得に失敗しました' }, { status: 500 });
+      }
+
+      let sentCount = 0;
+      for (const profile of profiles ?? []) {
+        const verifiedAt = new Date(profile.ai_verified_at!);
+        const diffMinutes = (now.getTime() - verifiedAt.getTime()) / (1000 * 60);
+
+        if (diffMinutes < 15 || diffMinutes > 30) continue;
+
+        const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
+        const email = authUser?.user?.email;
+        if (!email) continue;
+
+        await fetch(`${origin}/api/admin/notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'approval_document',
+            user: { nickname: profile.nickname ?? 'ユーザー', email },
+          }),
+        });
+
+        await admin
+          .from('profiles')
+          .update({ approval_email_sent_at: now.toISOString() })
+          .eq('id', profile.id);
+
+        sentCount++;
+      }
+
+      return NextResponse.json({ ok: true, sentCount });
     }
 
     return NextResponse.json({ error: '不明なtypeです' }, { status: 400 });

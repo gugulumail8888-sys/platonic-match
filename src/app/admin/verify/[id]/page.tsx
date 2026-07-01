@@ -17,6 +17,7 @@ interface VerifyDetail {
   status: VerifyStatus;
   frontUrl: string | null;
   backUrl: string | null;
+  email: string;
 }
 
 const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; icon: React.ElementType }> = {
@@ -76,6 +77,9 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
   const [saveError, setSaveError] = useState<string | null>(null);
   const [modalUrl, setModalUrl] = useState<string | null>(null);
   const [modalAlt, setModalAlt] = useState('');
+  const [showDeficiencyModal, setShowDeficiencyModal] = useState(false);
+  const [deficiencyReason, setDeficiencyReason] = useState('');
+  const [isSendingDeficiency, setIsSendingDeficiency] = useState(false);
 
   useEffect(() => {
     fetch(`/api/admin/verify/${params.id}`)
@@ -109,6 +113,30 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
       setSaveError(err instanceof Error ? err.message : '更新に失敗しました');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeficiencyMail = async () => {
+    if (!detail) return;
+    setIsSendingDeficiency(true);
+    try {
+      const res = await fetch('/api/admin/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'deficiency_document',
+          user: { nickname: detail.nickname, email: detail.email },
+          reason: deficiencyReason,
+        }),
+      });
+      if (!res.ok) throw new Error('送信に失敗しました');
+      setShowDeficiencyModal(false);
+      setDeficiencyReason('');
+      alert('不備メールを送信しました');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '送信に失敗しました');
+    } finally {
+      setIsSendingDeficiency(false);
     }
   };
 
@@ -237,8 +265,46 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
           >
             否認する
           </button>
+          <button
+            onClick={() => setShowDeficiencyModal(true)}
+            disabled={isSaving}
+            className="px-4 py-2 rounded-xl bg-amber-900/30 border border-amber-900 text-amber-400 text-sm font-medium hover:bg-amber-900/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            不備メールを送る
+          </button>
         </div>
       </SectionCard>
+
+      {showDeficiencyModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md mx-4">
+            <h3 className="text-base font-bold text-zinc-200 mb-4">不備メールを送る</h3>
+            <p className="text-xs text-zinc-400 mb-3">不備の理由を入力してください（任意）。入力した内容がメールに記載されます。</p>
+            <textarea
+              value={deficiencyReason}
+              onChange={(e) => setDeficiencyReason(e.target.value)}
+              placeholder="例：書類の文字が読み取れません。鮮明な画像を再提出してください。"
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-teal-500 mb-4"
+              rows={4}
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => { setShowDeficiencyModal(false); setDeficiencyReason(''); }}
+                className="px-4 py-2 rounded-xl bg-zinc-700 text-zinc-300 text-sm hover:bg-zinc-600 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDeficiencyMail}
+                disabled={isSendingDeficiency}
+                className="px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-medium hover:bg-amber-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isSendingDeficiency ? '送信中...' : '送信する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
