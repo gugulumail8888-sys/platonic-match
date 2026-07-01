@@ -77,6 +77,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     backUrl = signed?.signedUrl ?? null;
   }
 
+  const { data: authUser } = await admin.auth.admin.getUserById(params.id);
+
   return NextResponse.json({
     id: row.id,
     nickname: row.nickname ?? '不明',
@@ -87,6 +89,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     status: row.status,
     frontUrl,
     backUrl,
+    email: authUser?.user?.email ?? '',
   });
 }
 
