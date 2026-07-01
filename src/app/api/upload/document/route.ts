@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get('file');
     const side = formData.get('side');
+    const resubmit = formData.get('resubmit') === 'true';
 
     if (!(file instanceof File) || (side !== 'front' && side !== 'back')) {
       return NextResponse.json({ error: '不正なリクエストです' }, { status: 400 });
@@ -35,9 +36,14 @@ export async function POST(req: NextRequest) {
 
     const column = side === 'front' ? 'id_document_url' : 'id_document_back_url';
 
+    const updatePayload: Record<string, unknown> = { [column]: path };
+    if (resubmit) {
+      updatePayload.resubmitted_at = new Date().toISOString();
+    }
+
     const { error: updateError } = await admin
       .from('profiles')
-      .update({ [column]: path })
+      .update(updatePayload)
       .eq('id', user.id);
 
     if (updateError) {

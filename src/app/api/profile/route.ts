@@ -17,7 +17,30 @@ export async function GET() {
 
   if (!profile) return NextResponse.json({ error: 'プロフィールが見つかりません' }, { status: 404 });
 
-  return NextResponse.json({ profile });
+  let id_document_signed_url: string | null = null;
+  let id_document_back_signed_url: string | null = null;
+
+  if (profile.id_document_url) {
+    const { data: signed } = await admin.storage
+      .from('documents')
+      .createSignedUrl(profile.id_document_url, 60 * 60);
+    id_document_signed_url = signed?.signedUrl ?? null;
+  }
+
+  if (profile.id_document_back_url) {
+    const { data: signed } = await admin.storage
+      .from('documents')
+      .createSignedUrl(profile.id_document_back_url, 60 * 60);
+    id_document_back_signed_url = signed?.signedUrl ?? null;
+  }
+
+  return NextResponse.json({
+    profile: {
+      ...profile,
+      id_document_signed_url,
+      id_document_back_signed_url,
+    },
+  });
 }
 
 export async function PATCH(req: NextRequest) {

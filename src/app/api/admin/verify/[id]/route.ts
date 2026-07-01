@@ -102,9 +102,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: 'statusはapproved/rejected/verified/pendingを指定してください' }, { status: 400 });
   }
 
+  const updatePayload: Record<string, unknown> = { status: body.status };
+  if (body.status === 'verified') {
+    updatePayload.resubmitted_at = null;
+  }
+
   const { error: updateError } = await admin
     .from('profiles')
-    .update({ status: body.status })
+    .update(updatePayload)
     .eq('id', params.id);
 
   if (updateError) {

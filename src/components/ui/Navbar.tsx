@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Mail,
   Lock,
+  Video,
 } from "lucide-react";
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
 ];
 
 const supportNavItems = [
+  { href: "/zoom-guide", label: "Google Meetお見合い準備ガイド", icon: Video },
   { href: "/help", label: "ヘルプ", icon: HelpCircle },
   { href: "/contact", label: "お問い合わせ", icon: Mail },
 ];

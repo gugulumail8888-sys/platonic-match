@@ -37,7 +37,7 @@ export async function GET() {
 
   const { data: rows, error } = await admin
     .from('profiles')
-    .select('id, nickname, birth_date, gender, prefecture, created_at, id_document_url, id_document_back_url, status')
+    .select('id, nickname, birth_date, gender, prefecture, created_at, id_document_url, id_document_back_url, status, resubmitted_at')
     .in('status', ['pending', 'approved', 'verified', 'rejected'])
     .order('created_at', { ascending: false });
 
@@ -73,6 +73,7 @@ export async function GET() {
       status: row.status as 'pending' | 'approved' | 'rejected',
       frontUrl,
       backUrl,
+      resubmitted_at: row.resubmitted_at,
     };
   }));
 

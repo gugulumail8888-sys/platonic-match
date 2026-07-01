@@ -153,7 +153,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 夏のキャンペーンバナー */}
+      {/* オープン記念・初期限定キャンペーンバナー */}
       {showCampaignBanner && (
         <section className="px-4 -mt-px">
           <div

@@ -222,30 +222,6 @@ export default function HelpPage() {
         ))}
       </div>
 
-      {/* Google Meetガイドリンク */}
-      <div className="mt-3 bg-zinc-800 rounded-2xl border border-zinc-700 p-4 flex flex-col gap-3">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 bg-blue-900/50 border border-blue-700/50 rounded-xl flex items-center justify-center flex-shrink-0 text-base">
-            📱
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-white mb-0.5">
-              Google Meetお見合い準備ガイド
-            </p>
-            <p className="text-xs text-zinc-400">
-              iPhone・AndroidでのGoogle Meet参加手順をご確認ください
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/zoom-guide"
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-900 hover:bg-blue-800 text-blue-300 text-sm font-medium rounded-xl transition-colors"
-        >
-          Google Meetお見合い準備ガイドを見る
-          <ChevronRight className="w-4 h-4" />
-        </Link>
-      </div>
-
       {/* フッター：お問い合わせへ誘導 */}
       <div className="mt-6 bg-zinc-800 rounded-2xl border border-zinc-700 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-start gap-3">

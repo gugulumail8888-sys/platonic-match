@@ -11,6 +11,7 @@ import {
   Mail, Lock,
   Edit3, Eye, ShieldOff,
 } from 'lucide-react';
+import UploadArea from '@/components/upload/UploadArea';
 
 // ============================================================
 // Dummy Data
@@ -89,6 +90,12 @@ interface MyProfile {
   hobbies: string | null;
   pr: string | null;
   desired_conditions: string | null;
+  id_document_url: string | null;
+  id_document_back_url: string | null;
+  id_document_signed_url: string | null;
+  id_document_back_signed_url: string | null;
+  status: string | null;
+  resubmitted_at: string | null;
 }
 
 const GENDER_LABELS: Record<string, string> = { male: '男性', female: '女性', other: 'その他' };
@@ -532,6 +539,17 @@ function SettingsTab() {
   const [emailSaving, setEmailSaving] = useState(false);
   const [pwSaving, setPwSaving] = useState(false);
 
+  const [docProfile, setDocProfile] = useState<MyProfile | null>(null);
+  const [docLoading, setDocLoading] = useState(true);
+  const [frontFile, setFrontFile] = useState<File | null>(null);
+  const [backFile, setBackFile] = useState<File | null>(null);
+  const [frontPreview, setFrontPreview] = useState<string | null>(null);
+  const [backPreview, setBackPreview] = useState<string | null>(null);
+  const [frontCleared, setFrontCleared] = useState(false);
+  const [backCleared, setBackCleared] = useState(false);
+  const [docSaving, setDocSaving] = useState(false);
+  const [docError, setDocError] = useState('');
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(''), 2500);
@@ -543,6 +561,57 @@ function SettingsTab() {
       if (user?.email) setEmail(user.email);
     });
   }, []);
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((data) => setDocProfile(data.profile ?? null))
+      .catch(() => {})
+      .finally(() => setDocLoading(false));
+  }, []);
+
+  const handleFrontFile = (file: File) => {
+    setFrontFile(file);
+    setFrontPreview(URL.createObjectURL(file));
+    setFrontCleared(false);
+  };
+  const handleBackFile = (file: File) => {
+    setBackFile(file);
+    setBackPreview(URL.createObjectURL(file));
+    setBackCleared(false);
+  };
+  const handleDocResubmit = async () => {
+    if (!frontFile && !backFile) {
+      setDocError('少なくとも1枚は選択してください');
+      return;
+    }
+    setDocError('');
+    setDocSaving(true);
+    try {
+      const uploadOne = async (file: File, side: 'front' | 'back') => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('side', side);
+        formData.append('resubmit', 'true');
+        const res = await fetch('/api/upload/document', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error('アップロードに失敗しました');
+      };
+      if (frontFile) await uploadOne(frontFile, 'front');
+      if (backFile) await uploadOne(backFile, 'back');
+      setFrontFile(null);
+      setBackFile(null);
+      setFrontPreview(null);
+      setBackPreview(null);
+      showToast('書類を再提出しました');
+      const r = await fetch('/api/profile');
+      const data = await r.json();
+      setDocProfile(data.profile ?? null);
+    } catch {
+      setDocError('アップロードに失敗しました');
+    } finally {
+      setDocSaving(false);
+    }
+  };
 
   const handleEmailSave = async () => {
     setEmailError('');
@@ -607,6 +676,55 @@ function SettingsTab() {
 
   return (
     <div className="space-y-4">
+      <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5">
+        <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <span className="w-1 h-4 bg-teal-500 rounded-full inline-block" />
+          本人確認書類
+        </h3>
+        {docLoading ? (
+          <p className="text-sm text-zinc-500">読み込み中...</p>
+        ) : (
+          <div>
+            <p className="text-sm text-zinc-400 mb-3">
+              審査ステータス：
+              {docProfile?.status === 'approved' && <span className="text-teal-400 font-medium">承認済み（自動）</span>}
+              {docProfile?.status === 'verified' && <span className="text-teal-400 font-medium">確認済み</span>}
+              {docProfile?.status === 'pending' && <span className="text-yellow-400 font-medium">審査中</span>}
+              {docProfile?.status === 'rejected' && <span className="text-red-400 font-medium">要再提出</span>}
+            </p>
+            {docProfile?.resubmitted_at && (
+              <p className="text-xs text-yellow-400 mb-3">再提出済み・管理者確認待ちです</p>
+            )}
+            <p className="text-xs text-zinc-500 mb-2">
+              再提出する場合は、現在の画像を「✕」で消してから新しい画像を選択し、「書類を再提出する」を押してください。
+            </p>
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <UploadArea
+                label="表面"
+                preview={frontCleared ? null : (frontPreview ?? docProfile?.id_document_signed_url ?? null)}
+                onFile={handleFrontFile}
+                onClear={() => { setFrontFile(null); setFrontPreview(null); setFrontCleared(true); }}
+              />
+              <UploadArea
+                label="裏面"
+                preview={backCleared ? null : (backPreview ?? docProfile?.id_document_back_signed_url ?? null)}
+                onFile={handleBackFile}
+                onClear={() => { setBackFile(null); setBackPreview(null); setBackCleared(true); }}
+              />
+            </div>
+            {docError && <p className="text-xs text-red-400 mt-2">{docError}</p>}
+            <button
+              type="button"
+              onClick={handleDocResubmit}
+              disabled={docSaving || (!frontFile && !backFile)}
+              className="w-full mt-3 px-4 py-2.5 bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {docSaving ? '送信中...' : '書類を再提出する'}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* AIおすすめオプション */}
       <AIOptionSection />
 
