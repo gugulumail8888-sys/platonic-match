@@ -17,6 +17,7 @@ interface VerifyItem {
   status: VerifyStatus;
   frontUrl: string | null;
   backUrl: string | null;
+  resubmitted_at: string | null;
 }
 
 const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; icon: React.ElementType }> = {
@@ -37,14 +38,15 @@ function StatusBadge({ status }: { status: VerifyStatus }) {
   );
 }
 
-type FilterTab = 'all' | VerifyStatus;
+type FilterTab = 'all' | VerifyStatus | 'resubmitted';
 
 const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
-  { value: 'all',      label: 'すべて' },
-  { value: 'pending',  label: '審査待ち' },
-  { value: 'approved', label: '自動承認済み' },
-  { value: 'verified', label: '手動チェック済み' },
-  { value: 'rejected', label: '否認' },
+  { value: 'all',         label: 'すべて' },
+  { value: 'pending',     label: '審査待ち' },
+  { value: 'approved',    label: '自動承認済み' },
+  { value: 'resubmitted', label: '再審査待ち' },
+  { value: 'verified',    label: '手動チェック済み' },
+  { value: 'rejected',    label: '否認' },
 ];
 
 export default function AdminVerifyPage() {
@@ -85,7 +87,7 @@ export default function AdminVerifyPage() {
         body: JSON.stringify({ status: 'verified' }),
       });
       if (!res.ok) throw new Error('更新に失敗しました');
-      setItems((prev) => prev.map((v) => v.id === id ? { ...v, status: 'verified' } : v));
+      setItems((prev) => prev.map((v) => v.id === id ? { ...v, status: 'verified', resubmitted_at: null } : v));
     } catch {
       alert('更新に失敗しました');
     } finally {
@@ -93,16 +95,19 @@ export default function AdminVerifyPage() {
     }
   };
 
-  const filtered = items.filter((v) =>
-    filter === 'all' ? true : v.status === filter
-  );
+  const filtered = items.filter((v) => {
+    if (filter === 'all') return true;
+    if (filter === 'resubmitted') return !!v.resubmitted_at;
+    return v.status === filter;
+  });
 
   const counts = {
-    all:      items.length,
-    pending:  items.filter((v) => v.status === 'pending').length,
-    approved: items.filter((v) => v.status === 'approved').length,
-    verified: items.filter((v) => v.status === 'verified').length,
-    rejected: items.filter((v) => v.status === 'rejected').length,
+    all:         items.length,
+    pending:     items.filter((v) => v.status === 'pending').length,
+    approved:    items.filter((v) => v.status === 'approved').length,
+    resubmitted: items.filter((v) => !!v.resubmitted_at).length,
+    verified:    items.filter((v) => v.status === 'verified').length,
+    rejected:    items.filter((v) => v.status === 'rejected').length,
   };
 
   return (
@@ -225,7 +230,7 @@ export default function AdminVerifyPage() {
 
               {/* ボタンエリア */}
               <div className="space-y-2">
-                {item.status === 'approved' && (
+                {(item.status === 'approved' || !!item.resubmitted_at) && (
                   <button
                     onClick={() => handleManualCheck(item.id)}
                     disabled={checkingId === item.id}

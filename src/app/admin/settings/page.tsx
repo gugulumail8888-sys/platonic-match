@@ -395,7 +395,7 @@ export default function AdminSettingsPage() {
           <ToggleSwitch
             checked={campaignBannerEnabled}
             onChange={setCampaignBannerEnabled}
-            label="夏のキャンペーンバナーを表示"
+            label="オープン記念・初期限定キャンペーンバナーを表示"
             description="7月〜9月限定｜AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーをトップページに表示します"
           />
         </SettingsSection>
