@@ -18,6 +18,14 @@ export default function OmiaiPaymentSuccessPage() {
           お見合い料のお支払いが完了しました。<br />
           当日2時間前にGoogle MeetのURLをメールでお送りします。
         </p>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6 text-left">
+          <p className="text-zinc-300 text-xs font-medium mb-1">お見合い当日の注意事項</p>
+          <p className="text-zinc-500 text-xs leading-relaxed">
+            連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。詳しくは
+            <a href="/zoom-check" className="text-teal-400 underline">お見合い中の注意事項</a>
+            をご確認ください。
+          </p>
+        </div>
         <Button fullWidth onClick={() => router.push('/matching')}>
           マッチングページへ
         </Button>

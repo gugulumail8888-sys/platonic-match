@@ -1,10 +1,25 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: '未認証' }, { status: 401 });
+  }
+
   const adminSupabase = createAdminClient();
+  const { data: profile } = await adminSupabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') {
+    return NextResponse.json({ error: '権限がありません' }, { status: 403 });
+  }
 
   // profilesテーブルから会員情報を取得
   const { data: profiles, error } = await adminSupabase

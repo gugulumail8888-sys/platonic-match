@@ -110,7 +110,10 @@ export async function POST(req: NextRequest) {
     // 両者へ確定通知メール
     await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+      },
       body: JSON.stringify({
         type: 'schedule_confirmed',
         applicationId: matching.id,

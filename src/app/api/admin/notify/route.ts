@@ -45,6 +45,13 @@ function wrap(content: string) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as NotifyBody;
+
+    const authHeader = req.headers.get('authorization');
+    const expectedSecret = process.env.INTERNAL_API_SECRET;
+    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+      return NextResponse.json({ error: '未認証' }, { status: 401 });
+    }
+
     const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl } = body;
     const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -249,6 +256,10 @@ export async function POST(req: NextRequest) {
           <p>${applicant.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
+          <p style="font-size:13px; color:#666;">
+            連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。
+            詳しい注意事項は<a href="${process.env.NEXT_PUBLIC_APP_URL}/zoom-check">お見合い中の注意事項</a>をご確認ください。
+          </p>
         `),
       });
 
@@ -261,6 +272,10 @@ export async function POST(req: NextRequest) {
           <p>${member.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
+          <p style="font-size:13px; color:#666;">
+            連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。
+            詳しい注意事項は<a href="${process.env.NEXT_PUBLIC_APP_URL}/zoom-check">お見合い中の注意事項</a>をご確認ください。
+          </p>
         `),
       });
 
@@ -408,6 +423,10 @@ export async function POST(req: NextRequest) {
           <p>${applicant.nickname} さん、${member.nickname} さんとのお見合い日程が確定しました。</p>
           <p>日時：${whenStr}</p>
           ${meetSection}
+          <p style="font-size:13px; color:#666;">
+            連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。
+            詳しい注意事項は<a href="${process.env.NEXT_PUBLIC_APP_URL}/zoom-check">お見合い中の注意事項</a>をご確認ください。
+          </p>
           <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
         `),
       });
@@ -421,6 +440,10 @@ export async function POST(req: NextRequest) {
           <p>${member.nickname} さん、${applicant.nickname} さんとのお見合い日程が確定しました。</p>
           <p>日時：${whenStr}</p>
           ${meetSection}
+          <p style="font-size:13px; color:#666;">
+            連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。
+            詳しい注意事項は<a href="${process.env.NEXT_PUBLIC_APP_URL}/zoom-check">お見合い中の注意事項</a>をご確認ください。
+          </p>
           <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
         `),
       });

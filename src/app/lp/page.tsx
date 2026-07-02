@@ -108,7 +108,7 @@ export default function LpPage() {
         :root { --teal:#0d9488;--teal-light:#14b8a6;--teal-dim:#0d948820;--teal-mid:#0d948840;--dark:#1a2540;--dark-2:#1f2d4e;--light:#f7f8fa;--light-2:#ffffff;--light-border:#d8dde6;--dark-text:#1a2540;--muted:#4a5670;--white:#ffffff; }
         html { scroll-behavior: smooth; }
         body { background: var(--dark); color: var(--white); font-family: "Noto Sans JP", sans-serif; font-weight: 300; line-height: 1.7; overflow-x: hidden; }
-        nav { position: fixed; top: 40px; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 48px; background: linear-gradient(to bottom, #1a254099 0%, transparent 100%); backdrop-filter: blur(2px); transition: background .3s; }
+        nav { position: fixed; top: var(--banner-offset); left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 12px 48px; background: linear-gradient(to bottom, #1a254099 0%, transparent 100%); backdrop-filter: blur(2px); transition: background .3s; }
         nav.scrolled { background: rgba(26,37,64,.97); }
         .logo { font-family: inherit; font-size: 1.25rem; font-weight: 700; letter-spacing: normal; color: var(--white); display: flex; align-items: center; gap: 0; }
         .logo span { color: var(--teal-light); letter-spacing: normal; }

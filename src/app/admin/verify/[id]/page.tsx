@@ -120,14 +120,10 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
     if (!detail) return;
     setIsSendingDeficiency(true);
     try {
-      const res = await fetch('/api/admin/notify', {
+      const res = await fetch(`/api/admin/verify/${params.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'deficiency_document',
-          user: { nickname: detail.nickname, email: detail.email },
-          reason: deficiencyReason,
-        }),
+        body: JSON.stringify({ reason: deficiencyReason }),
       });
       if (!res.ok) throw new Error('送信に失敗しました');
       setShowDeficiencyModal(false);

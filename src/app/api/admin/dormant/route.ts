@@ -1,13 +1,28 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const months = parseInt(searchParams.get('months') ?? '6');
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: '未認証' }, { status: 401 });
+  }
 
   const adminSupabase = createAdminClient();
+  const { data: profile } = await adminSupabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') {
+    return NextResponse.json({ error: '権限がありません' }, { status: 403 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const months = parseInt(searchParams.get('months') ?? '6');
 
   const { data: authUsers, error: authError } = await adminSupabase.auth.admin.listUsers({
     perPage: 1000,
