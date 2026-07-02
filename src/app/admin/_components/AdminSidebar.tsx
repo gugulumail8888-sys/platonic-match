@@ -25,7 +25,7 @@ export function AdminSidebar() {
   return (
     <>
       {/* ========== デスクトップ サイドバー ========== */}
-      <aside className="hidden lg:flex flex-col w-56 bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-2.5rem)] fixed left-0 top-10 z-40 overflow-hidden">
+      <aside className="hidden lg:flex flex-col w-56 bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-var(--banner-offset))] fixed left-0 top-[var(--banner-offset)] z-40 overflow-hidden">
         {/* ロゴ */}
         <div className="p-5 border-b border-zinc-800">
           <div className="flex items-center gap-2.5">

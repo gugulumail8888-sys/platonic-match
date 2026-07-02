@@ -92,7 +92,10 @@ async function tryCreateMutualMatch(
 
       await fetch(`${origin}/api/admin/notify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+        },
         body: JSON.stringify({
           type: 'matching_approved',
           applicationId: newMatching?.id ?? '',

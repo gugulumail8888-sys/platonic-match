@@ -119,3 +119,42 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   return NextResponse.json({ ok: true });
 }
+
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const { error, admin } = await requireAdmin();
+  if (error) return error;
+
+  const body = await req.json() as { reason?: string };
+
+  const { data: row } = await admin
+    .from('profiles')
+    .select('nickname')
+    .eq('id', params.id)
+    .maybeSingle();
+
+  const { data: authUser } = await admin.auth.admin.getUserById(params.id);
+  const email = authUser?.user?.email;
+
+  if (!email) {
+    return NextResponse.json({ error: 'メールアドレスが見つかりません' }, { status: 404 });
+  }
+
+  const notifyRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/admin/notify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+    },
+    body: JSON.stringify({
+      type: 'deficiency_document',
+      user: { nickname: row?.nickname ?? '会員', email },
+      reason: body.reason ?? '',
+    }),
+  });
+
+  if (!notifyRes.ok) {
+    return NextResponse.json({ error: 'メール送信に失敗しました' }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}

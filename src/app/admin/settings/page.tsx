@@ -106,6 +106,9 @@ export default function AdminSettingsPage() {
   const [operatorName, setOperatorName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceNoticeEnabled, setMaintenanceNoticeEnabled] = useState(false);
+  const [maintenanceScheduledStart, setMaintenanceScheduledStart] = useState('');
+  const [maintenanceScheduledEnd, setMaintenanceScheduledEnd] = useState('');
 
   // 2. 料金設定
   const [lightPlanPrice, setLightPlanPrice] = useState(1078);
@@ -146,6 +149,9 @@ export default function AdminSettingsPage() {
       .then((data: Record<string, string>) => {
         if (data.site_name !== undefined) setSiteName(data.site_name);
         if (data.maintenance_mode !== undefined) setMaintenanceMode(data.maintenance_mode === 'true');
+        if (data.maintenance_notice_enabled !== undefined) setMaintenanceNoticeEnabled(data.maintenance_notice_enabled === 'true');
+        if (data.maintenance_scheduled_start !== undefined) setMaintenanceScheduledStart(data.maintenance_scheduled_start);
+        if (data.maintenance_scheduled_end !== undefined) setMaintenanceScheduledEnd(data.maintenance_scheduled_end);
         if (data.light_plan_price !== undefined) setLightPlanPrice(Number(data.light_plan_price));
         if (data.matching_fee_normal !== undefined) setMatchingFeeNormal(Number(data.matching_fee_normal));
         if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
@@ -184,6 +190,9 @@ export default function AdminSettingsPage() {
   const handleSaveBasic = () => saveSettings({
     site_name: siteName,
     maintenance_mode: String(maintenanceMode),
+    maintenance_notice_enabled: String(maintenanceNoticeEnabled),
+    maintenance_scheduled_start: maintenanceScheduledStart,
+    maintenance_scheduled_end: maintenanceScheduledEnd,
   });
 
   const handleSavePricing = () => saveSettings({
@@ -263,6 +272,28 @@ export default function AdminSettingsPage() {
             label="メンテナンスモード"
             description="有効にするとサイトをメンテナンス画面に切り替えます"
           />
+          <ToggleSwitch
+            checked={maintenanceNoticeEnabled}
+            onChange={setMaintenanceNoticeEnabled}
+            label="メンテナンス予告表示"
+            description="有効にすると下記の予定日時をバナーで告知します"
+          />
+          <FieldRow label="メンテナンス開始予定日時">
+            <input
+              type="datetime-local"
+              value={maintenanceScheduledStart}
+              onChange={(e) => setMaintenanceScheduledStart(e.target.value)}
+              className={inputCls}
+            />
+          </FieldRow>
+          <FieldRow label="メンテナンス終了予定日時">
+            <input
+              type="datetime-local"
+              value={maintenanceScheduledEnd}
+              onChange={(e) => setMaintenanceScheduledEnd(e.target.value)}
+              className={inputCls}
+            />
+          </FieldRow>
         </SettingsSection>
 
         {/* 2. 料金設定 */}

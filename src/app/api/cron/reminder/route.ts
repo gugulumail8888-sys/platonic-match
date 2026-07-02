@@ -92,7 +92,10 @@ async function buildPersonCache(admin: AdminClient, matchings: Matching[]): Prom
 async function notifyAdmin(origin: string, type: string, matching: Matching, personCache: Map<string, Person>) {
   await fetch(`${origin}/api/admin/notify`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+    },
     body: JSON.stringify({
       type,
       applicationId: matching.id,
@@ -299,7 +302,10 @@ export async function POST(req: NextRequest) {
 
         await fetch(`${origin}/api/admin/notify`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+          },
           body: JSON.stringify({
             type: 'approval_document',
             user: { nickname: profile.nickname ?? 'ユーザー', email },

@@ -86,7 +86,10 @@ export async function POST(req: NextRequest) {
     // お相手へ通知メール
     await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+      },
       body: JSON.stringify({
         type: 'schedule_proposed',
         applicationId: matching.id,

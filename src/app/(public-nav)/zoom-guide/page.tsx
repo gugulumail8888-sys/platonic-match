@@ -340,6 +340,20 @@ export default function ZoomGuidePage() {
         </div>
       </div>
 
+      {/* お見合い中の注意事項への導線 */}
+      <a
+        href="/zoom-check"
+        className="block bg-teal-950/30 border border-teal-800/50 rounded-2xl p-5 hover:bg-teal-950/50 transition-all"
+      >
+        <h2 className="text-teal-300 font-bold mb-2 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" />
+          お見合い中の注意事項も確認しましょう
+        </h2>
+        <p className="text-sm text-teal-400/80">
+          連絡先の交換・個人情報の共有・画面の録画などの禁止事項について、事前にご確認ください。
+        </p>
+      </a>
+
       {/* PDFダウンロード */}
       <button
         onClick={handlePrint}

@@ -285,7 +285,7 @@ export default function HowItWorksClient() {
   return (
     <div className="min-h-screen bg-zinc-950">
       {/* ヘッダー */}
-      <header className="sticky top-10 z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
+      <header className="sticky top-[var(--banner-offset)] z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
         <div className="max-w-xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link
             href="/"

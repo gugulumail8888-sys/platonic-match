@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { createAdminClient } from "@/lib/supabase/server";
+import { parseJstDateTime } from "@/lib/datetime";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
@@ -24,13 +25,28 @@ export async function middleware(request: NextRequest) {
 
     if (!isAdmin) {
       const admin = createAdminClient();
-      const { data } = await admin
+      const { data: settingsRows } = await admin
         .from('settings')
-        .select('value')
-        .eq('key', 'maintenance_mode')
-        .maybeSingle();
+        .select('key, value')
+        .in('key', ['maintenance_mode', 'maintenance_scheduled_start', 'maintenance_scheduled_end']);
 
-      if (data?.value === 'true') {
+      const settingsMap = Object.fromEntries((settingsRows ?? []).map((r) => [r.key, r.value]));
+
+      const manualOn = settingsMap.maintenance_mode === 'true';
+
+      let scheduledOn = false;
+      const start = settingsMap.maintenance_scheduled_start;
+      const end = settingsMap.maintenance_scheduled_end;
+      if (start && end) {
+        const now = Date.now();
+        const startTime = parseJstDateTime(start).getTime();
+        const endTime = parseJstDateTime(end).getTime();
+        if (!isNaN(startTime) && !isNaN(endTime) && now >= startTime && now <= endTime) {
+          scheduledOn = true;
+        }
+      }
+
+      if (manualOn || scheduledOn) {
         return NextResponse.redirect(new URL('/maintenance', request.url));
       }
     }

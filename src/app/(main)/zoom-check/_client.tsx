@@ -8,11 +8,13 @@ const RULES = [
   { id: 1, text: 'LINEや電話番号など、連絡先の交換をしない' },
   { id: 2, text: 'SNSアカウント（Instagram・X・Facebookなど）の交換をしない' },
   { id: 3, text: '住所・職場など個人が特定できる情報を伝えない' },
-  { id: 4, text: '画面の録画・スクリーンショットを撮影しない' },
+  { id: 4, text: '画面の録画・スクリーンショット・通話内容の録音をしない' },
   { id: 5, text: '金銭・物品の要求・贈与をしない' },
   { id: 6, text: '交際を希望する場合は必ずサイト内の「交際希望」ボタンから申請する' },
   { id: 7, text: 'わいせつ画像・性的コンテンツ・不適切な画像データの送受信や共有をしない' },
-  { id: 8, text: '違反した場合は即時アカウント停止・以降の利用禁止となることに同意する' },
+  { id: 9, text: '暴言・誹謗中傷・ハラスメントに該当する言動をしない' },
+  { id: 10, text: 'お見合い時間（40分）を超えた延長の依頼はご遠慮ください' },
+  { id: 8, text: '違反が確認された場合はまず警告を行います。ただし、わいせつ・性的コンテンツ等の重大な違反、または悪質・繰り返しの違反があった場合は即時アカウント停止・以降の利用禁止となることに同意する' },
 ];
 
 export default function ZoomCheckClient() {
@@ -45,7 +47,7 @@ export default function ZoomCheckClient() {
           <Video className="w-5 h-5 text-blue-400" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white">Google Meetお見合い参加前の確認</h1>
+          <h1 className="text-xl font-bold text-white">お見合い中の注意事項</h1>
           <p className="text-xs text-zinc-400">{partnerName}さんとのお見合い</p>
         </div>
       </div>
