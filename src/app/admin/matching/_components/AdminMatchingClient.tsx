@@ -241,6 +241,8 @@ export default function AdminMatchingClient({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedRow, setSelectedRow]   = useState<MatchingRow | null>(null);
 
+  const now = Date.now();
+
   const filtered = matchings.filter((r) =>
     statusFilter === 'all' ? true : r.status === statusFilter
   );
@@ -294,7 +296,7 @@ export default function AdminMatchingClient({
           <table className="w-full text-sm min-w-[700px]">
             <thead className="border-b border-zinc-800">
               <tr>
-                {['申請番号', '申請者', 'お相手', '申請日', 'ステータス', '操作'].map((h) => (
+                {['申請番号', '申請者', 'お相手', '申請日', 'ステータス', '時間超過', '操作'].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider">
                     {h}
                   </th>
@@ -304,7 +306,7 @@ export default function AdminMatchingClient({
             <tbody className="divide-y divide-zinc-800">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-zinc-500">
                     該当する申請が見つかりませんでした
                   </td>
                 </tr>
@@ -344,6 +346,16 @@ export default function AdminMatchingClient({
                       {/* ステータス */}
                       <td className="px-4 py-3">
                         <StatusBadge status={row.status} />
+                      </td>
+
+                      {/* 時間超過 */}
+                      <td className="px-4 py-3">
+                        {row.status === 'zoom_completed' &&
+                          row.scheduled_at !== null &&
+                          row.meeting_ended_at === null &&
+                          now - new Date(row.scheduled_at).getTime() >= 50 * 60 * 1000 && (
+                            <span className="text-xs font-medium text-red-400">⚠️ 超過</span>
+                          )}
                       </td>
 
                       {/* 操作 */}
