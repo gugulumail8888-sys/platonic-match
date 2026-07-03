@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
   { href: '/admin',          label: 'ダッシュボード', icon: Home,          exact: true },
-  { href: '/admin/review',   label: '個別審査',       icon: ClipboardList, exact: false },
   { href: '/admin/members',  label: '会員管理',       icon: Users,         exact: false },
-  { href: '/admin/matching', label: '申請管理',       icon: HeartHandshake, exact: false },
   { href: '/admin/verify',   label: '本人確認審査',   icon: ShieldCheck,   exact: false },
+  { href: '/admin/matching', label: '申請管理',       icon: HeartHandshake, exact: false },
   { href: '/admin/schedule', label: '日程管理',       icon: Calendar,      exact: false },
+  { href: '/admin/review',   label: 'プロフィール管理', icon: ClipboardList, exact: false },
   { href: '/admin/dormant',  label: '休眠会員',       icon: Moon,          exact: false },
   { href: '/admin/export',   label: 'データ出力',     icon: Download,      exact: false },
   { href: '/admin/surveys',  label: 'アンケート',     icon: ClipboardCheck, exact: false },
