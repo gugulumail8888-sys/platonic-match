@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic';
 
-import { revalidatePath } from 'next/cache';
+import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/server';
-import { CheckCircle, XCircle, User } from 'lucide-react';
+import { User } from 'lucide-react';
 
 type Profile = {
   id: string;
@@ -14,6 +14,8 @@ type Profile = {
   avatar_url: string | null;
   status: string;
   created_at: string;
+  admin_notes: string | null;
+  profile_reviewed_at: string | null;
 };
 
 function calcAge(birthDate: string) {
@@ -25,136 +27,157 @@ function calcAge(birthDate: string) {
   return age;
 }
 
-async function updateStatus(formData: FormData) {
-  'use server';
-  const profileId = formData.get('profileId') as string;
-  const status = formData.get('status') as string;
-  const supabase = createAdminClient();
-  await supabase
-    .from('profiles')
-    .update({ status })
-    .eq('id', profileId);
-  revalidatePath('/admin/review');
-}
-
-export default async function ReviewPage() {
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams: { tab?: string };
+}) {
   const adminSupabase = createAdminClient();
 
-  // まず全件取得してみる（statusフィルターなし）
-  const { data: allProfiles, error: allError } = await adminSupabase
+  const { data: allProfiles } = await adminSupabase
     .from('profiles')
-    .select('id, nickname, status, birth_date, gender, prefecture, occupation, created_at');
+    .select(
+      'id, nickname, birth_date, gender, prefecture, occupation, avatar_url, status, created_at, admin_notes, profile_reviewed_at'
+    );
 
-  console.log('ALL profiles:', JSON.stringify(allProfiles));
-  console.log('ALL error:', JSON.stringify(allError));
+  const profiles = (allProfiles ?? []) as Profile[];
 
-  const pending = allProfiles?.filter((p) => p.status === 'pending') ?? [];
-  const profiles = pending as Profile[];
+  const unreviewed = profiles.filter((p) => p.profile_reviewed_at === null);
+  const reviewed = profiles.filter((p) => p.profile_reviewed_at !== null);
+
+  const tab = searchParams.tab === 'reviewed' ? 'reviewed' : 'unreviewed';
+  const displayed = tab === 'reviewed' ? reviewed : unreviewed;
 
   return (
     <div className="p-6 md:p-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">個別審査</h1>
+        <h1 className="text-2xl font-bold text-white">プロフィール管理</h1>
         <p className="text-sm text-zinc-400 mt-0.5">
-          審査待ち {profiles.length} 件
+          未確認 {unreviewed.length} 件 ／ 確認済み {reviewed.length} 件
         </p>
       </div>
 
-      {profiles.length === 0 ? (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
-          <CheckCircle className="w-12 h-12 text-teal-500 mx-auto mb-3" />
-          <p className="text-white font-medium">審査待ちのユーザーはいません</p>
-          <p className="text-zinc-500 text-sm mt-1">すべての申請が処理済みです</p>
+      {/* タブ */}
+      <div className="flex gap-2 border-b border-zinc-800">
+        <Link
+          href="/admin/review?tab=unreviewed"
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            tab === 'unreviewed'
+              ? 'border-teal-500 text-white'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          未確認 ({unreviewed.length})
+        </Link>
+        <Link
+          href="/admin/review?tab=reviewed"
+          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+            tab === 'reviewed'
+              ? 'border-teal-500 text-white'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          確認済み ({reviewed.length})
+        </Link>
+      </div>
+
+      {/* テーブル */}
+      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[800px]">
+            <thead className="border-b border-zinc-800">
+              <tr>
+                {['会員', '年齢', '性別', '居住地', '職業', '登録日', '手動確認状況', '操作'].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {displayed.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
+                    該当する会員が見つかりませんでした
+                  </td>
+                </tr>
+              ) : (
+                displayed.map((profile) => (
+                  <tr key={profile.id} className="hover:bg-zinc-800/50 transition-colors">
+                    {/* 会員（アバター+ニックネーム） */}
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/review/${profile.id}`}
+                        className="flex items-center gap-2.5 group"
+                      >
+                        {profile.avatar_url ? (
+                          <img
+                            src={profile.avatar_url}
+                            alt={profile.nickname}
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                            <User className="w-4 h-4 text-zinc-400" />
+                          </div>
+                        )}
+                        <span className="text-zinc-100 font-medium group-hover:text-teal-400 transition-colors">
+                          {profile.nickname}
+                        </span>
+                      </Link>
+                    </td>
+
+                    {/* 年齢 */}
+                    <td className="px-4 py-3 text-zinc-400 text-xs">{calcAge(profile.birth_date)}歳</td>
+
+                    {/* 性別 */}
+                    <td className="px-4 py-3 text-zinc-400 text-xs">
+                      {profile.gender === 'male' ? '男性' : profile.gender === 'female' ? '女性' : 'その他'}
+                    </td>
+
+                    {/* 居住地 */}
+                    <td className="px-4 py-3 text-zinc-400 text-xs">{profile.prefecture}</td>
+
+                    {/* 職業 */}
+                    <td className="px-4 py-3 text-zinc-400 text-xs">{profile.occupation}</td>
+
+                    {/* 登録日 */}
+                    <td className="px-4 py-3 text-zinc-400 text-xs">
+                      {new Date(profile.created_at).toLocaleDateString('ja-JP')}
+                    </td>
+
+                    {/* 手動確認状況 */}
+                    <td className="px-4 py-3">
+                      {profile.profile_reviewed_at ? (
+                        <span className="text-xs bg-teal-900/50 text-teal-400 border border-teal-800 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          確認済み（{new Date(profile.profile_reviewed_at).toLocaleDateString('ja-JP')}）
+                        </span>
+                      ) : (
+                        <span className="text-xs bg-amber-900/50 text-amber-400 border border-amber-800 px-2 py-0.5 rounded-full">
+                          未確認
+                        </span>
+                      )}
+                    </td>
+
+                    {/* 操作 */}
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/admin/review/${profile.id}`}
+                        className="text-xs px-2.5 py-1 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors inline-block"
+                      >
+                        詳細
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {profiles.map((profile) => (
-            <div
-              key={profile.id}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6"
-            >
-              <div className="flex items-start gap-5">
-                {/* アバター */}
-                <div className="flex-shrink-0">
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.nickname}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-zinc-700 flex items-center justify-center">
-                      <User className="w-8 h-8 text-zinc-400" />
-                    </div>
-                  )}
-                </div>
-
-                {/* 詳細 */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h2 className="text-lg font-bold text-white">{profile.nickname}</h2>
-                    <span className="text-xs bg-amber-900/50 text-amber-400 border border-amber-800 px-2 py-0.5 rounded-full">
-                      審査待ち
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-sm mb-3">
-                    <div>
-                      <span className="text-zinc-500">年齢</span>
-                      <span className="text-zinc-200 ml-2">{calcAge(profile.birth_date)}歳</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">性別</span>
-                      <span className="text-zinc-200 ml-2">
-                        {profile.gender === 'male' ? '男性' : profile.gender === 'female' ? '女性' : 'その他'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">居住地</span>
-                      <span className="text-zinc-200 ml-2">{profile.prefecture}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500">職業</span>
-                      <span className="text-zinc-200 ml-2">{profile.occupation}</span>
-                    </div>
-                  </div>
-
-
-                  <p className="text-xs text-zinc-600">
-                    登録日: {new Date(profile.created_at).toLocaleDateString('ja-JP')}
-                  </p>
-                </div>
-
-                {/* 承認・否認ボタン */}
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  <form action={updateStatus}>
-                    <input type="hidden" name="profileId" value={profile.id} />
-                    <input type="hidden" name="status" value="approved" />
-                    <button
-                      type="submit"
-                      className="flex items-center gap-2 bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors w-full justify-center"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      承認
-                    </button>
-                  </form>
-                  <form action={updateStatus}>
-                    <input type="hidden" name="profileId" value={profile.id} />
-                    <input type="hidden" name="status" value="rejected" />
-                    <button
-                      type="submit"
-                      className="flex items-center gap-2 bg-red-900 hover:bg-red-800 text-red-200 text-sm font-medium px-4 py-2 rounded-xl transition-colors w-full justify-center"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      否認
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
