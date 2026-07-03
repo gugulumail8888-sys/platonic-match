@@ -411,7 +411,7 @@ export async function POST(req: NextRequest) {
       // 日程確定通知（両者へ）
       const whenStr = scheduledDateStr ?? '';
       const meetSection = meetUrl
-        ? `<p>Google Meet URL：<a href="${meetUrl}">${meetUrl}</a></p>`
+        ? `<p>お見合い開始時刻になりましたら、<a href="${process.env.NEXT_PUBLIC_APP_URL}/matching">マイページの「Meetに参加する」ボタン</a>からご参加ください。</p>`
         : '<p>Google Meetリンクは別途事務局よりお送りします。</p>';
 
       // 申請者
