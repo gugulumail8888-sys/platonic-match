@@ -85,6 +85,12 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
   const router = useRouter();
   const [wished, setWished] = useState(matching.applicant_dating_wish);
   const [responding, setResponding] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   async function handleDatingWish() {
     const supabase = createClient();
@@ -118,6 +124,36 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
 
   const isReceiver = matching.partner_id === currentUserId;
   const { partner, status, created_at, id } = matching;
+
+  let countdown: { text: string; className: string } | null = null;
+  if (status === 'zoom_completed' && matching.scheduled_at !== null && matching.meeting_ended_at === null) {
+    const elapsedMs = now - new Date(matching.scheduled_at).getTime();
+    const formatMinSec = (ms: number) => {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}:${String(sec).padStart(2, '0')}`;
+    };
+
+    if (elapsedMs < 0) {
+      countdown = null;
+    } else if (elapsedMs < 40 * 60 * 1000) {
+      countdown = {
+        text: `⏱ 残り時間 ${formatMinSec(40 * 60 * 1000 - elapsedMs)}`,
+        className: 'text-teal-400',
+      };
+    } else if (elapsedMs < 50 * 60 * 1000) {
+      countdown = {
+        text: `⚠️ 超過時間 +${formatMinSec(elapsedMs - 40 * 60 * 1000)}`,
+        className: 'text-amber-400',
+      };
+    } else {
+      countdown = {
+        text: 'まもなく終了します',
+        className: 'text-red-400',
+      };
+    }
+  }
 
   return (
     <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 hover:border-zinc-600 transition-all">
@@ -204,6 +240,12 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
             >
               お断りする
             </button>
+          </div>
+        )}
+
+        {countdown && (
+          <div className={`text-center text-sm font-medium mb-2 ${countdown.className}`}>
+            {countdown.text}
           </div>
         )}
 
