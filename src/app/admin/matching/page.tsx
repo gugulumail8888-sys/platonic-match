@@ -19,7 +19,7 @@ export default async function AdminMatchingPage() {
 
   const { data: rows } = await supabase
     .from('matchings')
-    .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, partner_dating_wish')
+    .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, partner_dating_wish, scheduled_at, meeting_ended_at, user1_joined_at, user2_joined_at')
     .order('created_at', { ascending: false });
 
   if (!rows || rows.length === 0) {

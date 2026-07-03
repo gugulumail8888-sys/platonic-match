@@ -6,7 +6,7 @@ import { MapPin, X, ChevronRight } from 'lucide-react';
 
 // ── 型定義 ────────────────────────────────────────────────────
 
-export type AppStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled' | 'rejected';
+export type AppStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled' | 'rejected' | 'ended';
 
 export interface MatchingProfile {
   id: string;
@@ -27,6 +27,10 @@ export interface MatchingRow {
   partner_dating_wish: boolean;
   applicant: MatchingProfile | null;
   partner: MatchingProfile | null;
+  scheduled_at: string | null;
+  meeting_ended_at: string | null;
+  user1_joined_at: string | null;
+  user2_joined_at: string | null;
 }
 
 // ── 定数 ──────────────────────────────────────────────────────
@@ -38,6 +42,7 @@ export const APP_STATUS_CONFIG: Record<AppStatus, { label: string; className: st
   zoom_completed: { label: 'Google Meet完了',   className: 'bg-blue-900    text-blue-300'                           },
   cancelled:      { label: 'キャンセル', className: 'bg-red-900/50 text-red-300 border border-red-800' },
   rejected:       { label: '拒否',       className: 'bg-zinc-700 text-zinc-400 border border-zinc-600' },
+  ended:          { label: '終了済み',   className: 'bg-zinc-800 text-zinc-400 border border-zinc-700' },
 };
 
 const NEXT_STATUS: Partial<Record<AppStatus, AppStatus>> = {
@@ -62,6 +67,7 @@ const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'completed',      label: '完了' },
   { value: 'cancelled',      label: 'キャンセル' },
   { value: 'rejected',       label: '拒否' },
+  { value: 'ended',          label: '終了済み' },
 ];
 
 // ── ヘルパー ──────────────────────────────────────────────────
@@ -247,6 +253,7 @@ export default function AdminMatchingClient({
     completed:      matchings.filter((r) => r.status === 'completed').length,
     cancelled:      matchings.filter((r) => r.status === 'cancelled').length,
     rejected:       matchings.filter((r) => r.status === 'rejected').length,
+    ended:          matchings.filter((r) => r.status === 'ended').length,
   };
 
   return (
