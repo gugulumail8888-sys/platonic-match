@@ -16,7 +16,7 @@ type Matching = {
   amount: number | null;
   applied_at: string | null;
   scheduled_at: string | null;
-  zoom_link: string | null;
+  zoom_url: string | null;
   payment_intent_id: string | null;
 };
 
@@ -28,7 +28,7 @@ type Person = {
   email: string;
 };
 
-const MATCHING_COLUMNS = 'id, applicant_id, partner_id, amount, applied_at, scheduled_at, zoom_link, payment_intent_id';
+const MATCHING_COLUMNS = 'id, applicant_id, partner_id, amount, applied_at, scheduled_at, zoom_url, payment_intent_id';
 
 // ============================================================
 // 認証チェック（Bearerトークン）
@@ -104,7 +104,7 @@ async function notifyAdmin(origin: string, type: string, matching: Matching, per
       member: personCache.get(matching.partner_id),
       amount: matching.amount ?? 0,
       scheduledAt: matching.scheduled_at,
-      meetUrl: matching.zoom_link,
+      meetUrl: matching.zoom_url,
       surveyUrl: `${origin}/omiai-survey?matchingId=${matching.id}`,
     }),
   });
