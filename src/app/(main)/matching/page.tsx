@@ -7,7 +7,7 @@ import { MapPin, Calendar, ClipboardList, Users, HeartHandshake } from 'lucide-r
 import { Button } from '@/components/ui/Button';
 import { createClient } from '@/lib/supabase/client';
 
-type ApplicationStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled' | 'rejected';
+type ApplicationStatus = 'pending' | 'scheduling' | 'completed' | 'zoom_completed' | 'cancelled' | 'rejected' | 'ended';
 
 interface PartnerProfile {
   id: string;
@@ -53,7 +53,7 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: strin
     className: 'bg-green-900/50 text-green-300 border border-green-800',
   },
   zoom_completed: {
-    label: 'Google Meet完了',
+    label: 'お見合い準備完了',
     className: 'bg-blue-900 text-blue-300',
   },
   cancelled: {
@@ -63,6 +63,10 @@ const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: strin
   rejected: {
     label: 'お断り',
     className: 'bg-zinc-800 text-zinc-500 border border-zinc-700',
+  },
+  ended: {
+    label: 'お見合い終了',
+    className: 'bg-zinc-800 text-zinc-400 border border-zinc-700',
   },
 };
 
