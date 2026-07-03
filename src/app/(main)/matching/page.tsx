@@ -28,6 +28,8 @@ interface Matching {
   partner: PartnerProfile;
   hasSlots: boolean;
   scheduled_at: string | null;
+  zoom_url: string | null;
+  meeting_ended_at: string | null;
 }
 
 function calcAge(birthDate: string) {
@@ -205,6 +207,26 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           </div>
         )}
 
+        {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && (
+          <button
+            onClick={async () => {
+              try {
+                await fetch('/api/matching/join', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ matchingId: matching.id }),
+                });
+              } catch (e) {
+                console.error('join記録エラー:', e);
+              }
+              window.open(matching.zoom_url!, '_blank');
+            }}
+            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm w-full mb-2"
+          >
+            🎥 Google Meetに参加する
+          </button>
+        )}
+
         {/* 交際希望ボタン（Google Meet完了時のみ） */}
         {status === 'zoom_completed' && (
           <button
@@ -312,7 +334,7 @@ export default function MatchingPage() {
 
       const { data: rows, error } = await supabase
         .from('matchings')
-        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at')
+        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at, zoom_url, meeting_ended_at')
         .or(`applicant_id.eq.${user.id},partner_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 

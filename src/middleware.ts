@@ -9,6 +9,7 @@ export async function middleware(request: NextRequest) {
   // ── メンテナンスモードチェック（既存の認証チェックより前に実行） ──
   if (
     pathname !== '/maintenance' &&
+    pathname !== '/login' &&
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/_next')
   ) {
