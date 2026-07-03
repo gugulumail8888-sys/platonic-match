@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { MapPin, X, ChevronRight } from 'lucide-react';
+import { MapPin, X, ChevronRight, CheckCircle2, Circle, ArrowUp, ArrowDown } from 'lucide-react';
 
 // ── 型定義 ────────────────────────────────────────────────────
 
@@ -79,6 +79,47 @@ function calcAge(birthDate: string) {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
+}
+
+// ── ソート ────────────────────────────────────────────────────
+
+type SortKey = 'id' | 'applicant' | 'partner' | 'created_at' | 'status' | 'joined' | 'overtime';
+type SortDirection = 'asc' | 'desc';
+
+const SORTABLE_COLUMNS: { key: SortKey; label: string }[] = [
+  { key: 'id',         label: '申請番号'   },
+  { key: 'applicant',  label: '申請者'     },
+  { key: 'partner',    label: 'お相手'     },
+  { key: 'created_at', label: '申請日'     },
+  { key: 'status',     label: 'ステータス' },
+  { key: 'joined',     label: '入室状況'   },
+  { key: 'overtime',   label: '時間超過'   },
+];
+
+// 時間超過バッジの表示条件（352行目付近の判定と同一。ソート用に複製）
+function isOvertime(row: MatchingRow, now: number): boolean {
+  return (
+    row.status === 'zoom_completed' &&
+    row.scheduled_at !== null &&
+    row.meeting_ended_at === null &&
+    now - new Date(row.scheduled_at).getTime() >= 50 * 60 * 1000
+  );
+}
+
+function joinedCount(row: MatchingRow): number {
+  return (row.user1_joined_at !== null ? 1 : 0) + (row.user2_joined_at !== null ? 1 : 0);
+}
+
+function getSortValue(row: MatchingRow, key: SortKey, now: number): string | number | boolean {
+  switch (key) {
+    case 'id':         return row.id;
+    case 'applicant':  return row.applicant?.nickname ?? '';
+    case 'partner':    return row.partner?.nickname ?? '';
+    case 'created_at': return new Date(row.created_at).getTime();
+    case 'status':     return row.status;
+    case 'joined':     return joinedCount(row);
+    case 'overtime':   return isOvertime(row, now);
+  }
 }
 
 // ── サブコンポーネント ─────────────────────────────────────────
@@ -240,12 +281,35 @@ export default function AdminMatchingClient({
 }) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedRow, setSelectedRow]   = useState<MatchingRow | null>(null);
+  const [sortKey, setSortKey]           = useState<SortKey | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const now = Date.now();
 
   const filtered = matchings.filter((r) =>
     statusFilter === 'all' ? true : r.status === statusFilter
   );
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    const dir = sortDirection === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const va = getSortValue(a, sortKey, now);
+      const vb = getSortValue(b, sortKey, now);
+      if (va < vb) return -1 * dir;
+      if (va > vb) return 1 * dir;
+      return 0;
+    });
+  }, [filtered, sortKey, sortDirection, now]);
 
   const counts: Record<StatusFilter, number> = {
     all:            matchings.length,
@@ -296,22 +360,36 @@ export default function AdminMatchingClient({
           <table className="w-full text-sm min-w-[700px]">
             <thead className="border-b border-zinc-800">
               <tr>
-                {['申請番号', '申請者', 'お相手', '申請日', 'ステータス', '時間超過', '操作'].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider">
-                    {h}
+                {SORTABLE_COLUMNS.map((col) => (
+                  <th
+                    key={col.key}
+                    onClick={() => handleSort(col.key)}
+                    className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-zinc-200 transition-colors"
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {col.label}
+                      {sortKey === col.key && (
+                        sortDirection === 'asc'
+                          ? <ArrowUp className="w-3 h-3" />
+                          : <ArrowDown className="w-3 h-3" />
+                      )}
+                    </span>
                   </th>
                 ))}
+                <th className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider">
+                  操作
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {filtered.length === 0 ? (
+              {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-zinc-500">
+                  <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
                     該当する申請が見つかりませんでした
                   </td>
                 </tr>
               ) : (
-                filtered.map((row) => {
+                sorted.map((row) => {
                   const hasDatingWish = row.applicant_dating_wish || row.partner_dating_wish;
                   const nextStatus = NEXT_STATUS[row.status] ?? null;
                   const nextLabel  = NEXT_LABEL[row.status]  ?? null;
@@ -346,6 +424,40 @@ export default function AdminMatchingClient({
                       {/* ステータス */}
                       <td className="px-4 py-3">
                         <StatusBadge status={row.status} />
+                      </td>
+
+                      {/* 入室状況 */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-zinc-500 w-10 flex-shrink-0">申請者</span>
+                            {row.user1_joined_at !== null ? (
+                              <span className="flex items-center gap-1 text-green-400">
+                                <CheckCircle2 className="w-3 h-3" />
+                                入室済み
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-zinc-600">
+                                <Circle className="w-3 h-3" />
+                                未入室
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-zinc-500 w-10 flex-shrink-0">お相手</span>
+                            {row.user2_joined_at !== null ? (
+                              <span className="flex items-center gap-1 text-green-400">
+                                <CheckCircle2 className="w-3 h-3" />
+                                入室済み
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-zinc-600">
+                                <Circle className="w-3 h-3" />
+                                未入室
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
 
                       {/* 時間超過 */}
