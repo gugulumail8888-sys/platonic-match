@@ -23,7 +23,9 @@ export default function PublicNavLayout({
   return (
     <div className="min-h-screen bg-zinc-950 pt-[var(--banner-offset)]">
       <Navbar role={role} hasAiOption={hasAiOption} />
-      {children}
+      <main className={role ? "lg:ml-64 pb-24 lg:pb-0 min-h-screen" : "min-h-screen"}>
+        {children}
+      </main>
       <ScrollToTop />
     </div>
   );

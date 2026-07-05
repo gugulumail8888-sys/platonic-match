@@ -38,8 +38,8 @@ export default async function MainLayout({
   return (
     <div className="min-h-screen bg-zinc-950 pt-[var(--banner-offset)]">
       <Navbar role={role} hasAiOption={hasAiOption} />
-      {/* デスクトップ：サイドバー分のmargin */}
-      <main className="lg:ml-64 pb-24 lg:pb-0 min-h-screen">
+      {/* デスクトップ：サイドバー分のmargin（role が無い場合は適用しない） */}
+      <main className={role ? "lg:ml-64 pb-24 lg:pb-0 min-h-screen" : "min-h-screen"}>
         {children}
       </main>
       <ScrollToTop />

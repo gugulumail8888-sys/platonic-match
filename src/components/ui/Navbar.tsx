@@ -106,66 +106,70 @@ export function Navbar({ role, hasAiOption = false }: { role?: string; hasAiOpti
 
   return (
     <>
-      {/* デスクトップ サイドバー */}
-      <aside className="hidden lg:flex flex-col w-64 bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-var(--banner-offset))] fixed left-0 top-[var(--banner-offset)] z-40">
-        <div className="p-6 border-b border-zinc-800">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-              <Heart className="w-4 h-4 text-white fill-white" />
+      {/* デスクトップ サイドバー（ログイン時のみ表示） */}
+      {role && (
+        <aside className="hidden lg:flex flex-col w-64 bg-zinc-900 border-r border-zinc-800 h-[calc(100vh-var(--banner-offset))] fixed left-0 top-[var(--banner-offset)] z-40">
+          <div className="p-6 border-b border-zinc-800">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                <Heart className="w-4 h-4 text-white fill-white" />
+              </div>
+              <span className="text-xl font-bold text-white tracking-wide">
+                ami<span className="text-primary-400">sta</span>
+              </span>
+            </Link>
+          </div>
+
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {navItems.map((item) => renderNavItem(item))}
+
+            <div className="pt-2 mt-2 border-t border-zinc-800">
+              {supportNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+                      isActive
+                        ? "bg-primary-950 text-primary-400 font-medium border border-primary-900"
+                        : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                    )}
+                  >
+                    <Icon className={cn("w-5 h-5", isActive ? "text-primary-400" : "text-zinc-500 group-hover:text-zinc-300")} />
+                    <span className="text-sm">{item.label}</span>
+                    {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-400" />}
+                  </Link>
+                );
+              })}
             </div>
-            <span className="text-xl font-bold text-white tracking-wide">
-              ami<span className="text-primary-400">sta</span>
-            </span>
-          </Link>
-        </div>
+          </nav>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => renderNavItem(item))}
+          <div className="p-4 border-t border-zinc-800">
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-500 hover:bg-red-950 hover:text-red-400 transition-all w-full text-sm"
+            >
+              <LogOut className="w-5 h-5" />
+              ログアウト
+            </button>
+          </div>
+        </aside>
+      )}
 
-          <div className="pt-2 mt-2 border-t border-zinc-800">
-            {supportNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-                    isActive
-                      ? "bg-primary-950 text-primary-400 font-medium border border-primary-900"
-                      : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
-                  )}
-                >
-                  <Icon className={cn("w-5 h-5", isActive ? "text-primary-400" : "text-zinc-500 group-hover:text-zinc-300")} />
-                  <span className="text-sm">{item.label}</span>
-                  {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-400" />}
-                </Link>
-              );
-            })}
+      {/* モバイル ボトムナビ（ログイン時のみ表示） */}
+      {role && (
+        <nav
+          className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50"
+          style={{ transform: 'translateZ(0)' }}
+        >
+          <div className="flex items-center py-2 px-1" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
+            {navItems.map((item) => renderNavItem(item, true))}
           </div>
         </nav>
-
-        <div className="p-4 border-t border-zinc-800">
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-500 hover:bg-red-950 hover:text-red-400 transition-all w-full text-sm"
-          >
-            <LogOut className="w-5 h-5" />
-            ログアウト
-          </button>
-        </div>
-      </aside>
-
-      {/* モバイル ボトムナビ */}
-      <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50"
-        style={{ transform: 'translateZ(0)' }}
-      >
-        <div className="flex items-center py-2 px-1" style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
-          {navItems.map((item) => renderNavItem(item, true))}
-        </div>
-      </nav>
+      )}
     </>
   );
 }
