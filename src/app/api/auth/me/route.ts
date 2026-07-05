@@ -35,7 +35,7 @@ export async function GET() {
 
   const hasAiOption = !isAdmin && (profile?.is_premium ?? false);
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     role: isAdmin ? 'admin' : 'user',
     email: user.email,
     hasAiOption,
@@ -48,4 +48,17 @@ export async function GET() {
       pr: profile?.pr ?? null,
     },
   });
+
+  response.cookies.set(
+    'auth',
+    JSON.stringify({ role: isAdmin ? 'admin' : 'user', email: user.email, hasAiOption }),
+    {
+      httpOnly: true,
+      path: '/',
+      maxAge: 86400,
+      sameSite: 'lax',
+    }
+  );
+
+  return response;
 }

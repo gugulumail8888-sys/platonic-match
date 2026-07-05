@@ -20,9 +20,13 @@ export default async function MainLayout({
 
   // admin ロールは管理画面へ
   const authCookie = cookies().get("auth")?.value;
+  let role: string | undefined;
+  let hasAiOption = false;
   if (authCookie) {
     try {
-      const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string };
+      const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string; hasAiOption?: boolean };
+      role = auth.role;
+      hasAiOption = auth.hasAiOption === true;
       if (auth.role === "admin") {
         redirect("/admin");
       }
@@ -33,7 +37,7 @@ export default async function MainLayout({
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-[var(--banner-offset)]">
-      <Navbar />
+      <Navbar role={role} hasAiOption={hasAiOption} />
       {/* デスクトップ：サイドバー分のmargin */}
       <main className="lg:ml-64 pb-24 lg:pb-0 min-h-screen">
         {children}

@@ -65,19 +65,18 @@ function LoginFormInner() {
     setFailCount(0);
     setLockedUntil(null);
 
-    // auth cookie にロール情報をセット
+    // auth cookie は /api/auth/me がサーバー側でhttpOnlyセットする
     try {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
         const auth = await res.json() as { role: string; email: string; hasAiOption: boolean };
-        document.cookie = `auth=${encodeURIComponent(JSON.stringify(auth))};path=/;max-age=86400;SameSite=Lax`;
         if (auth.role === 'admin') {
           window.location.href = '/admin';
           return;
         }
       }
     } catch {
-      // cookie セット失敗時はそのまま続行
+      // 取得失敗時はそのまま続行
     }
 
     window.location.href = "/dashboard";

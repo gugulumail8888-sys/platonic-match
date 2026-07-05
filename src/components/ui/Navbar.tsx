@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import {
   Heart,
@@ -32,32 +31,12 @@ const supportNavItems = [
   { href: "/contact", label: "お問い合わせ", icon: Mail },
 ];
 
-// Cookieからauth情報を取得
-function getAuthFromCookie(): { role: string; email: string; hasAiOption?: boolean } | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie.match(/(?:^|;\s*)auth=([^;]*)/);
-  if (!match) return null;
-  try {
-    return JSON.parse(decodeURIComponent(match[1]));
-  } catch {
-    return null;
-  }
-}
-
-export function Navbar() {
+export function Navbar({ role, hasAiOption = false }: { role?: string; hasAiOption?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [auth, setAuth] = useState<{ role: string; email: string; hasAiOption?: boolean } | null>(null);
-
-  useEffect(() => {
-    setAuth(getAuthFromCookie());
-  }, []);
-
-  const hasAiOption = auth?.hasAiOption === true;
-
   const handleSignOut = async () => {
-    document.cookie = "auth=; path=/; max-age=0";
+    await fetch('/api/auth/logout', { method: 'POST' });
     const { createClient } = await import('@/lib/supabase/client');
     const supabase = createClient();
     await supabase.auth.signOut();
