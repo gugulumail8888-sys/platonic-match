@@ -38,3 +38,12 @@ Thumbs.db
 # Supabase
 .supabase/
 .env.local.bak
+
+# 一時作業ファイル
+*.bak
+test-*.ts
+delete-test-*.ts
+rotate-*.ps1
+set-*-key.ps1
+deploy-*-to-vps.ps1
+fix-*.sh
