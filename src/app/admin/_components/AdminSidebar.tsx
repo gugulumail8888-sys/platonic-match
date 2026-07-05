@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, ArrowLeft, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare } from 'lucide-react';
+import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, ArrowLeft, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare, Video, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -17,6 +17,11 @@ const NAV_ITEMS = [
   { href: '/admin/surveys',  label: 'アンケート',     icon: ClipboardCheck, exact: false },
   { href: '/admin/feedback', label: 'ご意見・ご要望', icon: MessageSquare,  exact: false },
   { href: '/admin/settings', label: '設定',           icon: Settings,      exact: false },
+];
+
+const EXTERNAL_LINKS = [
+  { href: '/zoom-guide', label: 'Google Meetお見合い準備ガイド', icon: Video },
+  { href: '/help',       label: 'ヘルプ',                        icon: HelpCircle },
 ];
 
 export function AdminSidebar() {
@@ -70,6 +75,23 @@ export function AdminSidebar() {
               </Link>
             );
           })}
+
+          {/* 外部リンク */}
+          <div className="mt-3 pt-3 border-t border-zinc-800 space-y-0.5">
+            {EXTERNAL_LINKS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0 text-zinc-500" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         {/* トップページへ */}
@@ -114,6 +136,23 @@ export function AdminSidebar() {
               </Link>
             );
           })}
+
+          {/* 外部リンク */}
+          <div className="flex items-center gap-1 pl-2 ml-1 border-l border-zinc-800">
+            {EXTERNAL_LINKS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </header>
     </>
