@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Video, AlertTriangle, CheckCircle, Check } from 'lucide-react';
 
@@ -17,14 +17,59 @@ const RULES = [
   { id: 8, text: '違反が確認された場合はまず警告を行います。ただし、わいせつ・性的コンテンツ等の重大な違反、または悪質・繰り返しの違反があった場合は即時アカウント停止・以降の利用禁止となることに同意する' },
 ];
 
+interface MatchingJoinInfo {
+  zoom_url: string | null;
+  status: string;
+  meeting_ended_at: string | null;
+  nickname: string | null;
+}
+
+function MessageScreen({ message }: { message: string }) {
+  return (
+    <div className="p-6 md:p-8 max-w-2xl mx-auto text-center">
+      <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-4" />
+      <p className="text-zinc-300 text-sm">{message}</p>
+    </div>
+  );
+}
+
 export default function ZoomCheckClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const meetUrl = searchParams.get('url') ?? 'https://meet.google.com';
-  const partnerName = searchParams.get('name') ?? 'お相手';
+  const matchingId = searchParams.get('matchingId');
 
   const [checked, setChecked] = useState<number[]>([]);
   const [agreed, setAgreed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [matchingInfo, setMatchingInfo] = useState<MatchingJoinInfo | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
+
+  useEffect(() => {
+    if (!matchingId) {
+      setLoadError('お見合い情報が見つかりません');
+      setIsLoading(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/matching/join?matchingId=${matchingId}`);
+        if (!res.ok) {
+          setLoadError('このお見合いは見つかりません');
+          return;
+        }
+        const data = await res.json() as MatchingJoinInfo;
+        setMatchingInfo(data);
+      } catch (e) {
+        console.error('matching情報取得エラー:', e);
+        setLoadError('このお見合いは見つかりません');
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [matchingId]);
 
   const toggleCheck = (id: number) => {
     setChecked((prev) =>
@@ -34,10 +79,62 @@ export default function ZoomCheckClient() {
 
   const allChecked = checked.length === RULES.length;
 
-  const handleJoin = () => {
-    window.open(meetUrl, '_blank');
-    router.push('/matching');
+  const handleJoin = async () => {
+    if (!matchingId || !matchingInfo?.zoom_url) return;
+    setIsJoining(true);
+    setJoinError(null);
+    try {
+      const consentRes = await fetch('/api/zoom-check/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchingId }),
+      });
+      if (!consentRes.ok) {
+        setJoinError('同意記録の保存に失敗しました');
+        return;
+      }
+
+      const joinRes = await fetch('/api/matching/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchingId }),
+      });
+      if (!joinRes.ok) {
+        setJoinError('入室記録の保存に失敗しました');
+        return;
+      }
+
+      window.open(matchingInfo.zoom_url, '_blank');
+      router.push('/matching');
+    } catch (e) {
+      console.error('join処理エラー:', e);
+      setJoinError('処理に失敗しました。もう一度お試しください。');
+    } finally {
+      setIsJoining(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-zinc-400 text-sm">読み込み中...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !matchingInfo) {
+    return <MessageScreen message={loadError ?? 'このお見合いは見つかりません'} />;
+  }
+
+  if (matchingInfo.meeting_ended_at !== null) {
+    return <MessageScreen message="このお見合いは既に終了しています" />;
+  }
+
+  if (matchingInfo.status !== 'zoom_completed') {
+    return <MessageScreen message="まだお見合いの準備が整っていません" />;
+  }
+
+  const partnerName = matchingInfo.nickname ?? 'お相手';
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
@@ -116,7 +213,7 @@ export default function ZoomCheckClient() {
       {/* 最終同意 */}
       <button
         onClick={() => setAgreed(!agreed)}
-        className={`w-full flex items-start gap-3 p-4 rounded-2xl border transition-all mb-6 text-left ${
+        className={`w-full flex items-start gap-3 p-4 rounded-2xl border transition-all mb-3 text-left ${
           agreed
             ? 'bg-teal-950/50 border-teal-700'
             : 'bg-zinc-900 border-zinc-700 hover:border-zinc-600'
@@ -133,13 +230,21 @@ export default function ZoomCheckClient() {
         </span>
       </button>
 
+      <p className="text-xs text-zinc-500 mb-6">
+        ※ この同意内容は日時とともに記録され、同意書としてお相手との間で
+        問題が生じた際の確認資料となります。
+      </p>
+
       {/* ボタン */}
       <div className="space-y-3">
+        {joinError && (
+          <p className="text-red-400 text-sm text-center">{joinError}</p>
+        )}
         <button
-          disabled={!allChecked || !agreed}
+          disabled={!allChecked || !agreed || isJoining}
           onClick={handleJoin}
           className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-medium text-sm transition-colors ${
-            allChecked && agreed
+            allChecked && agreed && !isJoining
               ? 'bg-teal-600 hover:bg-teal-500 text-white'
               : 'bg-teal-600 text-white opacity-40 cursor-not-allowed'
           }`}

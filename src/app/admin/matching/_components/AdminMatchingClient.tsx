@@ -31,6 +31,8 @@ export interface MatchingRow {
   meeting_ended_at: string | null;
   user1_joined_at: string | null;
   user2_joined_at: string | null;
+  applicant_consented: boolean;
+  partner_consented: boolean;
 }
 
 // ── 定数 ──────────────────────────────────────────────────────
@@ -376,6 +378,9 @@ export default function AdminMatchingClient({
                     </span>
                   </th>
                 ))}
+                <th className="text-left px-4 py-3 text-xs text-zinc-400 font-med uppercase tracking-wider">
+                  同意状況
+                </th>
                 <th className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider">
                   操作
                 </th>
@@ -384,7 +389,7 @@ export default function AdminMatchingClient({
             <tbody className="divide-y divide-zinc-800">
               {sorted.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-zinc-500">
+                  <td colSpan={9} className="px-4 py-12 text-center text-zinc-500">
                     該当する申請が見つかりませんでした
                   </td>
                 </tr>
@@ -454,6 +459,40 @@ export default function AdminMatchingClient({
                               <span className="flex items-center gap-1 text-zinc-600">
                                 <Circle className="w-3 h-3" />
                                 未入室
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 同意状況 */}
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-zinc-500 w-10 flex-shrink-0">申請者</span>
+                            {row.applicant_consented ? (
+                              <span className="flex items-center gap-1 text-green-400">
+                                <CheckCircle2 className="w-3 h-3" />
+                                同意済み
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-zinc-600">
+                                <Circle className="w-3 h-3" />
+                                未同意
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-zinc-500 w-10 flex-shrink-0">お相手</span>
+                            {row.partner_consented ? (
+                              <span className="flex items-center gap-1 text-green-400">
+                                <CheckCircle2 className="w-3 h-3" />
+                                同意済み
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-zinc-600">
+                                <Circle className="w-3 h-3" />
+                                未同意
                               </span>
                             )}
                           </div>

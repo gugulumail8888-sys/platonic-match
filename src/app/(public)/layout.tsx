@@ -1,7 +1,10 @@
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { ChevronLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
+import { Navbar } from '@/components/ui/Navbar';
+import { AdminSidebar } from '@/app/admin/_components/AdminSidebar';
 
 export default async function PublicLayout({
   children,
@@ -11,34 +14,58 @@ export default async function PublicLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  const authCookie = cookies().get('auth')?.value;
+  let role: string | undefined;
+  let hasAiOption = false;
+  if (authCookie) {
+    try {
+      const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string; hasAiOption?: boolean };
+      role = auth.role;
+      hasAiOption = auth.hasAiOption === true;
+    } catch {
+      // 不正な cookie は無視
+    }
+  }
+
+  const isAdmin = role === 'admin';
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pt-9">
+      {isAdmin ? (
+        <AdminSidebar />
+      ) : role ? (
+        <Navbar role={role} hasAiOption={hasAiOption} />
+      ) : null}
       {/* ヘッダー */}
-      <header className="sticky top-9 z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-          {user ? (
-            <Link href="/dashboard" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
-              <ChevronLeft className="w-4 h-4" />
-              ダッシュボードに戻る
-            </Link>
-          ) : (
-            <Link href="/" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
-              <ChevronLeft className="w-4 h-4" />
-              トップページへ
-            </Link>
-          )}
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">a</span>
-              </div>
-              <span className="text-white font-bold text-lg">amista</span>
-            </Link>
+      {!role && (
+        <header className="sticky top-9 z-40 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
+          <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+            {user ? (
+              <Link href="/dashboard" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+                ダッシュボードに戻る
+              </Link>
+            ) : (
+              <Link href="/" className="flex items-center gap-1 text-sm text-zinc-400 hover:text-white transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+                トップページへ
+              </Link>
+            )}
+            <div className="flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-teal-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">a</span>
+                </div>
+                <span className="text-white font-bold text-lg">amista</span>
+              </Link>
+            </div>
           </div>
+        </header>
+      )}
+      <main className={isAdmin ? 'lg:ml-56' : role ? 'lg:ml-64' : ''}>
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          {children}
         </div>
-      </header>
-      <main className="max-w-2xl mx-auto px-4 py-8">
-        {children}
       </main>
       {/* フッター */}
       <footer className="border-t border-zinc-800 px-6 py-6 mt-8">

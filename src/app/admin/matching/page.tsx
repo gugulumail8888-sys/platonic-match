@@ -33,6 +33,21 @@ export default async function AdminMatchingPage() {
     ]),
   ];
 
+  const matchingIds = rows.map((r) => r.id);
+
+  const { data: consents } = await supabase
+    .from('zoom_check_consents')
+    .select('matching_id, user_id')
+    .in('matching_id', matchingIds);
+
+  const consentMap = new Map<string, Set<string>>();
+  for (const c of consents ?? []) {
+    if (!consentMap.has(c.matching_id)) {
+      consentMap.set(c.matching_id, new Set());
+    }
+    consentMap.get(c.matching_id)!.add(c.user_id);
+  }
+
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, nickname, birth_date, prefecture, occupation, avatar_url')
@@ -45,6 +60,8 @@ export default async function AdminMatchingPage() {
     status: r.status as AppStatus,
     applicant: profileMap.get(r.applicant_id) ?? null,
     partner: profileMap.get(r.partner_id) ?? null,
+    applicant_consented: consentMap.get(r.id)?.has(r.applicant_id) ?? false,
+    partner_consented: consentMap.get(r.id)?.has(r.partner_id) ?? false,
   }));
 
   return <AdminMatchingClient matchings={matchings} updateStatus={updateMatchingStatus} />;

@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { Heart, Mail } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SignupPage() {
   const handleGoogleSignup = async () => {
+    const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

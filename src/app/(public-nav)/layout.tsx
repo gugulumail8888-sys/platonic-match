@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { Navbar } from "@/components/ui/Navbar";
+import { AdminSidebar } from "@/app/admin/_components/AdminSidebar";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 
 export default function PublicNavLayout({
@@ -20,10 +21,20 @@ export default function PublicNavLayout({
     }
   }
 
+  const isAdmin = role === "admin";
+
   return (
     <div className="min-h-screen bg-zinc-950 pt-[var(--banner-offset)]">
-      <Navbar role={role} hasAiOption={hasAiOption} />
-      <main className={role ? "lg:ml-64 pb-24 lg:pb-0 min-h-screen" : "min-h-screen"}>
+      {isAdmin ? <AdminSidebar /> : <Navbar role={role} hasAiOption={hasAiOption} />}
+      <main
+        className={
+          isAdmin
+            ? "lg:ml-56 pb-24 lg:pb-0 min-h-screen"
+            : role
+            ? "lg:ml-64 pb-24 lg:pb-0 min-h-screen"
+            : "min-h-screen"
+        }
+      >
         {children}
       </main>
       <ScrollToTop />

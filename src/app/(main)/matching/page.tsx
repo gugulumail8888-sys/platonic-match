@@ -251,17 +251,8 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
 
         {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && (
           <button
-            onClick={async () => {
-              try {
-                await fetch('/api/matching/join', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ matchingId: matching.id }),
-                });
-              } catch (e) {
-                console.error('join記録エラー:', e);
-              }
-              window.open(matching.zoom_url!, '_blank');
+            onClick={() => {
+              router.push(`/zoom-check?matchingId=${matching.id}`);
             }}
             className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm w-full mb-2"
           >

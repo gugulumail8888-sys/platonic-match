@@ -843,7 +843,7 @@ const DOC_OPTIONS: { value: DocType; label: string; note?: string }[] = [
 function Step3({
   docType, setDocType, frontPreview, backPreview,
   onFrontFile, onBackFile, onFrontClear, onBackClear,
-  isSameFile,
+  isSameFile, agreedToTerms, onAgreedChange,
 }: {
   docType: DocType;
   setDocType: (v: DocType) => void;
@@ -854,6 +854,8 @@ function Step3({
   onFrontClear: () => void;
   onBackClear: () => void;
   isSameFile: boolean;
+  agreedToTerms: boolean;
+  onAgreedChange: (v: boolean) => void;
 }) {
   const isPassport = docType === 'passport';
   const frontLabel = isPassport ? '顔写真ページ' : '表面';
@@ -946,6 +948,32 @@ function Step3({
           ))}
         </ul>
       </div>
+
+      {/* 利用規約・プライバシーポリシー同意 */}
+      <label
+        className={`flex items-start gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition-colors ${
+          agreedToTerms
+            ? 'border-teal-500 bg-teal-950/40'
+            : 'border-zinc-700 bg-zinc-800'
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={agreedToTerms}
+          onChange={(e) => onAgreedChange(e.target.checked)}
+          className="mt-0.5 w-4 h-4 accent-teal-500 flex-shrink-0"
+        />
+        <span className="text-sm text-zinc-300">
+          <Link href="/terms" target="_blank" className="text-teal-400 hover:text-teal-300 underline">
+            利用規約
+          </Link>
+          {' と '}
+          <Link href="/privacy" target="_blank" className="text-teal-400 hover:text-teal-300 underline">
+            プライバシーポリシー
+          </Link>
+          {' '}に同意します
+        </span>
+      </label>
     </div>
   );
 }
@@ -1046,6 +1074,7 @@ export default function RegisterPage() {
   const [backPreview, setBackPreview]   = useState<string | null>(null);
   const [frontFile, setFrontFile]       = useState<File | null>(null);
   const [backFile, setBackFile]         = useState<File | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const isSameFile = !!(
     frontFile && backFile &&
@@ -1160,8 +1189,8 @@ export default function RegisterPage() {
     return Object.keys(e).length === 0;
   };
 
-  // Step3: 書類選択 + 両面アップロード済み + 同一画像でないことで有効
-  const step3Valid = !!docType && !!frontPreview && !!backPreview && !isSameFile;
+  // Step3: 書類選択 + 両面アップロード済み + 同一画像でないこと + 利用規約同意で有効
+  const step3Valid = !!docType && !!frontPreview && !!backPreview && !isSameFile && agreedToTerms;
 
   const handleNext = async () => {
     if (step === 1) {
@@ -1366,6 +1395,8 @@ export default function RegisterPage() {
               onFrontClear={handleClear('front')}
               onBackClear={handleClear('back')}
               isSameFile={isSameFile}
+              agreedToTerms={agreedToTerms}
+              onAgreedChange={setAgreedToTerms}
             />
           )}
           {step === 4 && <Step4 />}
