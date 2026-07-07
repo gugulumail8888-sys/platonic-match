@@ -51,6 +51,9 @@ export function ScrollHeader() {
           <Link href="/how-it-works" className="hover:text-primary-400 transition-colors">
             申請の流れ／AIおすすめプラン
           </Link>
+          <Link href="/zoom-guide" className="hover:text-primary-400 transition-colors">
+            Google Meetとは
+          </Link>
         </nav>
 
         {/* ボタン */}
