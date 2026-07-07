@@ -3,19 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Video, AlertTriangle, CheckCircle, Check } from 'lucide-react';
-
-const RULES = [
-  { id: 1, text: 'LINEや電話番号など、連絡先の交換をしない' },
-  { id: 2, text: 'SNSアカウント（Instagram・X・Facebookなど）の交換をしない' },
-  { id: 3, text: '住所・職場など個人が特定できる情報を伝えない' },
-  { id: 4, text: '画面の録画・スクリーンショット・通話内容の録音をしない' },
-  { id: 5, text: '金銭・物品の要求・贈与をしない' },
-  { id: 6, text: '交際を希望する場合は必ずサイト内の「交際希望」ボタンから申請する' },
-  { id: 7, text: 'わいせつ画像・性的コンテンツ・不適切な画像データの送受信や共有をしない' },
-  { id: 9, text: '暴言・誹謗中傷・ハラスメントに該当する言動をしない' },
-  { id: 10, text: 'お見合い時間（40分）を超えた延長の依頼はご遠慮ください' },
-  { id: 8, text: '違反が確認された場合はまず警告を行います。ただし、わいせつ・性的コンテンツ等の重大な違反、または悪質・繰り返しの違反があった場合は即時アカウント停止・以降の利用禁止となることに同意する' },
-];
+import { RULES } from '@/lib/zoom-check-rules';
 
 interface MatchingJoinInfo {
   zoom_url: string | null;

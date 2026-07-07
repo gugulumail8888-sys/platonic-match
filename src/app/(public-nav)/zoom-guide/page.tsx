@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Smartphone, Wifi, Mic, Camera, Video, CheckCircle, AlertCircle, Download } from 'lucide-react';
+import { RULES } from '@/lib/zoom-check-rules';
 
 const IPHONE_STEPS = [
   {
@@ -340,19 +341,24 @@ export default function ZoomGuidePage() {
         </div>
       </div>
 
-      {/* お見合い中の注意事項への導線 */}
-      <a
-        href="/zoom-check"
-        className="block bg-teal-950/30 border border-teal-800/50 rounded-2xl p-5 hover:bg-teal-950/50 transition-all"
-      >
-        <h2 className="text-teal-300 font-bold mb-2 flex items-center gap-2">
+      {/* お見合い中の注意事項（閲覧専用） */}
+      <div className="bg-teal-950/30 border border-teal-800/50 rounded-2xl p-5">
+        <h2 className="text-teal-300 font-bold mb-3 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
-          お見合い中の注意事項も確認しましょう
+          お見合い中の注意事項
         </h2>
-        <p className="text-sm text-teal-400/80">
-          連絡先の交換・個人情報の共有・画面の録画などの禁止事項について、事前にご確認ください。
+        <p className="text-sm text-teal-400/80 mb-3">
+          amistaでは会員の安全を守るため、Google Meet中の直接連絡先交換を禁止しています。以下の事項を必ずご確認ください。
         </p>
-      </a>
+        <ul className="space-y-2 text-sm text-teal-200">
+          {RULES.map((rule) => (
+            <li key={rule.id} className="flex items-start gap-2">
+              <span className="text-teal-500 mt-0.5">・</span>
+              <span>{rule.text}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* PDFダウンロード */}
       <button
