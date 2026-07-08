@@ -42,10 +42,13 @@ export async function POST(req: NextRequest) {
       const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
 
       let plan: string | null = null;
+      let currentPeriodEnd: string | null = null;
       if (subscriptionId) {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const priceId = subscription.items.data[0]?.price.id;
         plan = priceId ? PLAN_BY_PRICE_ID[priceId] ?? null : null;
+        const periodEndUnix = subscription.items.data[0]?.current_period_end;
+        currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null;
       }
 
       const supabase = createAdminClient();
@@ -57,6 +60,7 @@ export async function POST(req: NextRequest) {
           subscription_status: 'active',
           subscription_plan: plan,
           subscription_started_at: new Date().toISOString(),
+          current_period_end: currentPeriodEnd,
           is_premium: true,
         })
         .eq('id', userId);
@@ -179,6 +183,36 @@ export async function POST(req: NextRequest) {
 
       if (cancelError) {
         console.error('subscription cancel update error:', cancelError);
+      }
+    }
+  } else if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object as Stripe.Subscription;
+    let userId = subscription.metadata?.userId;
+
+    const supabase = createAdminClient();
+
+    if (!userId) {
+      const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
+      if (customerId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('stripe_customer_id', customerId)
+          .maybeSingle();
+        userId = profile?.id;
+      }
+    }
+
+    if (userId) {
+      const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ current_period_end: currentPeriodEnd })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('subscription updated current_period_end update error:', updateError);
       }
     }
   }

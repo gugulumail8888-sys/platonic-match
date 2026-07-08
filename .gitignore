@@ -47,3 +47,7 @@ rotate-*.ps1
 set-*-key.ps1
 deploy-*-to-vps.ps1
 fix-*.sh
+
+# バックアップファイル
+*.backup-*
+*.bak_*

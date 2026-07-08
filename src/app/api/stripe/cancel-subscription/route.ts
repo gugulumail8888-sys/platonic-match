@@ -22,11 +22,14 @@ export async function POST() {
     }
 
     // Stripeでサブスクリプションを期間末に解約
-    await stripe.subscriptions.update(profile.stripe_subscription_id, {
+    const updatedSubscription = await stripe.subscriptions.update(profile.stripe_subscription_id, {
       cancel_at_period_end: true,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      current_period_end: updatedSubscription.items.data[0]?.current_period_end ?? null,
+    });
   } catch (error) {
     console.error('cancel-subscription error:', error);
     return NextResponse.json({ error: '解約処理に失敗しました' }, { status: 500 });

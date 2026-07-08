@@ -441,6 +441,8 @@ function AIOptionSection() {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [cancelled, setCancelled] = useState(false);
+  const [remainingDays, setRemainingDays] = useState<number | null>(null);
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
 
   useEffect(() => {
     router.refresh();
@@ -449,16 +451,29 @@ function AIOptionSection() {
       if (!user) return;
       const { data } = await supabase
         .from('profiles')
-        .select('is_premium')
+        .select('is_premium, current_period_end')
         .eq('id', user.id)
         .single();
       setIsPremium(data?.is_premium ?? false);
+      setCurrentPeriodEnd(data?.current_period_end ?? null);
       setLoading(false);
     });
   }, []);
 
+  const periodEndDate = currentPeriodEnd ? new Date(currentPeriodEnd) : null;
+  const daysUntilRenewal = periodEndDate
+    ? Math.max(0, Math.ceil((periodEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+  const periodEndLabel = periodEndDate
+    ? `${periodEndDate.getFullYear()}年${periodEndDate.getMonth() + 1}月${periodEndDate.getDate()}日`
+    : null;
+
   const handleCancel = async () => {
-    if (!window.confirm('AIおすすめオプションを解約しますか？\n現在の請求期間終了後に解約されます。')) return;
+    const confirmMessage =
+      daysUntilRenewal !== null
+        ? `AIおすすめオプションを解約しますか？\nあと${daysUntilRenewal}日間ご利用いただけます。現在の請求期間終了後に解約されます。`
+        : 'AIおすすめオプションを解約しますか？\n現在の請求期間終了後に解約されます。';
+    if (!window.confirm(confirmMessage)) return;
     setCancelling(true);
     try {
       const res = await fetch('/api/stripe/cancel-subscription', { method: 'POST' });
@@ -466,6 +481,13 @@ function AIOptionSection() {
       if (!res.ok) {
         alert(data.error ?? '解約処理に失敗しました');
         return;
+      }
+      if (data.current_period_end) {
+        const endDate = new Date(data.current_period_end * 1000);
+        const today = new Date();
+        const diffMs = endDate.getTime() - today.getTime();
+        const days = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        setRemainingDays(days);
       }
       setCancelled(true);
     } catch {
@@ -491,9 +513,15 @@ function AIOptionSection() {
             </span>
             <span className="text-sm text-zinc-300">AIおすすめプラン（月額¥1,078）</span>
           </div>
+          {!cancelled && periodEndLabel && (
+            <div className="text-xs text-zinc-400">
+              次回更新日：{periodEndLabel}
+              {daysUntilRenewal !== null && `（あと${daysUntilRenewal}日で更新）`}
+            </div>
+          )}
           {cancelled ? (
             <div className="text-sm text-amber-400 bg-amber-950/30 border border-amber-800 rounded-xl px-4 py-3">
-              解約申請を受け付けました。現在の請求期間終了後に解約されます。
+              解約申請を受け付けました。{remainingDays !== null && `あと${remainingDays}日間`}ご利用いただけます（現在の請求期間終了後に解約されます）。
             </div>
           ) : (
             <button
