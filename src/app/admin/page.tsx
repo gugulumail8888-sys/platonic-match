@@ -1,76 +1,65 @@
-'use client';
+export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { Users, UserPlus, HeartHandshake, TrendingUp, MapPin } from 'lucide-react';
-import {
-  ADMIN_APPLICATIONS, ADMIN_MEMBERS,
-  APP_STATUS_CONFIG, MEMBER_STATUS_CONFIG,
-} from './_data';
+import { createAdminClient } from '@/lib/supabase/server';
 
 // ============================================================
-// 統計データ（ダミー）
+// ステータスラベル設定（/admin/matching, /admin/members と同じ値）
 // ============================================================
 
-const STATS = [
-  {
-    label: '総会員数',
-    value: '128名',
-    sub: '男性 62 / 女性 66',
-    icon: Users,
-    border: 'border-teal-800',
-    iconBg: 'bg-teal-900/40',
-    iconColor: 'text-teal-400',
-  },
-  {
-    label: '今月の新規登録',
-    value: '23名',
-    sub: '前月比 +3名',
-    icon: UserPlus,
-    border: 'border-blue-800',
-    iconBg: 'bg-blue-900/40',
-    iconColor: 'text-blue-400',
-  },
-  {
-    label: 'お見合い申請数',
-    value: '47件',
-    sub: '今月の累計',
-    icon: HeartHandshake,
-    border: 'border-pink-800',
-    iconBg: 'bg-pink-900/40',
-    iconColor: 'text-pink-400',
-  },
-  {
-    label: '今月の売上',
-    value: '¥141,000',
-    sub: '47件 × ¥3,000',
-    icon: TrendingUp,
-    border: 'border-green-800',
-    iconBg: 'bg-green-900/40',
-    iconColor: 'text-green-400',
-  },
-];
+type AppStatus = 'pending' | 'scheduling' | 'zoom_completed' | 'completed' | 'cancelled' | 'rejected' | 'ended';
 
-// 直近7日間（ダミー）
-const DAILY_DATA = [
-  { date: '5/21（水）', count: 6 },
-  { date: '5/22（木）', count: 8 },
-  { date: '5/23（金）', count: 4 },
-  { date: '5/24（土）', count: 7 },
-  { date: '5/25（日）', count: 5 },
-  { date: '5/26（月）', count: 9 },
-  { date: '5/27（火）', count: 3 },
-];
+const APP_STATUS_CONFIG: Record<AppStatus, { label: string; className: string; barColor: string }> = {
+  pending:        { label: '申請中',          className: 'bg-amber-900/50 text-amber-300 border border-amber-800', barColor: 'bg-amber-500' },
+  scheduling:     { label: '日程調整中',      className: 'bg-blue-900/50  text-blue-300  border border-blue-800',  barColor: 'bg-blue-500'  },
+  zoom_completed: { label: 'Google Meet完了', className: 'bg-blue-900    text-blue-300',                            barColor: 'bg-sky-500'   },
+  completed:      { label: '完了',            className: 'bg-green-900/50 text-green-300 border border-green-800', barColor: 'bg-green-500' },
+  cancelled:      { label: 'キャンセル',      className: 'bg-red-900/50 text-red-300 border border-red-800',       barColor: 'bg-red-500'   },
+  rejected:       { label: '拒否',            className: 'bg-zinc-700 text-zinc-400 border border-zinc-600',       barColor: 'bg-zinc-500'  },
+  ended:          { label: '終了済み',        className: 'bg-zinc-800 text-zinc-400 border border-zinc-700',       barColor: 'bg-zinc-600'  },
+};
 
-const STATUS_BREAKDOWN = [
-  { status: 'pending'    as const, count: 18 },
-  { status: 'scheduling' as const, count: 15 },
-  { status: 'completed'  as const, count: 14 },
-];
+const STATUS_ORDER: AppStatus[] = ['pending', 'scheduling', 'zoom_completed', 'completed', 'cancelled', 'rejected', 'ended'];
 
-// 最新5件
-const RECENT_APPS = [...ADMIN_APPLICATIONS]
-  .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt))
-  .slice(0, 5);
+type MemberStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
+
+const MEMBER_STATUS_CONFIG: Record<MemberStatus, { label: string; className: string }> = {
+  pending:   { label: '審査中',   className: 'bg-amber-900/50 text-amber-300 border border-amber-800' },
+  approved:  { label: '承認済み', className: 'bg-green-900/50 text-green-300 border border-green-800' },
+  rejected:  { label: '拒否',     className: 'bg-zinc-700 text-zinc-400 border border-zinc-600' },
+  withdrawn: { label: '退会済み', className: 'bg-zinc-800 text-zinc-500 border border-zinc-700' },
+};
+
+// ============================================================
+// 日時ヘルパー（サーバーのタイムゾーンに依存せず日本時間で計算する）
+// ============================================================
+
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const WEEKDAYS_JA = ['日', '月', '火', '水', '木', '金', '土'];
+
+function jstShift(d: Date): Date {
+  return new Date(d.getTime() + JST_OFFSET_MS);
+}
+
+// 指定した日本時間の年月日「0時0分」に対応するDate（UTC基準）を返す
+function jstMidnightUtc(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month, day, -9, 0, 0));
+}
+
+function calcAge(birthDate: string | null): number {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('ja-JP');
+}
 
 // ============================================================
 // Sub-components
@@ -88,11 +77,150 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
+function Avatar({ nickname, avatarUrl, className }: { nickname: string; avatarUrl: string | null; className: string }) {
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt={nickname} className={`${className} rounded-full object-cover flex-shrink-0`} />;
+  }
+  return (
+    <div className={`${className} rounded-full bg-teal-700 flex items-center justify-center text-white font-bold flex-shrink-0`}>
+      {nickname.charAt(0)}
+    </div>
+  );
+}
+
 // ============================================================
 // Page
 // ============================================================
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+  const supabase = createAdminClient();
+
+  // ── 日本時間での「今月」「先月」「直近7日間」の境界を算出 ──
+  const nowShifted = jstShift(new Date());
+  const todayY = nowShifted.getUTCFullYear();
+  const todayM = nowShifted.getUTCMonth();
+  const todayD = nowShifted.getUTCDate();
+
+  const monthStart = jstMidnightUtc(todayY, todayM, 1);
+  const nextMonthStart = jstMidnightUtc(todayY, todayM + 1, 1);
+  const prevMonthStart = jstMidnightUtc(todayY, todayM - 1, 1);
+
+  const monthStartIso = monthStart.toISOString();
+  const nextMonthStartIso = nextMonthStart.toISOString();
+  const prevMonthStartIso = prevMonthStart.toISOString();
+
+  const sevenDaysAgoStart = jstMidnightUtc(todayY, todayM, todayD - 6);
+
+  // ── データ取得（可能な範囲で並列化） ──
+  const [
+    { count: totalMembers },
+    { count: maleMembers },
+    { count: femaleMembers },
+    { count: newMembersThisMonth },
+    { count: newMembersLastMonth },
+    { data: matchingsThisMonth },
+    { data: refundsThisMonth },
+    { data: dailyMatchings },
+    { data: recentAppsRaw },
+    { data: recentMembers },
+  ] = await Promise.all([
+    supabase.from('profiles').select('id', { count: 'exact', head: true }),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'male'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'female'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true })
+      .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
+    supabase.from('profiles').select('id', { count: 'exact', head: true })
+      .gte('created_at', prevMonthStartIso).lt('created_at', monthStartIso),
+    supabase.from('matchings').select('id, status, created_at, amount, payment_intent_id')
+      .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
+    supabase.from('refunds').select('amount')
+      .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
+    supabase.from('matchings').select('created_at')
+      .gte('created_at', sevenDaysAgoStart.toISOString()),
+    supabase.from('matchings')
+      .select('id, status, created_at, amount, applicant_id, partner_id')
+      .order('created_at', { ascending: false })
+      .limit(5),
+    supabase.from('profiles')
+      .select('id, nickname, gender, birth_date, prefecture, status, avatar_url, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ]);
+
+  // ── 最新申請の申請者・お相手プロフィールをまとめて取得 ──
+  const recentApps = recentAppsRaw ?? [];
+  const recentAppProfileIds = [
+    ...new Set(recentApps.flatMap((a) => [a.applicant_id, a.partner_id])),
+  ];
+  const { data: recentAppProfiles } = recentAppProfileIds.length > 0
+    ? await supabase.from('profiles').select('id, nickname, avatar_url').in('id', recentAppProfileIds)
+    : { data: [] as { id: string; nickname: string; avatar_url: string | null }[] };
+  const recentAppProfileMap = new Map((recentAppProfiles ?? []).map((p) => [p.id, p]));
+
+  // ── 統計カード用の値を算出 ──
+  const newMemberDiff = (newMembersThisMonth ?? 0) - (newMembersLastMonth ?? 0);
+  const newMemberDiffLabel = `前月比 ${newMemberDiff > 0 ? '+' : ''}${newMemberDiff}名`;
+
+  const matchingsCountThisMonth = matchingsThisMonth?.length ?? 0;
+
+  const grossRevenue = (matchingsThisMonth ?? [])
+    .filter((m) => m.payment_intent_id !== null)
+    .reduce((sum, m) => sum + (m.amount ?? 0), 0);
+  const refundTotal = (refundsThisMonth ?? []).reduce((sum, r) => sum + (r.amount ?? 0), 0);
+  const refundCount = (refundsThisMonth ?? []).length;
+  const netRevenue = grossRevenue - refundTotal;
+
+  const STATS = [
+    {
+      label: '総会員数',
+      value: `${totalMembers ?? 0}名`,
+      sub: `男性 ${maleMembers ?? 0} / 女性 ${femaleMembers ?? 0}`,
+      icon: Users,
+      border: 'border-teal-800',
+      iconBg: 'bg-teal-900/40',
+      iconColor: 'text-teal-400',
+    },
+    {
+      label: '今月の新規登録',
+      value: `${newMembersThisMonth ?? 0}名`,
+      sub: newMemberDiffLabel,
+      icon: UserPlus,
+      border: 'border-blue-800',
+      iconBg: 'bg-blue-900/40',
+      iconColor: 'text-blue-400',
+    },
+    {
+      label: 'お見合い申請数',
+      value: `${matchingsCountThisMonth}件`,
+      sub: '今月の累計',
+      icon: HeartHandshake,
+      border: 'border-pink-800',
+      iconBg: 'bg-pink-900/40',
+      iconColor: 'text-pink-400',
+    },
+  ];
+
+  // ── 直近7日間の申請数（日本時間基準） ──
+  const dailyBuckets: { date: string; count: number }[] = [];
+  for (let offset = 6; offset >= 0; offset--) {
+    const dayStart = jstMidnightUtc(todayY, todayM, todayD - offset);
+    const dayEnd = jstMidnightUtc(todayY, todayM, todayD - offset + 1);
+    const count = (dailyMatchings ?? []).filter((m) => {
+      const t = new Date(m.created_at).getTime();
+      return t >= dayStart.getTime() && t < dayEnd.getTime();
+    }).length;
+    const shiftedDay = jstShift(dayStart);
+    const label = `${shiftedDay.getUTCMonth() + 1}/${shiftedDay.getUTCDate()}（${WEEKDAYS_JA[shiftedDay.getUTCDay()]}）`;
+    dailyBuckets.push({ date: label, count });
+  }
+  const dailyMax = Math.max(1, ...dailyBuckets.map((d) => d.count));
+
+  // ── ステータス別内訳（今月分） ──
+  const statusBreakdown = STATUS_ORDER.map((status) => ({
+    status,
+    count: (matchingsThisMonth ?? []).filter((m) => m.status === status).length,
+  }));
+
   return (
     <div className="p-6 md:p-8 space-y-6">
       {/* ヘッダー */}
@@ -121,6 +249,20 @@ export default function AdminDashboardPage() {
             </div>
           );
         })}
+
+        {/* 今月の売上（純売上をメインに、総売上・返金額を併記） */}
+        <div className="bg-zinc-900 rounded-2xl border border-green-800 p-5 flex items-start gap-4">
+          <div className="bg-green-900/40 rounded-xl p-2.5 flex-shrink-0">
+            <TrendingUp className="w-5 h-5 text-green-400" />
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400 mb-1">今月の売上（純額）</p>
+            <p className="text-2xl font-bold text-white leading-tight">¥{netRevenue.toLocaleString()}</p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              総売上 ¥{grossRevenue.toLocaleString()} − 返金 ¥{refundTotal.toLocaleString()}（{refundCount}件）
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* ===== 中段：日次・ステータス内訳 ===== */}
@@ -137,7 +279,7 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {DAILY_DATA.map((d) => (
+              {dailyBuckets.map((d) => (
                 <tr key={d.date} className="hover:bg-zinc-800/50 transition-colors">
                   <td className="py-2.5 text-zinc-300">{d.date}</td>
                   <td className="py-2.5 text-right font-mono font-medium text-white">
@@ -147,7 +289,7 @@ export default function AdminDashboardPage() {
                     <div className="bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="h-full bg-teal-600 rounded-full"
-                        style={{ width: `${(d.count / 9) * 100}%` }}
+                        style={{ width: `${(d.count / dailyMax) * 100}%` }}
                       />
                     </div>
                   </td>
@@ -160,9 +302,9 @@ export default function AdminDashboardPage() {
         {/* ステータス別内訳 */}
         <SectionCard title="ステータス別申請数">
           <div className="space-y-3">
-            {STATUS_BREAKDOWN.map(({ status, count }) => {
+            {statusBreakdown.map(({ status, count }) => {
               const cfg = APP_STATUS_CONFIG[status];
-              const pct = Math.round((count / 47) * 100);
+              const pct = matchingsCountThisMonth > 0 ? Math.round((count / matchingsCountThisMonth) * 100) : 0;
               return (
                 <div key={status}>
                   <div className="flex items-center justify-between mb-1.5">
@@ -176,17 +318,14 @@ export default function AdminDashboardPage() {
                   </div>
                   <div className="bg-zinc-800 rounded-full h-2 overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${
-                        status === 'pending' ? 'bg-amber-500' :
-                        status === 'scheduling' ? 'bg-blue-500' : 'bg-green-500'
-                      }`}
+                      className={`h-full rounded-full ${cfg.barColor}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
                 </div>
               );
             })}
-            <p className="text-xs text-zinc-500 pt-1 text-right">合計 47件</p>
+            <p className="text-xs text-zinc-500 pt-1 text-right">合計 {matchingsCountThisMonth}件</p>
           </div>
         </SectionCard>
       </div>
@@ -205,45 +344,50 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {RECENT_APPS.map((app) => {
-                const cfg = APP_STATUS_CONFIG[app.status];
+              {recentApps.map((app) => {
+                const cfg = APP_STATUS_CONFIG[app.status as AppStatus];
+                const applicant = recentAppProfileMap.get(app.applicant_id);
+                const partner = recentAppProfileMap.get(app.partner_id);
                 return (
                   <tr key={app.id} className="hover:bg-zinc-800/50 transition-colors">
-                    <td className="px-3 py-3 font-mono text-zinc-300 text-xs">{app.id}</td>
+                    <td className="px-3 py-3 font-mono text-zinc-300 text-xs">{app.id.slice(0, 8)}</td>
                     <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                          style={{ background: app.applicant.avatarColor }}
-                        >
-                          {app.applicant.initials}
+                      {applicant ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar nickname={applicant.nickname} avatarUrl={applicant.avatar_url} className="w-6 h-6 text-[10px]" />
+                          <span className="text-zinc-200">{applicant.nickname}</span>
                         </div>
-                        <span className="text-zinc-200">{app.applicant.nickname}</span>
-                      </div>
+                      ) : (
+                        <span className="text-zinc-600 text-xs">不明</span>
+                      )}
                     </td>
                     <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                          style={{ background: app.target.avatarColor }}
-                        >
-                          {app.target.initials}
+                      {partner ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar nickname={partner.nickname} avatarUrl={partner.avatar_url} className="w-6 h-6 text-[10px]" />
+                          <span className="text-zinc-200">{partner.nickname}</span>
                         </div>
-                        <span className="text-zinc-200">{app.target.nickname}</span>
-                      </div>
+                      ) : (
+                        <span className="text-zinc-600 text-xs">不明</span>
+                      )}
                     </td>
-                    <td className="px-3 py-3 text-zinc-400 text-xs">{app.appliedAt}</td>
+                    <td className="px-3 py-3 text-zinc-400 text-xs">{formatDate(app.created_at)}</td>
                     <td className="px-3 py-3">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.className}`}>
-                        {cfg.label}
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg?.className ?? 'bg-zinc-700 text-zinc-300'}`}>
+                        {cfg?.label ?? app.status}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-zinc-300 text-xs">
-                      ¥{app.amount.toLocaleString()}
+                      ¥{(app.amount ?? 0).toLocaleString()}
                     </td>
                   </tr>
                 );
               })}
+              {recentApps.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-3 py-6 text-center text-zinc-500 text-xs">申請はまだありません</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -271,50 +415,45 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {[...ADMIN_MEMBERS]
-                .sort((a, b) => b.registeredAt.localeCompare(a.registeredAt))
-                .slice(0, 5)
-                .map((m) => {
-                  const cfg = MEMBER_STATUS_CONFIG[m.memberStatus];
-                  return (
-                    <tr key={m.id} className="hover:bg-zinc-800/50 transition-colors">
-                      <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                            style={{ background: m.avatarColor }}
-                          >
-                            {m.initials}
-                          </div>
-                          <div>
-                            <Link
-                              href={`/admin/members/${m.id}`}
-                              className="text-zinc-200 hover:text-teal-400 transition-colors"
-                            >
-                              {m.nickname}
-                            </Link>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-3 text-zinc-400 text-xs">
-                        {m.gender === 'male' ? '男性' : '女性'}
-                      </td>
-                      <td className="px-3 py-3 text-zinc-400 text-xs">{m.age}歳</td>
-                      <td className="px-3 py-3 text-zinc-400 text-xs">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-teal-500" />
-                          {m.prefecture}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-zinc-400 text-xs">{m.registeredAt}</td>
-                      <td className="px-3 py-3">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg.className}`}>
-                          {cfg.label}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+              {(recentMembers ?? []).map((m) => {
+                const cfg = MEMBER_STATUS_CONFIG[m.status as MemberStatus];
+                return (
+                  <tr key={m.id} className="hover:bg-zinc-800/50 transition-colors">
+                    <td className="px-3 py-3">
+                      <div className="flex items-center gap-2">
+                        <Avatar nickname={m.nickname} avatarUrl={m.avatar_url} className="w-7 h-7 text-xs" />
+                        <Link
+                          href={`/admin/members/${m.id}`}
+                          className="text-zinc-200 hover:text-teal-400 transition-colors"
+                        >
+                          {m.nickname}
+                        </Link>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-zinc-400 text-xs">
+                      {m.gender === 'male' ? '男性' : m.gender === 'female' ? '女性' : 'その他'}
+                    </td>
+                    <td className="px-3 py-3 text-zinc-400 text-xs">{calcAge(m.birth_date)}歳</td>
+                    <td className="px-3 py-3 text-zinc-400 text-xs">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-teal-500" />
+                        {m.prefecture}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-zinc-400 text-xs">{formatDate(m.created_at)}</td>
+                    <td className="px-3 py-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cfg?.className ?? 'bg-zinc-700 text-zinc-300'}`}>
+                        {cfg?.label ?? m.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {(recentMembers ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-3 py-6 text-center text-zinc-500 text-xs">会員はまだいません</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
