@@ -62,6 +62,7 @@
 - 47. profiles.statusの二重体系・恒久対応:/admin/verifyの'verified'書き込みを廃止し'approved'に統一するか、'verified'を正式な状態として/api/members等の許可リストに追加するか方針を決定する(2026/7/9発見。応急対応として該当会員のstatusを個別UPDATEする対応を複数回実施済みだが、再発防止のための根本対応は未着手)
 - 48. /api/members・/api/members/[id]・src/app/(main)/dashboard/page.tsxの新着会員クエリで、status IN ('active', 'approved')条件から実在しない'active'を除去する(2026/7/9発見、未対応)
 - 49. 本番のCHECK制約とマイグレーション履歴を突き合わせ、正式なマイグレーションファイルとして追いつかせる(2026/7/9発見、未対応)
+- 50. src/app/api/stripe/webhook/route.ts(207,54)で`npx tsc --noEmit`がエラーを出している(Property 'current_period_end' does not exist on type 'Subscription')。Stripe型定義とコードの不整合を修正する(2026/7/10発見。管理画面ダッシュボードのデータ接続修正作業中に検出。動作には現時点で影響していないが型チェックが通らない状態)
 
 ---
 
@@ -81,3 +82,4 @@
 
 - 2026-07-10: このファイルを新規作成し、残タスク一覧を唯一の正として一本化(Cowork/Claude作成)。#47〜49としてprofiles.status恒久対応の3項目を新規採番。
 - 2026-07-10: #44(管理画面ダッシュボードのモックデータ)を完了に更新(コミットc75b5fc)。
+- 2026-07-10: #50としてStripe webhookのcurrent_period_end型エラーを新規採番。
