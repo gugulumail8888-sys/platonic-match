@@ -192,3 +192,27 @@
 
 ### UIバグ
 基本設定の「運営者名」「連絡先メールアドレス」入力欄は、保存ボタン押下時の送信データ(handleSaveBasicのペイロード)に含まれておらず、入力・保存しても何も保存されない(表示上は保存できたように見えてしまう)。
+
+## profiles.statusの二重体系の不整合(2026/7/9発見・応急対応済み)
+
+### 発見の経緯
+管理画面ダッシュボードの「最新登録会員」欄で、1名だけステータスバッジが日本語ラベルではなく英語のまま「verified」と表示されていたことから発覚。
+
+### 原因
+- /admin/verify(本人確認書類の手動チェック画面)は、profiles.statusに 'pending'|'approved'|'rejected'|'verified' の4値体系を書き込む(src/app/api/admin/verify/[id]/route.ts)
+- /admin/members・006_withdrawal.sqlのCHECK制約は 'pending'|'approved'|'rejected'|'withdrawn' の4値体系を前提としている
+- 本番のCHECK制約はマイグレーション履歴と異なり'verified'を許容する状態になっている(本番実スキーマとマイグレーション履歴の不一致の具体例)
+
+### 実害の確認結果
+- /api/members・/api/members/[id]は status IN ('active', 'approved') でのみ会員を表示する実装だが、'active'という値はprofiles.statusに一度も存在しない無効値のため、実質 status='approved' の会員しか表示されない
+- status='verified' だった会員1名は、会員一覧・お相手探し画面に一切表示されず、matchingsテーブルにも申請履歴が皆無(見えない会員状態)だったことを確認
+- マッチング申請API自体(matching/apply、likes)にはprofiles.statusのチェックはなく、/membersの表示条件を経由できないことが実質的なブロック要因だった
+
+### 応急対応(2026/7/9実施)
+- 該当1名(id: 6b87a6cc-35c9-4ff5-b7c8-a232d978fdfe)のstatusを'verified'から'approved'へ直接UPDATE(対象IDを1件のみに限定して実施、前後の状態を確認済み)
+- 実施後の件数:pending 2件、approved 8件、rejected 0件、withdrawn 0件、verified 0件(total 10件)
+
+### 恒久対応(未着手、次回以降)
+- /admin/verifyの'verified'書き込みを廃止し'approved'に統一するか、'verified'を正式な状態として/api/members等の許可リストに追加するか方針を決定する必要がある
+- /api/members・/api/members/[id]のstatus IN ('active', 'approved')条件から、存在しない'active'を除去する(src/app/(main)/dashboard/page.tsxの新着会員クエリにも同種の問題が既にあることを2026/7/9に別途確認済み)
+- 本番のCHECK制約とマイグレーション履歴を突き合わせ、正式なマイグレーションファイルとして追いつかせる
