@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, ArrowLeft, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare, Video, HelpCircle } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, LogOut, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare, Video, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -26,6 +26,15 @@ const EXTERNAL_LINKS = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const handleSignOut = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <>
@@ -94,15 +103,15 @@ export function AdminSidebar() {
           </div>
         </nav>
 
-        {/* トップページへ */}
+        {/* ログアウト */}
         <div className="p-3 border-t border-zinc-800">
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-white transition-all text-sm"
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:bg-red-950 hover:text-red-400 transition-all text-sm w-full"
           >
-            <ArrowLeft className="w-4 h-4 flex-shrink-0" />
-            トップページへ
-          </Link>
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            ログアウト
+          </button>
         </div>
       </aside>
 

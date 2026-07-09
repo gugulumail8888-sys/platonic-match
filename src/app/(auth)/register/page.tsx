@@ -1201,6 +1201,27 @@ export default function RegisterPage() {
         }, 50);
         return;
       }
+
+      try {
+        const res = await fetch('/api/auth/check-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: data.email }),
+        });
+        const result = await res.json();
+        if (result.exists) {
+          setErrors((prev) => ({ ...prev, email: 'このメールアドレスはすでに登録されています' }));
+          setTimeout(() => {
+            const el = document.querySelector('.border-red-500');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 50);
+          return;
+        }
+      } catch (checkError) {
+        console.error('email check error:', checkError);
+        // 確認処理自体が失敗した場合は、重複チェックをスキップして先に進める
+        // (最終的にはStep3のsignUp()側でも重複はエラーとして検出されるため)
+      }
     } else if (step === 2) {
       if (!validateStep2()) {
         setTimeout(() => {

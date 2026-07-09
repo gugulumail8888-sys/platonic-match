@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 export function ScrollHeader() {
   const [scrolled, setScrolled] = useState(false);
+  const [showMeetInfo, setShowMeetInfo] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +19,7 @@ export function ScrollHeader() {
   }, []);
 
   return (
+    <>
     <header
       className={cn(
         "fixed top-[var(--banner-offset)] left-0 right-0 z-50 transition-all duration-500",
@@ -51,9 +53,12 @@ export function ScrollHeader() {
           <Link href="/how-it-works" className="hover:text-primary-400 transition-colors">
             申請の流れ／AIおすすめプラン
           </Link>
-          <Link href="/zoom-guide" className="hover:text-primary-400 transition-colors">
+          <button
+            onClick={() => setShowMeetInfo(true)}
+            className="hover:text-primary-400 transition-colors"
+          >
             Google Meetとは
-          </Link>
+          </button>
         </nav>
 
         {/* ボタン */}
@@ -71,5 +76,29 @@ export function ScrollHeader() {
         </div>
       </div>
     </header>
+
+    {showMeetInfo && (
+      <div
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4"
+        onClick={() => setShowMeetInfo(false)}
+      >
+        <div
+          className="bg-zinc-900 border border-zinc-700 rounded-2xl p-6 max-w-md w-full text-white"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-lg font-bold mb-3">Google Meetとは</h3>
+          <p className="text-sm text-zinc-300 leading-relaxed mb-4">
+            amistaのお見合いは、Googleが提供するビデオ通話サービス「Google Meet」で行います。
+            特別なアプリのインストールは不要で、ブラウザからそのまま参加できます。
+          </p>
+          <div className="flex items-center justify-end">
+            <Button size="sm" variant="ghost" onClick={() => setShowMeetInfo(false)}>
+              閉じる
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
