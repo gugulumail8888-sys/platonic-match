@@ -164,3 +164,31 @@
 - フォームには「特定商取引法に基づく表記ページのURL」と「決済画面へのアクセス可否」の確認項目があり、本番サイトが503メンテナンス中はアクセス不可のため審査で不利になる可能性がある
 - 判断:503解除(タスク#21)後に申請を再開する。今回は申請フォームを送信せずキャンセルした
 - 次回申請時に必要な準備:特定商取引法に基づく表記ページのURLを確認・用意しておくこと
+
+## 管理画面ダッシュボード・設定画面の未接続問題(2026/7/9発見)
+
+### ダッシュボード(/admin、src/app/admin/page.tsx)が完全にモックデータ
+以下8項目すべてがSupabaseと接続されておらず、ハードコードされたダミーデータ(コード内コメントで「統計データ(ダミー)」「TODO: Supabase連携後にDBから取得するよう変更する」と明記):
+- 総会員数(128名、男性62/女性66)... page.tsx:15-23
+- 今月の新規登録(23名、前月比+3名)... page.tsx:24-32
+- お見合い申請数(47件)... page.tsx:33-41
+- 今月の売上(¥141,000)... page.tsx:42-50
+- 直近7日間の申請数グラフ... page.tsx:54-62(日付も2026/5/21〜27で固定、現在日時と無関係)
+- ステータス別申請数(18/15/14)... page.tsx:64-68
+- 最新申請(直近5件、APP-293形式ID)... src/app/admin/_data.ts:220〜(ADMIN_APPLICATIONS配列)
+- 最新登録会員(直近5名)... src/app/admin/_data.ts:79〜(ADMIN_MEMBERS配列)
+
+発見の経緯:ダッシュボードの「お見合い申請数47件」が、実際の申請管理画面(/admin/matching、全11件)と食い違っていたことから発覚。
+
+### 設定画面(/admin/settings)の「死んだ設定」項目
+保存(DBへのupsert)はされるが、他のどの画面・処理からも参照されていない項目:
+- site_name(サイト名)
+- 料金設定:light_plan_price、matching_fee_normal、matching_fee_premium(実際の価格はStripeのPrice ID/環境変数側で別管理)
+- registration_open(新規登録受付ON/OFF。説明文は「無効にすると新規会員登録を停止します」とあるが、signup/registerフローはこの値を一切参照していない)
+- 通知設定:admin_notify_email、notify_new_member、notify_matching_apply(実際のメール送信はprocess.env.ADMIN_EMAILという別の仕組みを使用しており、この設定値は一切反映されない。運用担当者が誤解しやすい要注意箇所)
+- マッチング設定:zoom_expiry_days(実際はgoogle-meet.tsのMEETING_DURATION_MS固定40分)、matching_auto_cancel_days(実際は022_auto_reject_cron.sqlに7日固定でハードコード)、dating_wish_expiry_days
+
+正しく機能している設定項目(参考):maintenance_mode、maintenance_notice_enabled、maintenance_scheduled_start/end、ai_option_enabled、omiai_open、review_mode、daily_like_limit、campaign_banner_enabled
+
+### UIバグ
+基本設定の「運営者名」「連絡先メールアドレス」入力欄は、保存ボタン押下時の送信データ(handleSaveBasicのペイロード)に含まれておらず、入力・保存しても何も保存されない(表示上は保存できたように見えてしまう)。
