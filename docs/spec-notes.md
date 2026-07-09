@@ -151,3 +151,9 @@
 - src/app/api/cron/meeting-timeout/route.ts のmeeting_timeout_cancel処理に、強制キャンセル直前のチェックとしてcheckRealMeetingAttendance()を組み込み。実際の参加人数が2名以上確認できた場合は、ボタンクリック記録が欠けていても強制キャンセルをスキップする
 - 実地テストで、実際に外部アカウントで入室した記録(earliestStartTime/latestEndTime)を正しく取得できることを確認済み(participantCount: 2)
 - なお、会議室の設定を書き込みで変更する setSpaceAccessOpen()(accessTypeをOPENにする関数)も実装したが、Calendar API経由で自動生成されたMeet Spaceに対しては「Permission denied on resource Space」という権限エラーが発生し機能しなかった。待機室問題は上記の組織全体設定変更で解決したため、この関数の呼び出しはcreateGoogleMeetUrl()から削除した(関数定義自体は将来のために残置)
+
+## 本番デプロイ完了(2026/7/9)
+- コミット 31f8894 を本番VPS(162.43.75.222)へデプロイ完了
+- 内容:ホーム/マイページのタブ再編成、Google Meet実入室検知機能、待機室バグの調査記録
+- docker compose logs で amista_app が正常起動(Next.js 14.2.29 Ready)していることを確認済み
+- 本番は現在503メンテナンス中のため、ブラウザでの実地確認は公開開始後に別途実施予定
