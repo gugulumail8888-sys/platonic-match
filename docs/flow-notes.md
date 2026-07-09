@@ -15,3 +15,17 @@
 マイページ「解約する」→ 残り日数付き確認ダイアログ → cancel-subscription API
 → Stripe cancel_at_period_end設定 → customer.subscription.updated Webhook
 → profiles更新 → 退会画面(/withdraw)での残り日数確認
+
+## ホーム画面表示フロー(2026/7/9更新)
+1. ログイン後ホーム画面へ遷移
+2. サーバー側でSupabaseから新着会員データ(異性・active/approved・ブロック除外・created_at降順・最大6件)を取得
+3. クライアント側タブコンポーネント(DashboardTabs)が新着会員データをpropsで受け取り、初期表示は「新着会員」タブ
+4. 「いいね送信」「いいね受信」タブ選択時、それぞれ /api/likes、/api/likes/received をクライアント側でfetchして表示
+5. マイページ側は「マイプロフィール」「ブロック」「アカウント設定」の3タブのみ(いいね関連はホームへ移動済み)
+
+## Google Meet入室確認フロー(2026/7/9更新)
+1. お見合い成立後、createGoogleMeetUrl()でカレンダーイベント+Meetリンクを作成(組織のMeet安全性設定によりアクセスタイプは「制限なし」、待機室なしで誰でも入室可能)
+2. 会員がzoom-checkページで同意チェックリストに同意しGoogle Meetへ参加ボタンを押すと、user1_joined_at/user2_joined_at(ボタンクリック時刻)を記録(同意の証跡として維持)
+3. 5分おきのpg_cronジョブ(meeting-timeout-cancel)が、scheduled_atから15分経過かつステータスzoom_completed・meeting_ended_at未設定のお見合いを抽出
+4. 抽出された候補のうち、ボタンクリック記録が欠けているものについて、checkRealMeetingAttendance()でGoogle Meet REST APIから実際の入室人数を取得
+5. 実際の入室が2名以上確認できればキャンセルをスキップ(実際は入室していたと判断)、確認できなければ従来通り強制キャンセルしてnotifyCancelTimeout()を実行

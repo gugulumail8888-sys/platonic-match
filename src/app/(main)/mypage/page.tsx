@@ -9,7 +9,7 @@ import {
   Ruler, Sparkles, GraduationCap, Users, Cigarette,
   Wallet, Home, GitMerge, Calendar, Baby, HeartHandshake,
   Mail, Lock,
-  Edit3, Eye, ShieldOff,
+  Edit3, ShieldOff,
 } from 'lucide-react';
 import UploadArea from '@/components/upload/UploadArea';
 
@@ -270,18 +270,6 @@ function ProfileTab() {
   );
 }
 
-// ============================================================
-// Tab 2: いいね履歴
-// ============================================================
-
-interface LikeMember {
-  id: string;
-  nickname: string;
-  birth_date: string | null;
-  prefecture: string | null;
-  isMutual?: boolean;
-}
-
 const AVATAR_COLORS = ['#0d9488','#2563eb','#7c3aed','#b45309','#be123c','#0f766e','#c2410c','#4f46e5'];
 
 function calcAge(birthDate: string | null): number | null {
@@ -299,93 +287,8 @@ function avatarColor(id: string): string {
   return AVATAR_COLORS[n % AVATAR_COLORS.length];
 }
 
-function LikeMemberCard({ member }: { member: LikeMember }) {
-  const age = calcAge(member.birth_date);
-  const initial = member.nickname.charAt(0);
-  const bg = avatarColor(member.id);
-  return (
-    <div className="bg-zinc-800 rounded-xl border border-zinc-700 p-4 flex items-center gap-4 hover:bg-zinc-700/60 hover:border-zinc-600 transition-all duration-200">
-      {/* アバター */}
-      <div
-        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 select-none"
-        style={{ background: bg }}
-      >
-        {initial}
-      </div>
-
-      {/* 情報 */}
-      <div className="flex-1 min-w-0">
-        <p className="text-white font-semibold text-sm leading-tight">{member.nickname}</p>
-        {age !== null && <p className="text-zinc-400 text-xs mt-0.5">{age}歳</p>}
-        {member.prefecture && (
-          <p className="text-zinc-500 text-xs flex items-center gap-1 mt-0.5">
-            <MapPin className="w-3 h-3 text-teal-600" />
-            {member.prefecture}
-          </p>
-        )}
-        {member.isMutual && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-pink-900/50 text-pink-300 border border-pink-800 mt-1">
-            💑 相互いいね
-          </span>
-        )}
-      </div>
-
-      {/* リンク */}
-      <Link
-        href={`/members/${member.id}`}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-teal-700 text-teal-400 text-xs font-medium hover:bg-teal-900/40 hover:border-teal-500 transition-colors flex-shrink-0"
-      >
-        <Eye className="w-3 h-3" />
-        プロフィールを見る
-      </Link>
-    </div>
-  );
-}
-
-function LikesSentTab() {
-  const [members, setMembers] = React.useState<LikeMember[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    fetch('/api/likes')
-      .then((r) => r.json())
-      .then((data) => setMembers(data.members ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="text-center text-zinc-400 py-12">読み込み中...</div>;
-  if (members.length === 0) return <div className="text-center text-zinc-500 py-12">いいねしたメンバーはいません</div>;
-  return (
-    <div className="space-y-2">
-      {members.map((m) => <LikeMemberCard key={m.id} member={m} />)}
-    </div>
-  );
-}
-
-function LikesReceivedTab() {
-  const [members, setMembers] = React.useState<LikeMember[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    fetch('/api/likes/received')
-      .then((r) => r.json())
-      .then((data) => setMembers(data.members ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="text-center text-zinc-400 py-12">読み込み中...</div>;
-  if (members.length === 0) return <div className="text-center text-zinc-500 py-12">いいねされたメンバーはいません</div>;
-  return (
-    <div className="space-y-2">
-      {members.map((m) => <LikeMemberCard key={m.id} member={m} />)}
-    </div>
-  );
-}
-
 // ============================================================
-// Tab 3: 設定
+// Tab 2: 設定
 // ============================================================
 
 interface ToggleSwitchProps {
@@ -926,14 +829,12 @@ function BlockedTab() {
 // Tab Navigation
 // ============================================================
 
-type TabId = 'profile' | 'likes-sent' | 'likes-received' | 'blocked' | 'settings';
+type TabId = 'profile' | 'blocked' | 'settings';
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'profile',        label: 'マイプロフィール', icon: User },
-  { id: 'likes-sent',     label: 'いいね送信',            icon: Heart },
-  { id: 'likes-received', label: 'いいね受信',            icon: HeartHandshake },
   { id: 'blocked',        label: 'ブロック',          icon: ShieldOff },
-  { id: 'settings',       label: '設定',              icon: Settings },
+  { id: 'settings',       label: 'アカウント設定',    icon: Settings },
 ];
 
 // ============================================================
@@ -975,7 +876,7 @@ export default function MyPage() {
           })}
         </div>
 
-        {/* 下段: いいねした・いいねされた・ブロックリスト・設定（均等幅） */}
+        {/* 下段: ブロックリスト・アカウント設定（均等幅） */}
         <div className="flex">
           {TABS.slice(1).map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
@@ -999,11 +900,9 @@ export default function MyPage() {
       </div>
 
       {/* タブコンテンツ */}
-      {activeTab === 'profile'        && <ProfileTab />}
-      {activeTab === 'likes-sent'     && <LikesSentTab />}
-      {activeTab === 'likes-received' && <LikesReceivedTab />}
-      {activeTab === 'blocked'        && <BlockedTab />}
-      {activeTab === 'settings'       && <SettingsTab />}
+      {activeTab === 'profile'  && <ProfileTab />}
+      {activeTab === 'blocked'  && <BlockedTab />}
+      {activeTab === 'settings' && <SettingsTab />}
     </div>
   );
 }

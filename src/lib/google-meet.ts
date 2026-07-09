@@ -1,7 +1,7 @@
 import { createSign, randomUUID } from 'crypto';
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
-const CALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar';
+const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/meetings.space.readonly https://www.googleapis.com/auth/meetings.space.settings';
 const MEETING_DURATION_MS = 40 * 60 * 1000;
 
 function base64url(input: Buffer | string): string {
@@ -18,7 +18,7 @@ async function getAccessToken(email: string, privateKey: string): Promise<string
   const claim = base64url(JSON.stringify({
     iss: email,
     sub: process.env.GOOGLE_WORKSPACE_USER ?? email,
-    scope: CALENDAR_SCOPE,
+    scope: SCOPES,
     aud: TOKEN_URL,
     iat: nowSec,
     exp: nowSec + 3600,
@@ -113,9 +113,132 @@ export async function createGoogleMeetUrl(scheduledAt: string, title: string): P
       ?? null;
     console.log('conferenceData:', JSON.stringify(data.conferenceData));
     console.log('hangoutLink:', data.hangoutLink);
+
     return meetUrl;
   } catch (error) {
     console.error('createGoogleMeetUrl error:', error);
+    return null;
+  }
+}
+
+// ============================================================
+// Meet REST API による実入室確認
+// ============================================================
+
+export function extractMeetingCode(zoomUrl: string): string | null {
+  const match = zoomUrl.match(/meet\.google\.com\/([a-z0-9-]+)/i);
+  return match ? match[1] : null;
+}
+
+export async function setSpaceAccessOpen(meetingCode: string): Promise<boolean> {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  if (!email || !privateKey) return false;
+
+  try {
+    const accessToken = await getAccessToken(email, privateKey);
+    if (!accessToken) return false;
+
+    const res = await fetch(
+      `https://meet.googleapis.com/v2/spaces/${encodeURIComponent(meetingCode)}?updateMask=config.accessType`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ config: { accessType: 'OPEN' } }),
+      }
+    );
+
+    if (!res.ok) {
+      console.error('setSpaceAccessOpen APIエラー:', await res.text());
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('setSpaceAccessOpen error:', error);
+    return false;
+  }
+}
+
+export async function checkRealMeetingAttendance(
+  zoomUrl: string,
+  scheduledAt: string
+): Promise<{
+  participantCount: number;
+  participants: { earliestStartTime: string | null; latestEndTime: string | null }[];
+} | null> {
+  const meetingCode = extractMeetingCode(zoomUrl);
+  if (!meetingCode) return null;
+
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  if (!email || !privateKey) return null;
+
+  try {
+    const accessToken = await getAccessToken(email, privateKey);
+    if (!accessToken) return null;
+
+    const filter = encodeURIComponent(`space.meeting_code="${meetingCode}"`);
+    const listRes = await fetch(
+      `https://meet.googleapis.com/v2/conferenceRecords?filter=${filter}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    if (!listRes.ok) {
+      console.error('Meet conferenceRecords取得エラー:', await listRes.text());
+      return null;
+    }
+
+    const listData = await listRes.json() as {
+      conferenceRecords?: { name: string; startTime?: string }[];
+    };
+    const records = listData.conferenceRecords ?? [];
+    if (records.length === 0) return null;
+
+    // startTimeがscheduledAt以降で最も近いものを選ぶ（startTimeが無ければ先頭＝最新を使う）
+    let target = records[0];
+    const withStartTime = records.filter((r) => r.startTime);
+    if (withStartTime.length > 0) {
+      const scheduledMs = new Date(scheduledAt).getTime();
+      const onOrAfterScheduled = withStartTime.filter(
+        (r) => new Date(r.startTime!).getTime() >= scheduledMs
+      );
+      const pool = onOrAfterScheduled.length > 0 ? onOrAfterScheduled : withStartTime;
+      target = pool.reduce((closest, r) =>
+        Math.abs(new Date(r.startTime!).getTime() - scheduledMs)
+          < Math.abs(new Date(closest.startTime!).getTime() - scheduledMs)
+          ? r
+          : closest
+      );
+    }
+
+    const participantsRes = await fetch(
+      `https://meet.googleapis.com/v2/${target.name}/participants`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    if (!participantsRes.ok) {
+      console.error('Meet participants取得エラー:', await participantsRes.text());
+      return null;
+    }
+
+    const participantsData = await participantsRes.json() as {
+      participants?: { earliestStartTime?: string; latestEndTime?: string }[];
+    };
+    const participants = participantsData.participants ?? [];
+
+    return {
+      participantCount: participants.length,
+      participants: participants.map((p) => ({
+        earliestStartTime: p.earliestStartTime ?? null,
+        latestEndTime: p.latestEndTime ?? null,
+      })),
+    };
+  } catch (error) {
+    console.error('checkRealMeetingAttendance error:', error);
     return null;
   }
 }

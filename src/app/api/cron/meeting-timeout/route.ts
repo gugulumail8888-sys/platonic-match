@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { calculateAge } from '@/lib/utils';
+import { checkRealMeetingAttendance } from '@/lib/google-meet';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -19,6 +20,7 @@ type Matching = {
   user1_joined_at: string | null;
   user2_joined_at: string | null;
   meeting_ended_at: string | null;
+  zoom_url: string | null;
 };
 
 type Person = {
@@ -30,7 +32,7 @@ type Person = {
 };
 
 const MATCHING_COLUMNS =
-  'id, applicant_id, partner_id, amount, applied_at, scheduled_at, user1_joined_at, user2_joined_at, meeting_ended_at';
+  'id, applicant_id, partner_id, amount, applied_at, scheduled_at, user1_joined_at, user2_joined_at, meeting_ended_at, zoom_url';
 
 // ============================================================
 // 認証チェック（Bearerトークン）
@@ -138,6 +140,24 @@ export async function POST(req: NextRequest) {
         const partnerMissing = matching.user2_joined_at === null;
 
         if (!applicantMissing && !partnerMissing) continue;
+
+        // Meet API上で実際の入室状況を確認し、2名以上の参加が確認できれば
+        // ボタンクリック記録が欠けていても強制キャンセルの対象から除外する
+        if (matching.zoom_url) {
+          const attendance = await checkRealMeetingAttendance(
+            matching.zoom_url,
+            matching.scheduled_at ?? new Date().toISOString()
+          );
+          if (attendance && attendance.participantCount >= 2) {
+            console.log(
+              'meeting_timeout_cancel skip（Meet APIで2名以上の入室を確認）:',
+              matching.id,
+              'participantCount=', attendance.participantCount,
+              'earliestStartTimes=', attendance.participants.map((p) => p.earliestStartTime)
+            );
+            continue;
+          }
+        }
 
         const lateBy: 'applicant' | 'member' | 'both' = applicantMissing && partnerMissing
           ? 'both'
