@@ -204,7 +204,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (userId) {
-      const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      // Stripeの新しいAPIバージョンではcurrent_period_endはSubscription直下ではなく
+      // 各subscription item側に移動している(checkout.session.completedハンドラーと同じ対応)
+      const periodEndUnix = subscription.items.data[0]?.current_period_end;
+      const currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null;
 
       const { error: updateError } = await supabase
         .from('profiles')

@@ -64,7 +64,7 @@
 - 47. profiles.statusの二重体系・恒久対応:/admin/verifyの'verified'書き込みを廃止し'approved'に統一するか、'verified'を正式な状態として/api/members等の許可リストに追加するか方針を決定する(2026/7/9発見。応急対応として該当会員のstatusを個別UPDATEする対応を複数回実施済みだが、再発防止のための根本対応は未着手)
 - 48. /api/members・/api/members/[id]・src/app/(main)/dashboard/page.tsxの新着会員クエリで、status IN ('active', 'approved')条件から実在しない'active'を除去する(2026/7/9発見、未対応)
 - 49. 本番のCHECK制約とマイグレーション履歴を突き合わせ、正式なマイグレーションファイルとして追いつかせる(2026/7/9発見、未対応)
-- 50. src/app/api/stripe/webhook/route.ts(207,54)で`npx tsc --noEmit`がエラーを出している(Property 'current_period_end' does not exist on type 'Subscription')。Stripe型定義とコードの不整合を修正する(2026/7/10発見。管理画面ダッシュボードのデータ接続修正作業中に検出。動作には現時点で影響していないが型チェックが通らない状態)
+- ~~50. src/app/api/stripe/webhook/route.ts(207,54)で`npx tsc --noEmit`がエラーを出している(Property 'current_period_end' does not exist on type 'Subscription')。Stripe型定義とコードの不整合を修正する(2026/7/10発見。管理画面ダッシュボードのデータ接続修正作業中に検出。動作には現時点で影響していないが型チェックが通らない状態)(完了:2026/7/10。customer.subscription.updatedハンドラーで`subscription.current_period_end`を直接参照していたのが原因。checkout.session.completedハンドラーと同じ`subscription.items.data[0]?.current_period_end`形式に統一。tsc --noEmit通過確認済み)~~
 - 51. 管理者アカウントのメールアドレス・パスワードが単純すぎるため変更する(2026/7/10発見、優先度高め・早めに対応希望。変更方法はSupabaseダッシュボードから直接変更する案とClaude Code経由でAdmin APIスクリプトを実行する案の2案を提示済み、方式は未決定)
 
 ---
@@ -91,3 +91,4 @@
 - 2026-07-10: #45・#46を完了に更新。/admin/settingsの死んだ設定項目を整理(削除/読み取り専用化)し、連絡先メールアドレスを実際の管理者通知送信先として実装。
 - 2026-07-10: /admin/settingsの確認専用セクションを1つに統合。src/lib/campaign.tsを新設しキャンペーン日付・上限人数を一本化、管理画面ダッシュボードにキャンペーン契約者数の目視確認カードを追加(#23関連、自動遮断は未実装のまま)。
 - 2026-07-10: 「基本設定」と「メンテナンス設定」を分割、「ベータ版設定」と「キャンペーン設定」を統合。未使用のhandleSave関数を削除。コミット7879b7fで本番反映(#45・#46にコミットハッシュ追記)。
+- 2026-07-10: #50を完了に更新。customer.subscription.updatedハンドラーのcurrent_period_end参照方法を修正、tsc --noEmit通過確認済み。
