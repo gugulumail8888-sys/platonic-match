@@ -39,7 +39,7 @@ export default async function DashboardPage() {
     .from('profiles')
     .select('id, nickname, birth_date, prefecture, occupation')
     .eq('gender', oppositeGender)
-    .in('status', ['active', 'approved'])
+    .in('status', ['approved', 'verified'])
     .neq('id', user.id);
 
   if (blockedIds.length > 0) {

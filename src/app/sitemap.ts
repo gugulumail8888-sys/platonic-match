@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://amista.jp';
+const BASE_URL = 'https://amista.net';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

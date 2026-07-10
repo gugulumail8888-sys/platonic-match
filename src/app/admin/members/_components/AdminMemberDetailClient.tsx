@@ -48,7 +48,7 @@ export interface ApplicationRow {
   partner: { id: string; nickname: string; avatar_url: string | null; avatar_color: string | null } | null;
 }
 
-const STATUS_ORDER: MemberStatus[] = ['pending', 'approved', 'rejected', 'withdrawn'];
+const STATUS_ORDER: MemberStatus[] = ['pending', 'approved', 'verified', 'rejected', 'withdrawn'];
 
 // ── ヘルパー ──────────────────────────────────────────────────
 

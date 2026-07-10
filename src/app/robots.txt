@@ -15,4 +15,4 @@ Disallow: /zoom-guide
 Disallow: /report
 Disallow: /withdraw
 
-Sitemap: https://amista.jp/sitemap.xml
+Sitemap: https://amista.net/sitemap.xml

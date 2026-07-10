@@ -147,15 +147,14 @@ export default function TokushoPage() {
                 label: 'サービスURL',
                 value: (
                   <a
-                    href="https://amista.jp"
+                    href="https://amista.net"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-teal-400 hover:text-teal-300 underline underline-offset-2 transition-colors break-all"
                   >
-                    https://amista.jp
+                    https://amista.net
                   </a>
                 ),
-                note: '（後で修正）',
               },
             ]}
           />
@@ -242,6 +241,8 @@ export default function TokushoPage() {
               'お見合い申請料は原則返金不可',
               'ただし相手が承認しなかった場合は返金対応',
               '月額プランは月末までに解約申請で翌月より停止',
+              '本サービスは通信販売に該当するため、特定商取引法に基づくクーリング・オフ制度の適用はありません',
+              '月額プランを解約した場合、解約月分の返金は行いません(日割り返金なし)。翌月以降の請求が停止します',
             ]}
           />
         </SectionCard>

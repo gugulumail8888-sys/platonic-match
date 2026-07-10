@@ -10,6 +10,7 @@ export async function middleware(request: NextRequest) {
   if (
     pathname !== '/maintenance' &&
     pathname !== '/login' &&
+    pathname !== '/lp' &&
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/_next')
   ) {

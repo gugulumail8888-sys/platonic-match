@@ -11,7 +11,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'approval_document' | 'deficiency_document';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'schedule_postponed' | 'approval_document' | 'deficiency_document';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -30,6 +30,8 @@ type NotifyBody = {
   applicantNickname?: string;
   partnerNickname?: string;
   re_request_message?: string;
+  // schedule_postponed用
+  requestedBy?: 'applicant' | 'member';
   // approval_document / deficiency_document用
   user?: { nickname: string; email: string };
   reason?: string;
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '未認証' }, { status: 401 });
     }
 
-    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl } = body;
+    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl, requestedBy } = body;
     const resend = new Resend(process.env.RESEND_API_KEY);
     const adminEmail = await getAdminEmail();
 
@@ -464,6 +466,32 @@ export async function POST(req: NextRequest) {
             連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。
             詳しい注意事項は<a href="${process.env.NEXT_PUBLIC_APP_URL}/zoom-check">お見合い中の注意事項</a>をご確認ください。
           </p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+    } else if (type === 'schedule_postponed') {
+      // 延期通知（両者へ）
+      const requesterLabel = requestedBy === 'applicant' ? applicant.nickname : member.nickname;
+
+      emails.push({
+        to: applicant.email,
+        subject: `【amista】お見合い日程が延期になりました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合い日程が延期になりました</h2>
+          <p>${applicant.nickname} さん、${requesterLabel}さんからの申し出により、確定していたお見合い日程が延期となりました。</p>
+          <p>マイページから新しい候補日を再度ご提案ください。</p>
+          <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
+        `),
+      });
+
+      emails.push({
+        to: member.email,
+        subject: `【amista】お見合い日程が延期になりました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #0d9488;">お見合い日程が延期になりました</h2>
+          <p>${member.nickname} さん、${requesterLabel}さんからの申し出により、確定していたお見合い日程が延期となりました。</p>
+          <p>お相手から新しい候補日が提案されましたら、あらためてマイページにてご確認ください。</p>
           <p style="color:#888; font-size:12px;">申請番号：${applicationId}</p>
         `),
       });

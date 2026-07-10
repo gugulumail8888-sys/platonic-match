@@ -30,6 +30,7 @@ interface Matching {
   scheduled_at: string | null;
   zoom_url: string | null;
   meeting_ended_at: string | null;
+  postponed_count: number;
 }
 
 function calcAge(birthDate: string) {
@@ -39,6 +40,17 @@ function calcAge(birthDate: string) {
   const m = today.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
   return age;
+}
+
+// 「予定日の前日17時(JST)」を延期申し出期限として算出する(src/app/api/schedule/postpone/route.tsと同じロジック)
+function getPostponeDeadline(scheduledAt: string): number {
+  const scheduled = new Date(scheduledAt);
+  const jstMs = scheduled.getTime() + 9 * 60 * 60 * 1000;
+  const jst = new Date(jstMs);
+  const y = jst.getUTCFullYear();
+  const m = jst.getUTCMonth();
+  const d = jst.getUTCDate();
+  return Date.UTC(y, m, d - 1, 8, 0, 0); // 17:00 JST = 08:00 UTC
 }
 
 const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: string }> = {
@@ -86,6 +98,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
   const [wished, setWished] = useState(matching.applicant_dating_wish);
   const [responding, setResponding] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [postponing, setPostponing] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -119,6 +132,23 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ matchingId: matching.id }),
     });
+    window.location.reload();
+  }
+
+  async function handlePostpone() {
+    if (!window.confirm('延期を申請しますか？確定していた日程はリセットされ、新しい候補日を再度調整していただく必要があります。')) return;
+    setPostponing(true);
+    const res = await fetch('/api/schedule/postpone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matchingId: matching.id }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? '延期処理に失敗しました');
+      setPostponing(false);
+      return;
+    }
     window.location.reload();
   }
 
@@ -275,9 +305,49 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           </button>
         )}
 
-        {/* 日程調整ボタン（日程調整中のみ・役割で分岐） */}
+        {/* 日程調整ボタン（日程調整中のみ・確定有無で分岐、確定後は役割共通） */}
         {status === 'scheduling' && (
-          isReceiver ? (
+          matching.scheduled_at !== null ? (
+            <>
+              <div className="mb-3 p-3 bg-teal-900/30 border border-teal-700 rounded-lg">
+                <p className="text-teal-400 text-sm font-medium">✅ 日程が確定しました！</p>
+                <p className="text-white text-sm mt-1">
+                  📅 {new Date(matching.scheduled_at!).toLocaleString('ja-JP', {
+                    timeZone: 'Asia/Tokyo',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}〜
+                </p>
+              </div>
+              {!isReceiver && (
+                <Link
+                  href={`/payment/omiai?matchingId=${id}`}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm mb-2"
+                >
+                  💳 お見合い料を支払う
+                </Link>
+              )}
+              {matching.postponed_count < 1 && (
+                getPostponeDeadline(matching.scheduled_at) < now ? (
+                  <div className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium bg-zinc-800 text-zinc-500 cursor-not-allowed">
+                    延期の申し出期限（予定日の前日17時）を過ぎています
+                  </div>
+                ) : (
+                  <button
+                    onClick={handlePostpone}
+                    disabled={postponing}
+                    className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border border-zinc-600 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    📆 {postponing ? '処理中...' : '延期を申請する'}
+                  </button>
+                )
+              )}
+            </>
+          ) : isReceiver ? (
             matching.hasSlots ? (
               <Link
                 href={`/schedule/select?id=${id}&name=${encodeURIComponent(partner.nickname)}`}
@@ -292,30 +362,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
               </div>
             )
           ) : (
-            matching.scheduled_at !== null ? (
-              <>
-                <div className="mb-3 p-3 bg-teal-900/30 border border-teal-700 rounded-lg">
-                  <p className="text-teal-400 text-sm font-medium">✅ 日程が確定しました！</p>
-                  <p className="text-white text-sm mt-1">
-                    📅 {new Date(matching.scheduled_at!).toLocaleString('ja-JP', {
-                      timeZone: 'Asia/Tokyo',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      weekday: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}〜
-                  </p>
-                </div>
-                <Link
-                  href={`/payment/omiai?matchingId=${id}`}
-                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm"
-                >
-                  💳 お見合い料を支払う
-                </Link>
-              </>
-            ) : matching.hasSlots ? (
+            matching.hasSlots ? (
               <div className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-zinc-700 text-zinc-400 cursor-not-allowed">
                 ⏳ 相手の返答待ち
               </div>
@@ -367,7 +414,7 @@ export default function MatchingPage() {
 
       const { data: rows, error } = await supabase
         .from('matchings')
-        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at, zoom_url, meeting_ended_at')
+        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at, zoom_url, meeting_ended_at, postponed_count')
         .or(`applicant_id.eq.${user.id},partner_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 

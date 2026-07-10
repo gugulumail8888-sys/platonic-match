@@ -6,7 +6,7 @@ import { Search, RotateCcw, MapPin, ArrowUp, ArrowDown } from 'lucide-react';
 
 // ── 型定義 ────────────────────────────────────────────────────
 
-export type MemberStatus = 'pending' | 'approved' | 'rejected' | 'withdrawn';
+export type MemberStatus = 'pending' | 'approved' | 'verified' | 'rejected' | 'withdrawn';
 
 export interface MemberRow {
   id: string;
@@ -28,10 +28,11 @@ export interface MemberRow {
 // ── 定数 ──────────────────────────────────────────────────────
 
 export const MEMBER_STATUS_CONFIG: Record<MemberStatus, { label: string; className: string }> = {
-  pending:   { label: '審査中',   className: 'bg-amber-900/50 text-amber-300 border border-amber-800' },
-  approved:  { label: '承認済み', className: 'bg-green-900/50 text-green-300 border border-green-800' },
-  rejected:  { label: '拒否',     className: 'bg-zinc-700 text-zinc-400 border border-zinc-600' },
-  withdrawn: { label: '退会済み', className: 'bg-zinc-800 text-zinc-500 border border-zinc-700' },
+  pending:   { label: '審査中',       className: 'bg-amber-900/50 text-amber-300 border border-amber-800' },
+  approved:  { label: '承認済み',     className: 'bg-green-900/50 text-green-300 border border-green-800' },
+  verified:  { label: '手動チェック済み', className: 'bg-teal-900/50 text-teal-300 border border-teal-800' },
+  rejected:  { label: '拒否',         className: 'bg-zinc-700 text-zinc-400 border border-zinc-600' },
+  withdrawn: { label: '退会済み',     className: 'bg-zinc-800 text-zinc-500 border border-zinc-700' },
 };
 
 type GenderFilter = 'all' | 'male' | 'female';
@@ -41,6 +42,7 @@ const STATUS_FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all',       label: 'すべて' },
   { value: 'pending',   label: '審査中' },
   { value: 'approved',  label: '承認済み' },
+  { value: 'verified',  label: '手動チェック済み' },
   { value: 'rejected',  label: '拒否' },
   { value: 'withdrawn', label: '退会済み' },
 ];

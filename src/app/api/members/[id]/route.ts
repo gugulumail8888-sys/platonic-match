@@ -12,7 +12,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     .from('profiles')
     .select('*')
     .eq('id', params.id)
-    .in('status', ['active', 'approved'])
+    .in('status', ['approved', 'verified'])
     .maybeSingle();
 
   if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 });

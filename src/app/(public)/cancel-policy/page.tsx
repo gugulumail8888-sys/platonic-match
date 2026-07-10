@@ -37,9 +37,9 @@ const POLICIES = [
     color: 'text-blue-400',
     bg: 'bg-blue-950/30 border-blue-900/50',
     title: '延期（日程変更）',
-    timing: 'キャンセルではなく日程変更を希望する場合',
+    timing: '予定日の前日17時までにご連絡いただいた場合（原則1回まで）',
     penalty: '違約金なし（原則1回まで）',
-    detail: 'キャンセルではなく延期をご希望の場合、すぐに新しい日程を調整していただければ違約金は発生しません。延期は原則1回までとさせていただきます。',
+    detail: 'キャンセルではなく延期をご希望の場合、マイページの「延期を申請する」ボタンからお手続きいただけます。お見合い予定日の前日17時までにお申し出いただく必要があります。前日17時を過ぎるとボタンは押せなくなり、通常のキャンセルポリシーが適用されます。延期は原則1回までとさせていただきます。',
   },
   {
     icon: AlertTriangle,
@@ -87,6 +87,17 @@ export default function CancelPolicyPage() {
           <p className="text-teal-300 font-medium text-sm mb-1">違約金はキャンセルした側のみ</p>
           <p className="text-teal-200/70 text-xs leading-relaxed">
             違約金はキャンセルした本人にのみ発生します。相手側には費用は一切かかりません。キャンセル料は申請料と同額（無料プラン¥3,500・AIおすすめプラン¥3,000）となります。なお、キャンセルが多い場合には退会をお願いする場合があります。
+          </p>
+        </div>
+      </div>
+
+      {/* 返金処理期間 */}
+      <div className="flex items-start gap-3 bg-blue-950/30 border border-blue-800/60 rounded-2xl p-4">
+        <RefreshCw className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-blue-300 font-medium text-sm mb-1">返金についてのお知らせ</p>
+          <p className="text-blue-200/70 text-xs leading-relaxed">
+            返金が発生する場合、キャンセル確定から5営業日以内にStripe決済にて返金処理いたします。
           </p>
         </div>
       </div>
