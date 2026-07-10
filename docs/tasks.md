@@ -59,8 +59,8 @@
 - ~~42. Google Meet実入室検知機能の実装、および待機室(ホスト承認待ち)で入室できなくなる重大バグの発見・修正(完了:2026/7/9)~~
 - 43. 503解除後にPayPay有効化申請を行う(取扱商材は「一般」を選択。特定商取引法に基づく表記ページのURLを事前に準備しておくこと)
 - ~~44. 管理画面ダッシュボード(/admin)の8項目(総会員数、今月の新規登録、お見合い申請数、今月の売上、直近7日間の申請数グラフ、ステータス別申請数、最新申請、最新登録会員)が完全にモックデータ(ハードコードされたダミー値)のため、Supabaseの実データ接続に修正する(2026/7/9発見:ダッシュボード表示「47件」と実際の申請管理画面「全11件」の食い違いから発覚)(完了:2026/7/10。コミットc75b5fc。admin/page.tsxをServer Component化しSupabase実データ接続、admin/_data.ts削除。認証はadmin/layout.tsxで一元適用済みを確認、_data.ts残存参照なしを確認済み)~~
-- ~~45. 管理画面設定(/admin/settings)の「死んだ設定」項目(サイト名、料金設定3項目:light_plan_price/matching_fee_normal/matching_fee_premium、新規登録受付ON/OFF、通知設定3項目:admin_notify_email/notify_new_member/notify_matching_apply、マッチング設定の期限3項目:zoom_expiry_days/matching_auto_cancel_days/dating_wish_expiry_days)が保存されても実際の処理に一切反映されていない問題を、実装に反映させるかUIから削除するか判断して対応する(2026/7/9発見)(完了:2026/7/10。判断結果→料金設定3項目とマッチング期限のうちzoom_expiry_days・matching_auto_cancel_daysは読み取り専用の確認表示に変更(Stripe Price ID・コード側固定値が正のため)。新規登録受付ON/OFF、通知設定3項目、交際希望の有効期限(dating_wish_expiry_days)はUIから削除。サイト名・運営者名も参照箇所ゼロと判明したため削除)~~
-- ~~46. 管理画面設定の「運営者名」「連絡先メールアドレス」入力欄が、保存ボタンを押しても送信データに含まれておらず一切保存されないUIバグを修正する(2026/7/9発見)(完了:2026/7/10。運営者名はどこからも参照されておらず削除。連絡先メールアドレスは保存バグを修正したうえで、お見合い新規申請・キャンセル・支払いリマインド等の管理者通知の実際の送信先として機能するよう実装(src/app/api/admin/notify/route.ts・src/app/api/contact/route.tsのgetAdminEmail()がsettings.contact_emailを参照、未設定時はADMIN_EMAIL環境変数にフォールバック))~~
+- ~~45. 管理画面設定(/admin/settings)の「死んだ設定」項目(サイト名、料金設定3項目:light_plan_price/matching_fee_normal/matching_fee_premium、新規登録受付ON/OFF、通知設定3項目:admin_notify_email/notify_new_member/notify_matching_apply、マッチング設定の期限3項目:zoom_expiry_days/matching_auto_cancel_days/dating_wish_expiry_days)が保存されても実際の処理に一切反映されていない問題を、実装に反映させるかUIから削除するか判断して対応する(2026/7/9発見)(完了:2026/7/10。判断結果→料金設定3項目とマッチング期限のうちzoom_expiry_days・matching_auto_cancel_daysは読み取り専用の確認表示に変更(Stripe Price ID・コード側固定値が正のため)。新規登録受付ON/OFF、通知設定3項目、交際希望の有効期限(dating_wish_expiry_days)はUIから削除。サイト名・運営者名も参照箇所ゼロと判明したため削除。コミット7879b7f)~~
+- ~~46. 管理画面設定の「運営者名」「連絡先メールアドレス」入力欄が、保存ボタンを押しても送信データに含まれておらず一切保存されないUIバグを修正する(2026/7/9発見)(完了:2026/7/10。運営者名はどこからも参照されておらず削除。連絡先メールアドレスは保存バグを修正したうえで、お見合い新規申請・キャンセル・支払いリマインド等の管理者通知の実際の送信先として機能するよう実装(src/app/api/admin/notify/route.ts・src/app/api/contact/route.tsのgetAdminEmail()がsettings.contact_emailを参照、未設定時はADMIN_EMAIL環境変数にフォールバック)。コミット7879b7f)~~
 - 47. profiles.statusの二重体系・恒久対応:/admin/verifyの'verified'書き込みを廃止し'approved'に統一するか、'verified'を正式な状態として/api/members等の許可リストに追加するか方針を決定する(2026/7/9発見。応急対応として該当会員のstatusを個別UPDATEする対応を複数回実施済みだが、再発防止のための根本対応は未着手)
 - 48. /api/members・/api/members/[id]・src/app/(main)/dashboard/page.tsxの新着会員クエリで、status IN ('active', 'approved')条件から実在しない'active'を除去する(2026/7/9発見、未対応)
 - 49. 本番のCHECK制約とマイグレーション履歴を突き合わせ、正式なマイグレーションファイルとして追いつかせる(2026/7/9発見、未対応)
@@ -90,3 +90,4 @@
 - 2026-07-10: #51として管理者アカウントのメール・パスワード変更(優先度高め)を新規採番。
 - 2026-07-10: #45・#46を完了に更新。/admin/settingsの死んだ設定項目を整理(削除/読み取り専用化)し、連絡先メールアドレスを実際の管理者通知送信先として実装。
 - 2026-07-10: /admin/settingsの確認専用セクションを1つに統合。src/lib/campaign.tsを新設しキャンペーン日付・上限人数を一本化、管理画面ダッシュボードにキャンペーン契約者数の目視確認カードを追加(#23関連、自動遮断は未実装のまま)。
+- 2026-07-10: 「基本設定」と「メンテナンス設定」を分割、「ベータ版設定」と「キャンペーン設定」を統合。未使用のhandleSave関数を削除。コミット7879b7fで本番反映(#45・#46にコミットハッシュ追記)。
