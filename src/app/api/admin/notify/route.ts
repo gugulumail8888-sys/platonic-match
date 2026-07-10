@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { createAdminClient } from '@/lib/supabase/server';
 
 type Person = {
   nickname: string;
@@ -42,6 +43,24 @@ function wrap(content: string) {
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head><body><div style="${baseStyle}">${content}${footer}</div></body></html>`;
 }
 
+// 管理者通知の送信先メールアドレスを決定する。
+// 優先順位: admin/settings画面の「連絡先メールアドレス」(settings.contact_email)
+// > 環境変数ADMIN_EMAIL > 既定値
+async function getAdminEmail(): Promise<string> {
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from('settings')
+      .select('value')
+      .eq('key', 'contact_email')
+      .maybeSingle();
+    if (data?.value?.trim()) return data.value.trim();
+  } catch (err) {
+    console.error('getAdminEmail error:', err);
+  }
+  return process.env.ADMIN_EMAIL ?? 'admin@amista.jp';
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as NotifyBody;
@@ -54,6 +73,7 @@ export async function POST(req: NextRequest) {
 
     const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl } = body;
     const resend = new Resend(process.env.RESEND_API_KEY);
+    const adminEmail = await getAdminEmail();
 
     const dateStr = appliedAt ? new Date(appliedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) : '';
     const amountStr = `¥${amount != null ? amount.toLocaleString() : ''}（税込）`;
@@ -66,7 +86,7 @@ export async function POST(req: NextRequest) {
     if (type === 'new_application') {
       // 管理者のみ
       emails.push({
-        to: process.env.ADMIN_EMAIL ?? 'admin@amista.jp',
+        to: adminEmail,
         subject: `【amista】新しいお見合い申請が届きました（${applicationId}）`,
         html: wrap(`
           <h2 style="color: #0d9488;">新しいお見合い申請が届きました</h2>
@@ -87,7 +107,7 @@ export async function POST(req: NextRequest) {
 
       // 管理者
       emails.push({
-        to: process.env.ADMIN_EMAIL ?? 'admin@amista.jp',
+        to: adminEmail,
         subject: `【amista】お見合い強制キャンセル（15分超過）（${applicationId}）`,
         html: wrap(`
           <h2 style="color: #dc2626;">お見合いが強制キャンセルされました（15分超過）</h2>
@@ -132,7 +152,7 @@ export async function POST(req: NextRequest) {
       // 支払い未完了キャンセル
       // 管理者
       emails.push({
-        to: process.env.ADMIN_EMAIL ?? 'admin@amista.jp',
+        to: adminEmail,
         subject: `【amista】支払い未完了によるキャンセル（${applicationId}）`,
         html: wrap(`
           <h2 style="color: #dc2626;">支払い未完了によりキャンセルされました</h2>
@@ -168,7 +188,7 @@ export async function POST(req: NextRequest) {
       // 申請者からの手動キャンセル
       // 管理者
       emails.push({
-        to: process.env.ADMIN_EMAIL ?? 'admin@amista.jp',
+        to: adminEmail,
         subject: `【amista】キャンセル依頼が届きました（${applicationId}）`,
         html: wrap(`
           <h2 style="color: #f59e0b;">キャンセル依頼が届きました</h2>
@@ -206,7 +226,7 @@ export async function POST(req: NextRequest) {
 
       // 管理者
       emails.push({
-        to: process.env.ADMIN_EMAIL ?? 'admin@amista.jp',
+        to: adminEmail,
         subject: '【amista】お見合い料のお支払いのご案内',
         html: wrap(`
           <h2 style="color: #0d9488;">支払いリマインドを送信しました</h2>

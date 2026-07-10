@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Settings, Wallet, Users, Bell, Heart, Bot, Megaphone,
+  Settings, Wallet, Users, Bot,
 } from 'lucide-react';
 
 // ============================================================
@@ -94,6 +94,45 @@ function SettingsSection({
   );
 }
 
+// 変更不可・確認専用のセクション(保存ボタンなし)。
+// 実際の値は環境変数・Stripe Price ID・コード内の固定値など別の場所で管理されており、
+// この画面はあくまで現在値の確認用。誤解防止のため保存ボタンは表示しない。
+function InfoSection({
+  icon: Icon, title, note, children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  note?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 space-y-4">
+      <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
+        <Icon className="w-4 h-4" />
+        {title}
+      </h3>
+      {note && (
+        <p className="text-xs text-zinc-500 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2">
+          {note}
+        </p>
+      )}
+      <div className="space-y-4">{children}</div>
+    </div>
+  );
+}
+
+function ReadOnlyRow({ label, value, unit }: { label: string; value: string | number; unit?: string }) {
+  return (
+    <div>
+      <label className="block text-xs text-zinc-400 mb-1.5">{label}</label>
+      <div className="flex items-center gap-2">
+        <p className="flex-1 text-white text-sm">{value}</p>
+        {unit && <span className="text-xs text-zinc-500 flex-shrink-0">{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
 // ============================================================
 // Page
 // ============================================================
@@ -102,8 +141,11 @@ export default function AdminSettingsPage() {
   const [toast, setToast] = useState('');
 
   // 1. 基本設定
-  const [siteName, setSiteName] = useState('amista');
-  const [operatorName, setOperatorName] = useState('');
+  // 連絡先メールアドレスは、お見合い新規申請・キャンセル・支払いリマインド等の
+  // 管理者通知の送信先として使用される(src/app/api/admin/notify/route.ts・
+  // src/app/api/contact/route.tsのgetAdminEmail()が参照。未入力時は環境変数
+  // ADMIN_EMAILにフォールバック)。サイト名・運営者名はどこからも参照されて
+  // いなかったため撤去した(2026/7/10)。
   const [contactEmail, setContactEmail] = useState('');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceNoticeEnabled, setMaintenanceNoticeEnabled] = useState(false);
@@ -116,20 +158,14 @@ export default function AdminSettingsPage() {
   const [matchingFeePremium, setMatchingFeePremium] = useState(3000);
 
   // 3. 会員設定
-  const [registrationOpen, setRegistrationOpen] = useState(true);
   const [omiaiOpen, setOmiaiOpen] = useState(false);
   const [reviewMode, setReviewMode] = useState<'auto' | 'manual'>('manual');
   const [likeLimit, setLikeLimit] = useState(0);
 
-  // 4. 通知設定
-  const [adminNotifyEmail, setAdminNotifyEmail] = useState('');
-  const [notifyNewMember, setNotifyNewMember] = useState(true);
-  const [notifyMatchingApply, setNotifyMatchingApply] = useState(true);
-
-  // 5. マッチング設定
+  // 5. マッチング設定(zoom_expiry_days・matching_auto_cancel_daysは確認専用。
+  // 実際はGoogle Meet連携コード・pg_cronのSQLに固定値がハードコードされている)
   const [zoomExpiryDays, setZoomExpiryDays] = useState(0);
   const [matchingAutoCancelDays, setMatchingAutoCancelDays] = useState(0);
-  const [datingWishExpiryDays, setDatingWishExpiryDays] = useState(0);
 
   // 6. ベータ版設定
   const [aiOptionEnabled, setAiOptionEnabled] = useState(true);
@@ -147,7 +183,7 @@ export default function AdminSettingsPage() {
     fetch('/api/admin/settings')
       .then((res) => res.json())
       .then((data: Record<string, string>) => {
-        if (data.site_name !== undefined) setSiteName(data.site_name);
+        if (data.contact_email !== undefined) setContactEmail(data.contact_email);
         if (data.maintenance_mode !== undefined) setMaintenanceMode(data.maintenance_mode === 'true');
         if (data.maintenance_notice_enabled !== undefined) setMaintenanceNoticeEnabled(data.maintenance_notice_enabled === 'true');
         if (data.maintenance_scheduled_start !== undefined) setMaintenanceScheduledStart(data.maintenance_scheduled_start);
@@ -157,21 +193,14 @@ export default function AdminSettingsPage() {
         if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
         if (data.ai_option_enabled !== undefined) setAiOptionEnabled(data.ai_option_enabled !== 'false');
         if (data.review_mode !== undefined) setReviewMode(data.review_mode === 'auto' ? 'auto' : 'manual');
-        if (data.registration_open !== undefined) setRegistrationOpen(data.registration_open !== 'false');
-      if (data.omiai_open !== undefined) setOmiaiOpen(data.omiai_open === 'true');
+        if (data.omiai_open !== undefined) setOmiaiOpen(data.omiai_open === 'true');
         if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
         if (data.campaign_banner_enabled !== undefined) setCampaignBannerEnabled(data.campaign_banner_enabled === 'true');
-        if (data.admin_notify_email !== undefined) setAdminNotifyEmail(data.admin_notify_email);
-        if (data.notify_new_member !== undefined) setNotifyNewMember(data.notify_new_member !== 'false');
-        if (data.notify_matching_apply !== undefined) setNotifyMatchingApply(data.notify_matching_apply !== 'false');
         if (data.zoom_expiry_days !== undefined) setZoomExpiryDays(Number(data.zoom_expiry_days));
         if (data.matching_auto_cancel_days !== undefined) setMatchingAutoCancelDays(Number(data.matching_auto_cancel_days));
-        if (data.dating_wish_expiry_days !== undefined) setDatingWishExpiryDays(Number(data.dating_wish_expiry_days));
       })
       .catch((err) => console.error('settings fetch error:', err));
   }, []);
-
-  const handleSave = () => showToast('この機能は現在準備中です');
 
   const saveSettings = async (payload: Record<string, string>) => {
     try {
@@ -188,44 +217,25 @@ export default function AdminSettingsPage() {
   };
 
   const handleSaveBasic = () => saveSettings({
-    site_name: siteName,
+    contact_email: contactEmail,
+  });
+
+  const handleSaveMaintenance = () => saveSettings({
     maintenance_mode: String(maintenanceMode),
     maintenance_notice_enabled: String(maintenanceNoticeEnabled),
     maintenance_scheduled_start: maintenanceScheduledStart,
     maintenance_scheduled_end: maintenanceScheduledEnd,
   });
 
-  const handleSavePricing = () => saveSettings({
-    light_plan_price: String(lightPlanPrice),
-    matching_fee_normal: String(matchingFeeNormal),
-    matching_fee_premium: String(matchingFeePremium),
-  });
-
   const handleSaveBeta = () => saveSettings({
     ai_option_enabled: String(aiOptionEnabled),
+    campaign_banner_enabled: String(campaignBannerEnabled),
   });
 
   const handleSaveMembers = () => saveSettings({
     review_mode: reviewMode,
-    registration_open: String(registrationOpen),
     omiai_open: String(omiaiOpen),
     daily_like_limit: String(likeLimit),
-  });
-
-  const handleSaveNotification = () => saveSettings({
-    admin_notify_email: adminNotifyEmail,
-    notify_new_member: String(notifyNewMember),
-    notify_matching_apply: String(notifyMatchingApply),
-  });
-
-  const handleSaveMatching = () => saveSettings({
-    zoom_expiry_days: String(zoomExpiryDays),
-    matching_auto_cancel_days: String(matchingAutoCancelDays),
-    dating_wish_expiry_days: String(datingWishExpiryDays),
-  });
-
-  const handleSaveCampaign = () => saveSettings({
-    campaign_banner_enabled: String(campaignBannerEnabled),
   });
 
   return (
@@ -239,24 +249,6 @@ export default function AdminSettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* 1. 基本設定 */}
         <SettingsSection icon={Settings} title="基本設定" onSave={handleSaveBasic}>
-          <FieldRow label="サイト名">
-            <input
-              type="text"
-              value={siteName}
-              onChange={(e) => setSiteName(e.target.value)}
-              className={inputCls}
-              placeholder="サイト名を入力"
-            />
-          </FieldRow>
-          <FieldRow label="運営者名">
-            <input
-              type="text"
-              value={operatorName}
-              onChange={(e) => setOperatorName(e.target.value)}
-              className={inputCls}
-              placeholder="運営者名を入力"
-            />
-          </FieldRow>
           <FieldRow label="連絡先メールアドレス">
             <input
               type="email"
@@ -266,6 +258,13 @@ export default function AdminSettingsPage() {
               placeholder="contact@example.com"
             />
           </FieldRow>
+          <p className="text-xs text-zinc-500 -mt-2">
+            お見合いの新規申請・キャンセル・支払いリマインドなどの管理者通知は、このアドレス宛に送信されます。未入力の場合は既定のアドレスが使われます。
+          </p>
+        </SettingsSection>
+
+        {/* メンテナンス設定 */}
+        <SettingsSection icon={Settings} title="メンテナンス設定" onSave={handleSaveMaintenance}>
           <ToggleSwitch
             checked={maintenanceMode}
             onChange={setMaintenanceMode}
@@ -296,52 +295,39 @@ export default function AdminSettingsPage() {
           </FieldRow>
         </SettingsSection>
 
-        {/* 2. 料金設定 */}
-        <SettingsSection icon={Wallet} title="料金設定" onSave={handleSavePricing}>
-          <FieldRow label="AIおすすめプラン月額（税込）" unit="円">
-            <input
-              type="number"
-              value={lightPlanPrice}
-              onChange={(e) => setLightPlanPrice(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
-          <FieldRow label="お見合い申請料金（無料プラン・税込）" unit="円">
-            <input
-              type="number"
-              value={matchingFeeNormal}
-              onChange={(e) => setMatchingFeeNormal(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
-          <FieldRow label="お見合い申請料金（AIプラン・税込）" unit="円">
-            <input
-              type="number"
-              value={matchingFeePremium}
-              onChange={(e) => setMatchingFeePremium(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
-        </SettingsSection>
+        {/* 2. 確認専用設定(実際の値は別の場所で管理されており、ここでは変更できません) */}
+        <InfoSection
+          icon={Wallet}
+          title="設定値の確認(変更不可)"
+          note="以下はいずれも現在の設定値の確認用の表示です。ここを変更しても実際の動作には反映されません。料金はStripeダッシュボード、期限はコード側の固定値がそれぞれの正となっています。"
+        >
+          <p className="text-xs text-teal-400 font-medium">料金(Stripe Price IDが正)</p>
+          <ReadOnlyRow label="AIおすすめプラン月額（税込）" value={lightPlanPrice.toLocaleString()} unit="円" />
+          <ReadOnlyRow label="お見合い申請料金（無料プラン・税込）" value={matchingFeeNormal.toLocaleString()} unit="円" />
+          <ReadOnlyRow label="お見合い申請料金（AIプラン・税込）" value={matchingFeePremium.toLocaleString()} unit="円" />
+          <p className="text-xs text-teal-400 font-medium pt-2 border-t border-zinc-800">マッチング期限(コード側の固定値が正)</p>
+          <ReadOnlyRow label="Google Meet面談有効期限" value={zoomExpiryDays} unit="日" />
+          <ReadOnlyRow label="お見合い申請の自動キャンセル期限" value={matchingAutoCancelDays} unit="日" />
+        </InfoSection>
 
-        {/* ベータ版設定 */}
-        <SettingsSection icon={Bot} title="ベータ版設定" onSave={handleSaveBeta}>
+        {/* ベータ版・キャンペーン設定 */}
+        <SettingsSection icon={Bot} title="ベータ版・キャンペーン設定" onSave={handleSaveBeta}>
           <ToggleSwitch
             checked={aiOptionEnabled}
             onChange={setAiOptionEnabled}
             label="AIおすすめオプション"
-            description="AIによるマッチングおすすめ機能を有効にします"
+            description="AIによるマッチングおすすめ機能を有効にします(OFF時は契約者含め全員が利用不可になります)"
+          />
+          <ToggleSwitch
+            checked={campaignBannerEnabled}
+            onChange={setCampaignBannerEnabled}
+            label="オープン記念・初期限定キャンペーンバナーを表示"
+            description="7月〜9月限定｜AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーをトップページに表示します"
           />
         </SettingsSection>
 
         {/* 3. 会員設定 */}
         <SettingsSection icon={Users} title="会員設定" onSave={handleSaveMembers}>
-          <ToggleSwitch
-            checked={registrationOpen}
-            onChange={setRegistrationOpen}
-            label="新規登録受付"
-            description="無効にすると新規会員登録を停止します"
-          />
           <ToggleSwitch
             checked={omiaiOpen}
             onChange={setOmiaiOpen}
@@ -366,69 +352,6 @@ export default function AdminSettingsPage() {
               className={inputCls}
             />
           </FieldRow>
-        </SettingsSection>
-
-        {/* 4. 通知設定 */}
-        <SettingsSection icon={Bell} title="通知設定" onSave={handleSaveNotification}>
-          <FieldRow label="管理者通知メールアドレス">
-            <input
-              type="email"
-              value={adminNotifyEmail}
-              onChange={(e) => setAdminNotifyEmail(e.target.value)}
-              className={inputCls}
-              placeholder="admin@example.com"
-            />
-          </FieldRow>
-          <ToggleSwitch
-            checked={notifyNewMember}
-            onChange={setNotifyNewMember}
-            label="新規登録通知"
-            description="新規会員が登録したときに通知します"
-          />
-          <ToggleSwitch
-            checked={notifyMatchingApply}
-            onChange={setNotifyMatchingApply}
-            label="お見合い申請通知"
-            description="お見合い申請があったときに通知します"
-          />
-        </SettingsSection>
-
-        {/* 5. マッチング設定 */}
-        <SettingsSection icon={Heart} title="マッチング設定" onSave={handleSaveMatching}>
-          <FieldRow label="Google Meet面談有効期限" unit="日">
-            <input
-              type="number"
-              value={zoomExpiryDays}
-              onChange={(e) => setZoomExpiryDays(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
-          <FieldRow label="お見合い申請の自動キャンセル期限" unit="日">
-            <input
-              type="number"
-              value={matchingAutoCancelDays}
-              onChange={(e) => setMatchingAutoCancelDays(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
-          <FieldRow label="交際希望の有効期限" unit="日">
-            <input
-              type="number"
-              value={datingWishExpiryDays}
-              onChange={(e) => setDatingWishExpiryDays(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
-        </SettingsSection>
-
-        {/* 7. キャンペーン設定 */}
-        <SettingsSection icon={Megaphone} title="キャンペーン設定" onSave={handleSaveCampaign}>
-          <ToggleSwitch
-            checked={campaignBannerEnabled}
-            onChange={setCampaignBannerEnabled}
-            label="オープン記念・初期限定キャンペーンバナーを表示"
-            description="7月〜9月限定｜AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーをトップページに表示します"
-          />
         </SettingsSection>
       </div>
 

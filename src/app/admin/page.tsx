@@ -1,8 +1,9 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
-import { Users, UserPlus, HeartHandshake, TrendingUp, MapPin } from 'lucide-react';
+import { Users, UserPlus, HeartHandshake, TrendingUp, MapPin, Sparkles } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/server';
+import { CAMPAIGN_START, CAMPAIGN_END, CAMPAIGN_SLOT_LIMIT } from '@/lib/campaign';
 
 // ============================================================
 // ステータスラベル設定（/admin/matching, /admin/members と同じ値）
@@ -123,6 +124,7 @@ export default async function AdminDashboardPage() {
     { data: dailyMatchings },
     { data: recentAppsRaw },
     { data: recentMembers },
+    { count: campaignSignupCount },
   ] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'male'),
@@ -145,6 +147,10 @@ export default async function AdminDashboardPage() {
       .select('id, nickname, gender, birth_date, prefecture, status, avatar_url, created_at')
       .order('created_at', { ascending: false })
       .limit(5),
+    // キャンペーン期間中にAIおすすめオプションを契約開始した人数(先着200名の消化状況確認用)
+    supabase.from('profiles').select('id', { count: 'exact', head: true })
+      .gte('subscription_started_at', CAMPAIGN_START.toISOString())
+      .lte('subscription_started_at', CAMPAIGN_END.toISOString()),
   ]);
 
   // ── 最新申請の申請者・お相手プロフィールをまとめて取得 ──
@@ -260,6 +266,22 @@ export default async function AdminDashboardPage() {
             <p className="text-2xl font-bold text-white leading-tight">¥{netRevenue.toLocaleString()}</p>
             <p className="text-xs text-zinc-500 mt-0.5">
               総売上 ¥{grossRevenue.toLocaleString()} − 返金 ¥{refundTotal.toLocaleString()}（{refundCount}件）
+            </p>
+          </div>
+        </div>
+
+        {/* キャンペーン契約者数（先着200名の消化状況） */}
+        <div className="bg-zinc-900 rounded-2xl border border-purple-800 p-5 flex items-start gap-4">
+          <div className="bg-purple-900/40 rounded-xl p-2.5 flex-shrink-0">
+            <Sparkles className="w-5 h-5 text-purple-400" />
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400 mb-1">AIオプション キャンペーン契約者数</p>
+            <p className="text-2xl font-bold text-white leading-tight">
+              {campaignSignupCount ?? 0} / {CAMPAIGN_SLOT_LIMIT}名
+            </p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              先着{CAMPAIGN_SLOT_LIMIT}名到達で新規は特典対象外（現在は自動判定なし・目視確認用）
             </p>
           </div>
         </div>

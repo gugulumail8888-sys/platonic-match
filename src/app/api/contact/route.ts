@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'amistasupport@gmail.com';
+import { createAdminClient } from '@/lib/supabase/server';
 
 const baseStyle = `font-family: sans-serif; font-size: 14px; line-height: 1.8; max-width: 600px; margin: 0 auto; padding: 24px;`;
 const footer = `<hr><p style="color: #888; font-size: 12px;">このメールはamistaシステムから自動送信されています。</p>`;
@@ -10,8 +9,27 @@ function wrap(content: string) {
   return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"></head><body><div style="${baseStyle}">${content}${footer}</div></body></html>`;
 }
 
+// 管理者通知の送信先メールアドレスを決定する。
+// 優先順位: admin/settings画面の「連絡先メールアドレス」(settings.contact_email)
+// > 環境変数ADMIN_EMAIL > 既定値
+async function getAdminEmail(): Promise<string> {
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from('settings')
+      .select('value')
+      .eq('key', 'contact_email')
+      .maybeSingle();
+    if (data?.value?.trim()) return data.value.trim();
+  } catch (err) {
+    console.error('getAdminEmail error:', err);
+  }
+  return process.env.ADMIN_EMAIL ?? 'amistasupport@gmail.com';
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const adminEmail = await getAdminEmail();
     const body = await req.json() as {
       name?: string;
       email?: string;
@@ -30,7 +48,7 @@ export async function POST(req: NextRequest) {
     // 管理者へ通知
     const { error: adminError } = await resend.emails.send({
       from: 'amista <onboarding@resend.dev>',
-      to: ADMIN_EMAIL,
+      to: adminEmail,
       subject: `【amista お問い合わせ】${subject}`,
       html: wrap(`
         <h2 style="color: #0d9488;">新しいお問い合わせが届きました</h2>
@@ -65,7 +83,7 @@ export async function POST(req: NextRequest) {
           <tr style="border-bottom:1px solid #e5e7eb;"><td style="padding:8px 12px 8px 0; color:#6b7280; vertical-align:top;">件名</td><td style="padding:8px 0; color:#111827;">${subject}</td></tr>
         </table>
         <div style="background:#f3f4f6; border-radius:8px; padding:16px; margin-top:12px; white-space:pre-wrap; color:#111827; border:1px solid #e5e7eb;">${message}</div>
-        <p style="margin-top:16px; color:#888; font-size:12px;">※ このメールに返信しないでください。お問い合わせは <a href="mailto:${ADMIN_EMAIL}" style="color:#0d9488;">${ADMIN_EMAIL}</a> までご連絡ください。</p>
+        <p style="margin-top:16px; color:#888; font-size:12px;">※ このメールに返信しないでください。お問い合わせは <a href="mailto:${adminEmail}" style="color:#0d9488;">${adminEmail}</a> までご連絡ください。</p>
       `),
       headers: { 'Content-Type': 'text/html; charset=UTF-8' },
     });
