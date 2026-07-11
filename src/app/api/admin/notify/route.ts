@@ -11,7 +11,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'schedule_postponed' | 'approval_document' | 'deficiency_document';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'schedule_postponed' | 'user_reported' | 'approval_document' | 'deficiency_document' | 'ai_option_renewal_reminder' | 'dormant_notice';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -32,9 +32,16 @@ type NotifyBody = {
   re_request_message?: string;
   // schedule_postponed用
   requestedBy?: 'applicant' | 'member';
+  // user_reported用
+  reporterNickname?: string;
+  reportedNickname?: string;
+  reportCategory?: string;
+  reportDetail?: string;
   // approval_document / deficiency_document用
   user?: { nickname: string; email: string };
   reason?: string;
+  // ai_option_renewal_reminder用
+  renewalDate?: string;
 };
 
 const FROM_EMAIL = 'amista <onboarding@resend.dev>';
@@ -73,7 +80,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '未認証' }, { status: 401 });
     }
 
-    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl, requestedBy } = body;
+    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl, requestedBy, reporterNickname, reportedNickname, reportCategory, reportDetail, renewalDate } = body;
     const resend = new Resend(process.env.RESEND_API_KEY);
     const adminEmail = await getAdminEmail();
 
@@ -496,6 +503,22 @@ export async function POST(req: NextRequest) {
         `),
       });
 
+    } else if (type === 'user_reported') {
+      // 通報通知（管理者のみ）
+      emails.push({
+        to: adminEmail,
+        subject: `【amista】通報が届きました（${applicationId}）`,
+        html: wrap(`
+          <h2 style="color: #e11d48;">通報が届きました</h2>
+          <p>申請番号：${applicationId}</p>
+          <p>通報者：${reporterNickname ?? '不明'}</p>
+          <p>対象：${reportedNickname ?? '不明'}</p>
+          <p>種別：${reportCategory ?? '不明'}</p>
+          <p>詳細：${reportDetail || '（詳細記入なし）'}</p>
+          <p>管理画面の「通報一覧」から詳細をご確認ください。</p>
+        `),
+      });
+
     } else if (type === 'survey_reminder') {
       // アンケート依頼（お見合い終了1〜2時間後）
       const surveySection = surveyUrl
@@ -576,6 +599,47 @@ export async function POST(req: NextRequest) {
           <p>マイページの設定タブから書類を再アップロードしてください。</p>
           <div style="text-align:center;margin:32px 0;">
             <a href="${process.env.NEXT_PUBLIC_SITE_URL}/mypage"
+              style="background:#0d9488;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">
+              マイページへ
+            </a>
+          </div>
+        `),
+      });
+    }
+
+    if (type === 'dormant_notice' && body.user) {
+      emails.push({
+        to: body.user.email,
+        subject: '【amista】長期間ログインがないことについてのお知らせ',
+        html: wrap(`
+          <p>${body.user.nickname} さん</p>
+          <p>長期間ログインが確認できておりません。</p>
+          <p>今後もamistaのご利用を継続されない場合、会員資格が取り消される場合がございます。</p>
+          <p>引き続きご利用の場合は、お手数ですが一度ログインいただきますようお願いいたします。</p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/login"
+              style="background:#0d9488;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">
+              ログインする
+            </a>
+          </div>
+        `),
+      });
+    }
+
+    if (type === 'ai_option_renewal_reminder' && body.user) {
+      const renewalDateStr = renewalDate
+        ? new Date(renewalDate).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })
+        : '';
+      emails.push({
+        to: body.user.email,
+        subject: '【amista】AIおすすめオプションの次回更新について',
+        html: wrap(`
+          <p>${body.user.nickname} さん</p>
+          <p>AIおすすめオプションをご利用いただきありがとうございます。</p>
+          <p>現在の請求期間は${renewalDateStr}に終了し、自動的に更新されます。</p>
+          <p>解約をご希望の場合は、期間終了前にマイページからお手続きください。</p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/mypage"
               style="background:#0d9488;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">
               マイページへ
             </a>
