@@ -1,7 +1,17 @@
-import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+import { createAdminClient } from '@/lib/supabase/server'
+
+async function confirmFeedback(formData: FormData) {
+  'use server'
+  const id = formData.get('id') as string
+  const supabase = createAdminClient()
+  const { data } = await supabase.from('feedback').select('is_confirmed').eq('id', id).single()
+  await supabase.from('feedback').update({ is_confirmed: !data?.is_confirmed }).eq('id', id)
+  revalidatePath('/admin/feedback')
+}
 
 export default async function AdminFeedbackPage() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: feedbacks, error } = await supabase
     .from('feedback')
     .select('*')
@@ -27,6 +37,7 @@ export default async function AdminFeedbackPage() {
               <th className="p-3 text-left whitespace-nowrap w-36">日時</th>
               <th className="p-3 text-left whitespace-nowrap w-24">ページ</th>
               <th className="p-3 text-left">内容</th>
+              <th className="p-3 text-left whitespace-nowrap w-24">状態</th>
             </tr>
           </thead>
           <tbody>
@@ -41,10 +52,25 @@ export default async function AdminFeedbackPage() {
                   </span>
                 </td>
                 <td className="p-3 whitespace-pre-wrap">{fb.content}</td>
+                <td className="p-3 whitespace-nowrap">
+                  <form action={confirmFeedback}>
+                    <input type="hidden" name="id" value={fb.id} />
+                    <button
+                      type="submit"
+                      className={
+                        fb.is_confirmed
+                          ? 'text-xs font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 border border-zinc-600 px-3 py-1 rounded-full transition-colors'
+                          : 'text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded-full transition-colors'
+                      }
+                    >
+                      {fb.is_confirmed ? '確認済' : '未確認'}
+                    </button>
+                  </form>
+                </td>
               </tr>
             ))}
             {(!feedbacks || feedbacks.length === 0) && (
-              <tr><td colSpan={3} className="p-4 text-center text-zinc-500">まだ投稿はありません。</td></tr>
+              <tr><td colSpan={4} className="p-4 text-center text-zinc-500">まだ投稿はありません。</td></tr>
             )}
           </tbody>
         </table>
