@@ -44,7 +44,7 @@ type NotifyBody = {
   renewalDate?: string;
 };
 
-const FROM_EMAIL = 'amista <onboarding@resend.dev>';
+const FROM_EMAIL = 'amista <noreply@amista.net>';
 const baseStyle = `font-family: sans-serif; font-size: 14px; line-height: 1.8; max-width: 600px; margin: 0 auto; padding: 24px;`;
 const footer = `<hr><p style="color: #888; font-size: 12px;">このメールはamistaシステムから自動送信されています。</p>`;
 
@@ -651,7 +651,7 @@ export async function POST(req: NextRequest) {
     // 全メール送信
     for (const mail of emails) {
       const { error } = await resend.emails.send({
-        from: 'amista <onboarding@resend.dev>',
+        from: FROM_EMAIL,
         ...mail,
         headers: { 'Content-Type': 'text/html; charset=UTF-8' },
       });

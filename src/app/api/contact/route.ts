@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     // 管理者へ通知
     const { error: adminError } = await resend.emails.send({
-      from: 'amista <onboarding@resend.dev>',
+      from: 'amista <noreply@amista.net>',
       to: adminEmail,
       subject: `【amista お問い合わせ】${subject}`,
       html: wrap(`
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     // 送信者へ受付確認
     const { error: userError } = await resend.emails.send({
-      from: 'amista <onboarding@resend.dev>',
+      from: 'amista <noreply@amista.net>',
       to: email,
       subject: `【amista】お問い合わせを受け付けました`,
       html: wrap(`
