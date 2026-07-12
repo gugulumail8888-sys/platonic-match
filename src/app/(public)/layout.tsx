@@ -68,6 +68,8 @@ export default async function PublicLayout({
         </div>
       </main>
       {/* フッター */}
+      {/* 変更前: isAdmin/roleに関係なく常に表示されていたため、ログイン済み(管理者・一般会員)でも
+          このpublic用フッターが重複表示されていた。未ログイン時のみ表示するよう !role で囲む。
       <footer className="border-t border-zinc-800 px-6 py-6 mt-8">
         <nav className="flex flex-wrap justify-center gap-6 text-sm text-zinc-400">
           <Link href="/terms" className="hover:text-white transition-colors">利用規約</Link>
@@ -78,6 +80,19 @@ export default async function PublicLayout({
           <Link href="/cancel-policy" className="hover:text-white transition-colors">キャンセルポリシー</Link>
         </nav>
       </footer>
+      */}
+      {!role && (
+        <footer className="border-t border-zinc-800 px-6 py-6 mt-8">
+          <nav className="flex flex-wrap justify-center gap-6 text-sm text-zinc-400">
+            <Link href="/terms" className="hover:text-white transition-colors">利用規約</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">プライバシーポリシー</Link>
+            <Link href="/tokusho" className="hover:text-white transition-colors">特定商取引法</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">お問い合わせ</Link>
+            <Link href="/help" className="hover:text-white transition-colors">ヘルプ</Link>
+            <Link href="/cancel-policy" className="hover:text-white transition-colors">キャンセルポリシー</Link>
+          </nav>
+        </footer>
+      )}
       <ScrollToTop />
     </div>
   );
