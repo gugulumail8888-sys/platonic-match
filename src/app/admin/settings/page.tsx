@@ -175,6 +175,11 @@ export default function AdminSettingsPage() {
   // 一時停止中かどうかの表示用(空文字なら停止していない)
   const [aiOptionPausedAt, setAiOptionPausedAt] = useState('');
 
+  // OFF確認モーダル(2026/7/15対応。テスト等の一時的なOFFで契約者の請求期間が
+  // 意図せず延長されないよう、請求停止の要否を都度選べるようにする)
+  const [showOffConfirmModal, setShowOffConfirmModal] = useState(false);
+  const [pauseBillingOnOff, setPauseBillingOnOff] = useState(true);
+
   // 7. キャンペーン設定
   const [campaignBannerEnabled, setCampaignBannerEnabled] = useState(false);
 
@@ -244,14 +249,23 @@ export default function AdminSettingsPage() {
   });
 
   const handleSaveBeta = () => {
-    if (!aiOptionEnabled && !window.confirm(
-      'AIおすすめオプションをOFFにします。契約中の会員全員のStripe請求を自動的に一時停止します(現金返金ではなく、再開時に停止していた日数分は課金されません)。よろしいですか？'
-    )) {
+    if (!aiOptionEnabled) {
+      setPauseBillingOnOff(true);
+      setShowOffConfirmModal(true);
       return;
     }
     saveSettings({
       ai_option_enabled: String(aiOptionEnabled),
       campaign_banner_enabled: String(campaignBannerEnabled),
+    });
+  };
+
+  const handleConfirmOff = () => {
+    setShowOffConfirmModal(false);
+    saveSettings({
+      ai_option_enabled: 'false',
+      campaign_banner_enabled: String(campaignBannerEnabled),
+      pause_billing: String(pauseBillingOnOff),
     });
   };
 
@@ -382,6 +396,44 @@ export default function AdminSettingsPage() {
           </FieldRow>
         </SettingsSection>
       </div>
+
+      {/* AIおすすめオプションOFF確認モーダル */}
+      {showOffConfirmModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md mx-4">
+            <h3 className="text-base font-bold text-zinc-200 mb-3">AIおすすめオプションをOFFにします</h3>
+            <p className="text-xs text-zinc-400 mb-4 leading-relaxed">
+              OFFにすると、契約者含め全会員がAIおすすめ機能を利用できなくなります。
+            </p>
+            <label className="flex items-start gap-2.5 bg-zinc-900 border border-zinc-700 rounded-xl p-3.5 mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={pauseBillingOnOff}
+                onChange={(e) => setPauseBillingOnOff(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span className="text-xs text-zinc-300 leading-relaxed">
+                契約者の請求も自動的に一時停止する<br />
+                <span className="text-zinc-500">(現金返金ではなく、再開時に停止していた日数分は課金されません。実際のサービス停止・障害の場合はONのままにしてください。動作確認などの一時的なOFFではOFFにしてください)</span>
+              </span>
+            </label>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setShowOffConfirmModal(false)}
+                className="px-4 py-2 rounded-xl bg-zinc-700 text-zinc-300 text-sm hover:bg-zinc-600 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleConfirmOff}
+                className="px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-medium hover:bg-amber-500 transition-colors"
+              >
+                OFFにする
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* トースト */}
       {toast && (

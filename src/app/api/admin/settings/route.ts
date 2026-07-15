@@ -83,7 +83,10 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  const rows = entries.map(([key, value]) => ({ key, value: String(value) }));
+  const pauseBillingRequested = body.pause_billing !== false && body.pause_billing !== 'false';
+  const entriesToSave = entries.filter(([key]) => key !== 'pause_billing');
+
+  const rows = entriesToSave.map(([key, value]) => ({ key, value: String(value) }));
 
   const { error: upsertError } = await admin
     .from('settings')
@@ -95,12 +98,19 @@ export async function PATCH(req: NextRequest) {
   }
 
   let billingResult: { paused?: number; resumed?: number; failed?: number } = {};
-  if (aiOptionEnabledChangedTo === false) {
+  if (aiOptionEnabledChangedTo === false && pauseBillingRequested) {
     const r = await pauseAllAiOptionBilling(admin);
     billingResult = r;
   } else if (aiOptionEnabledChangedTo === true) {
-    const r = await resumeAllAiOptionBilling(admin);
-    billingResult = r;
+    const { data: pausedAtRow } = await admin
+      .from('settings')
+      .select('value')
+      .eq('key', 'ai_option_paused_at')
+      .maybeSingle();
+    if (pausedAtRow?.value) {
+      const r = await resumeAllAiOptionBilling(admin);
+      billingResult = r;
+    }
   }
 
   return NextResponse.json({ ok: true, billingResult });
