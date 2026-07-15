@@ -18,6 +18,7 @@ interface VerifyItem {
   frontUrl: string | null;
   backUrl: string | null;
   resubmitted_at: string | null;
+  lastDeficiencySentAt: string | null;
 }
 
 // 会員管理画面(AdminMembersClient.tsx)のMEMBER_STATUS_CONFIGと同じ日本語訳に統一（自動/手動の区別のみ括弧で補足）
@@ -39,13 +40,14 @@ function StatusBadge({ status }: { status: VerifyStatus }) {
   );
 }
 
-type FilterTab = 'all' | VerifyStatus | 'resubmitted';
+type FilterTab = 'all' | VerifyStatus | 'resubmitted' | 'deficiency_pending';
 
 const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
   { value: 'all',         label: 'すべて' },
   { value: 'pending',     label: '審査中' },
   { value: 'approved',    label: '承認済み（自動）' },
   { value: 'resubmitted', label: '再審査待ち' },
+  { value: 'deficiency_pending', label: '不備通知済み(未再提出)' },
   { value: 'verified',    label: '手動チェック済み' },
   { value: 'rejected',    label: '拒否' },
 ];
@@ -102,6 +104,9 @@ export default function AdminVerifyPage() {
   const filtered = items.filter((v) => {
     if (filter === 'all') return true;
     if (filter === 'resubmitted') return !!v.resubmitted_at;
+    if (filter === 'deficiency_pending') {
+      return !!v.lastDeficiencySentAt && (!v.resubmitted_at || new Date(v.resubmitted_at) < new Date(v.lastDeficiencySentAt));
+    }
     return v.status === filter;
   });
 
@@ -114,6 +119,7 @@ export default function AdminVerifyPage() {
     pending:     items.filter((v) => v.status === 'pending').length,
     approved:    items.filter((v) => v.status === 'approved').length,
     resubmitted: items.filter((v) => !!v.resubmitted_at).length,
+    deficiency_pending: items.filter((v) => !!v.lastDeficiencySentAt && (!v.resubmitted_at || new Date(v.resubmitted_at) < new Date(v.lastDeficiencySentAt))).length,
     verified:    items.filter((v) => v.status === 'verified').length,
     rejected:    items.filter((v) => v.status === 'rejected').length,
   };

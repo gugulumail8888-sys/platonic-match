@@ -8,8 +8,8 @@ const SIGNED_URL_EXPIRY_SECONDS = 60 * 60;
 type AdminClient = ReturnType<typeof createAdminClient>;
 
 type AdminCheckResult =
-  | { error: NextResponse; admin?: undefined }
-  | { error?: undefined; admin: AdminClient };
+  | { error: NextResponse; admin?: undefined; userId?: undefined }
+  | { error?: undefined; admin: AdminClient; userId: string };
 
 async function requireAdmin(): Promise<AdminCheckResult> {
   const supabase = await createClient();
@@ -30,7 +30,7 @@ async function requireAdmin(): Promise<AdminCheckResult> {
     return { error: NextResponse.json({ error: '権限がありません' }, { status: 403 }) };
   }
 
-  return { admin };
+  return { admin, userId: user.id };
 }
 
 function calcAge(birthDate: string | null): number {
@@ -79,6 +79,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   const { data: authUser } = await admin.auth.admin.getUserById(params.id);
 
+  const { data: deficiencyLogs } = await admin
+    .from('verification_deficiency_notices')
+    .select('reason, sent_at')
+    .eq('profile_id', params.id)
+    .order('sent_at', { ascending: false });
+
   return NextResponse.json({
     id: row.id,
     nickname: row.nickname ?? '不明',
@@ -90,6 +96,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     frontUrl,
     backUrl,
     email: authUser?.user?.email ?? '',
+    deficiencyHistory: (deficiencyLogs ?? []).map((log) => ({ reason: log.reason, sentAt: log.sent_at })),
   });
 }
 
@@ -121,7 +128,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
-  const { error, admin } = await requireAdmin();
+  const { error, admin, userId } = await requireAdmin();
   if (error) return error;
 
   const body = await req.json() as { reason?: string };
@@ -154,6 +161,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   if (!notifyRes.ok) {
     return NextResponse.json({ error: 'メール送信に失敗しました' }, { status: 500 });
+  }
+
+  const { error: logError } = await admin
+    .from('verification_deficiency_notices')
+    .insert({
+      profile_id: params.id,
+      reason: body.reason ?? null,
+      sent_by: userId,
+    });
+
+  if (logError) {
+    console.error('deficiency notice log insert error:', logError);
+    // 履歴記録に失敗してもメール送信自体は成功しているため、エラーにはしない
   }
 
   return NextResponse.json({ ok: true });

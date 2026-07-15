@@ -18,6 +18,7 @@ interface VerifyDetail {
   frontUrl: string | null;
   backUrl: string | null;
   email: string;
+  deficiencyHistory: { reason: string | null; sentAt: string }[];
 }
 
 const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; icon: React.ElementType }> = {
@@ -129,6 +130,8 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
       setShowDeficiencyModal(false);
       setDeficiencyReason('');
       alert('不備メールを送信しました');
+      const refreshed = await fetch(`/api/admin/verify/${params.id}`).then((r) => r.json()) as VerifyDetail;
+      setDetail(refreshed);
     } catch (err) {
       alert(err instanceof Error ? err.message : '送信に失敗しました');
     } finally {
@@ -269,6 +272,22 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
             不備メールを送る
           </button>
         </div>
+      </SectionCard>
+
+      {/* 不備通知履歴 */}
+      <SectionCard title="不備通知履歴">
+        {detail.deficiencyHistory.length === 0 ? (
+          <p className="text-zinc-500 text-sm">送信履歴はありません</p>
+        ) : (
+          <div className="space-y-3">
+            {detail.deficiencyHistory.map((log, i) => (
+              <div key={i} className="border-b border-zinc-700/40 last:border-0 pb-3 last:pb-0">
+                <p className="text-xs text-zinc-500 mb-1">{new Date(log.sentAt).toLocaleString('ja-JP')}</p>
+                <p className="text-sm text-zinc-300">{log.reason || '(理由の記載なし)'}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </SectionCard>
 
       {showDeficiencyModal && (

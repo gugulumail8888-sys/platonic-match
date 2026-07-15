@@ -46,6 +46,20 @@ export async function GET() {
     return NextResponse.json({ error: '取得に失敗しました' }, { status: 500 });
   }
 
+  const profileIds = (rows ?? []).map((r) => r.id as string);
+  const { data: deficiencyRows } = await admin
+    .from('verification_deficiency_notices')
+    .select('profile_id, sent_at')
+    .in('profile_id', profileIds)
+    .order('sent_at', { ascending: false });
+
+  const lastDeficiencyMap = new Map<string, string>();
+  for (const d of deficiencyRows ?? []) {
+    if (!lastDeficiencyMap.has(d.profile_id as string)) {
+      lastDeficiencyMap.set(d.profile_id as string, d.sent_at as string);
+    }
+  }
+
   const items = await Promise.all((rows ?? []).map(async (row) => {
     let frontUrl: string | null = null;
     let backUrl: string | null = null;
@@ -74,6 +88,7 @@ export async function GET() {
       frontUrl,
       backUrl,
       resubmitted_at: row.resubmitted_at,
+      lastDeficiencySentAt: lastDeficiencyMap.get(row.id as string) ?? null,
     };
   }));
 
