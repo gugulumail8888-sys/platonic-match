@@ -10,11 +10,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ja_JP",
     siteName: "amista",
+    images: ['/og-image.png'],
   },
   twitter: {
     card: "summary_large_image",
     title: "信頼できる友人から、ライフパートナーへ。| amista",
     description: "恋愛感情より、価値観と人柄。プレッシャーのない、あたらしいかたちの婚活。",
+    images: ['/og-image.png'],
   },
 };
 

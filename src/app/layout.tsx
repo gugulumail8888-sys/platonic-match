@@ -6,6 +6,7 @@ import { MaintenanceNoticeBanner } from "@/components/layout/MaintenanceNoticeBa
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://amista.net'),
   title: {
     template: "%s | amista",
     default: "amista - 友情から始まる、本物のパートナーシップ",
@@ -18,6 +19,11 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ja_JP",
     siteName: "amista",
+    images: ['/og-image.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/og-image.png'],
   },
   icons: {
     icon: "/favicon.svg",
