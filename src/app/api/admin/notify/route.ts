@@ -11,7 +11,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'schedule_postponed' | 'user_reported' | 'approval_document' | 'deficiency_document' | 'ai_option_renewal_reminder' | 'dormant_notice';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'schedule_postponed' | 'user_reported' | 'approval_document' | 'deficiency_document' | 'ai_option_renewal_reminder' | 'dormant_notice' | 'ai_option_inactivity_notice' | 'refund_completed';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -40,6 +40,8 @@ type NotifyBody = {
   // approval_document / deficiency_document用
   user?: { nickname: string; email: string };
   reason?: string;
+  // refund_completed用
+  refundAmount?: number;
   // ai_option_renewal_reminder用
   renewalDate?: string;
 };
@@ -285,6 +287,7 @@ export async function POST(req: NextRequest) {
           <p>${applicant.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
+          <p>お見合いの前にお相手のプロフィールをご確認いただき、必要であればメモをご用意いただくとスムーズです。</p>
           <p style="font-size:13px; color:#666;">
             連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。
             詳しい注意事項は<a href="${process.env.NEXT_PUBLIC_APP_URL}/zoom-check">お見合い中の注意事項</a>をご確認ください。
@@ -301,6 +304,7 @@ export async function POST(req: NextRequest) {
           <p>${member.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
+          <p>お見合いの前にお相手のプロフィールをご確認いただき、必要であればメモをご用意いただくとスムーズです。</p>
           <p style="font-size:13px; color:#666;">
             連絡先の交換・個人情報の共有・画面の録画などはご遠慮いただいています。
             詳しい注意事項は<a href="${process.env.NEXT_PUBLIC_APP_URL}/zoom-check">お見合い中の注意事項</a>をご確認ください。
@@ -644,6 +648,40 @@ export async function POST(req: NextRequest) {
               マイページへ
             </a>
           </div>
+        `),
+      });
+    }
+
+    if (type === 'ai_option_inactivity_notice' && body.user) {
+      emails.push({
+        to: body.user.email,
+        subject: '【amista】AIおすすめオプションをご利用ですか？',
+        html: wrap(`
+          <p>${body.user.nickname} さん</p>
+          <p>1.5ヶ月以上、amistaへのログインが確認できておりません。</p>
+          <p>AIおすすめオプションは月額課金制のサービスです。ログインしてご活用いただかないと、せっかくのオプションの価値が生まれません。</p>
+          <p>ご利用状況の確認や解約のお手続きは、マイページからいつでも行っていただけます。</p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL}/mypage"
+              style="background:#0d9488;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;">
+              マイページへ
+            </a>
+          </div>
+        `),
+      });
+    }
+
+    if (type === 'refund_completed' && body.user) {
+      const amountStr = typeof body.refundAmount === 'number' ? `¥${body.refundAmount.toLocaleString()}` : '';
+      emails.push({
+        to: body.user.email,
+        subject: '【amista】返金処理のご案内',
+        html: wrap(`
+          <p>${body.user.nickname} さん</p>
+          <p>お見合いのキャンセルに伴う返金処理を承りました。</p>
+          ${amountStr ? `<p>返金金額：${amountStr}</p>` : ''}
+          <p>1営業日以内に返金処理を行います。決済時にご利用のカード明細への反映まで、カード会社により数営業日かかる場合がございます。</p>
+          <p>ご不明な点がございましたら、お問い合わせページよりご連絡ください。</p>
         `),
       });
     }

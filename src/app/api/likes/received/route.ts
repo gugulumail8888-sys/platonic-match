@@ -20,6 +20,15 @@ export async function GET() {
 
   const likerIds = receivedLikes.map((l: { liker_id: string }) => l.liker_id);
 
+  // 自分がブロックした相手を除外
+  const { data: blockedByMe } = await supabase
+    .from('blocks')
+    .select('blocked_id')
+    .eq('blocker_id', user.id);
+  const blockedIdSet = new Set((blockedByMe ?? []).map((b) => b.blocked_id));
+
+  const filteredLikerIds = likerIds.filter((id) => !blockedIdSet.has(id));
+
   // 自分がいいねした人の一覧（相互いいね判定用）
   const { data: sentLikes } = await supabase
     .from('likes')
@@ -32,7 +41,7 @@ export async function GET() {
   const { data: members } = await supabase
     .from('profiles')
     .select('id, nickname, birth_date, prefecture')
-    .in('id', likerIds);
+    .in('id', filteredLikerIds);
 
   const result = (members ?? []).map((m) => ({
     ...m,

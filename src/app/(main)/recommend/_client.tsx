@@ -12,10 +12,21 @@ import { Button } from '@/components/ui/Button';
 const MUST_CONDITION_OPTIONS = [
   '子供ほしい', '子供ほしくない', '喫煙者NG', '飲酒者NG',
   '同居希望', '別居希望', 'すぐに結婚したい', '外部パートナーあり', '外部パートナーなし',
+  '家計完全折半希望', '家計は相談次第希望',
 ];
 const PRIORITY_POINT_OPTIONS = [
   '価値観', '生活習慣', '居住地の近さ', '年齢', '収入', '趣味', '外見',
 ];
+
+interface AiPreferences {
+  preferred_age_min: number | null;
+  preferred_age_max: number | null;
+  preferred_prefecture: string | null;
+  must_conditions: string[] | null;
+  priority_points: string[] | null;
+  free_message: string | null;
+  preferred_income_min: number | null;
+}
 
 interface RecommendResult {
   id: string;
@@ -58,7 +69,7 @@ function ScoreBar({ score }: { score: number }) {
   );
 }
 
-function BestMatchCard({ member }: { member: RecommendResult }) {
+function BestMatchCard({ member, isNew }: { member: RecommendResult; isNew?: boolean }) {
   return (
     <div className="relative rounded-2xl overflow-hidden border-2 border-yellow-400 shadow-[0_0_30px_rgba(234,179,8,0.3)]" style={{ background: 'linear-gradient(135deg, #134e4a 0%, #18181b 50%, #422006 100%)' }}>
       {/* 帯 */}
@@ -73,7 +84,10 @@ function BestMatchCard({ member }: { member: RecommendResult }) {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-2xl mb-1">{member.nickname}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-white font-bold text-2xl">{member.nickname}</p>
+              {isNew && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-600 text-white">NEW</span>}
+            </div>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-400">
               <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{member.prefecture}</span>
               <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{member.occupation}</span>
@@ -99,7 +113,7 @@ function BestMatchCard({ member }: { member: RecommendResult }) {
   );
 }
 
-function ResultCard({ member, rank }: { member: RecommendResult; rank: number }) {
+function ResultCard({ member, rank, isNew }: { member: RecommendResult; rank: number; isNew?: boolean }) {
   const rankBg = rank === 1 ? 'bg-amber-500 text-amber-900' : rank === 2 ? 'bg-zinc-400 text-zinc-900' : rank === 3 ? 'bg-amber-700 text-amber-100' : 'bg-zinc-700 text-zinc-300';
   return (
     <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 flex flex-col gap-4 hover:border-zinc-600 transition-all">
@@ -111,7 +125,10 @@ function ResultCard({ member, rank }: { member: RecommendResult; rank: number })
           <span className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${rankBg}`}>{rank}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-white font-semibold text-base mb-0.5">{member.nickname}</p>
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="text-white font-semibold text-base">{member.nickname}</p>
+            {isNew && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-pink-600 text-white">NEW</span>}
+          </div>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-400">
             <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{member.prefecture}</span>
             <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{member.occupation}</span>
@@ -129,13 +146,28 @@ function ResultCard({ member, rank }: { member: RecommendResult; rank: number })
 }
 
 export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean }) {
+  function loadLastResult(): { candidates: RecommendResult[]; isDemo: boolean; newIds: string[] } | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem('amista_ai_recommend_last_result');
+      if (!raw) return null;
+      return JSON.parse(raw) as { candidates: RecommendResult[]; isDemo: boolean; newIds: string[] };
+    } catch {
+      return null;
+    }
+  }
+
   const router = useRouter();
   const hasAccess = hasAiOption === true;
   const [aiOptionEnabled, setAiOptionEnabled] = useState<boolean | null>(null);
-  const [status, setStatus] = useState<'idle' | 'preferences' | 'loading' | 'done' | 'error'>('idle');
-  const [results, setResults] = useState<RecommendResult[]>([]);
+  const [status, setStatus] = useState<'idle' | 'preferences' | 'loading' | 'done' | 'error'>(() => (loadLastResult() ? 'done' : 'idle'));
+  const [results, setResults] = useState<RecommendResult[]>(() => loadLastResult()?.candidates ?? []);
   const [errorMsg, setErrorMsg] = useState('');
-  const [isDemo, setIsDemo] = useState(false);
+  const [isDemo, setIsDemo] = useState(() => loadLastResult()?.isDemo ?? false);
+  const [hasSavedPreferences, setHasSavedPreferences] = useState<boolean | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [limitExceeded, setLimitExceeded] = useState(false);
+  const [newIds, setNewIds] = useState<Set<string>>(() => new Set(loadLastResult()?.newIds ?? []));
 
   const [ageMin, setAgeMin] = useState('');
   const [ageMax, setAgeMax] = useState('');
@@ -143,6 +175,7 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
   const [mustConditions, setMustConditions] = useState<string[]>([]);
   const [priorityPoints, setPriorityPoints] = useState<string[]>([]);
   const [freeMessage, setFreeMessage] = useState('');
+  const [incomeMin, setIncomeMin] = useState('');
 
   const toggleValue = (arr: string[], val: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
     // 排他ペアの定義
@@ -150,6 +183,7 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
       ['子供ほしい', '子供ほしくない'],
       ['外部パートナーあり', '外部パートナーなし'],
       ['同居希望', '別居希望'],
+      ['家計完全折半希望', '家計は相談次第希望'],
     ];
     setter(prev => {
       if (prev.includes(val)) {
@@ -163,6 +197,26 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
     });
   };
 
+  function computeNewIds(candidates: RecommendResult[]): string[] {
+    try {
+      const prevRaw = localStorage.getItem('amista_ai_recommend_prev_ids');
+      const prevIds: string[] = prevRaw ? JSON.parse(prevRaw) : [];
+      localStorage.setItem('amista_ai_recommend_prev_ids', JSON.stringify(candidates.map((c) => c.id)));
+      if (prevIds.length === 0) return [];
+      return candidates.filter((c) => !prevIds.includes(c.id)).map((c) => c.id);
+    } catch {
+      return [];
+    }
+  }
+
+  function persistLastResult(candidates: RecommendResult[], isDemo: boolean, newIdsArr: string[]) {
+    try {
+      localStorage.setItem('amista_ai_recommend_last_result', JSON.stringify({ candidates, isDemo, newIds: newIdsArr }));
+    } catch {
+      // localStorageが使えない環境では何もしない
+    }
+  }
+
   useEffect(() => {
     fetch('/api/admin/settings')
       .then((r) => r.json())
@@ -170,6 +224,40 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
         setAiOptionEnabled(data.ai_option_enabled !== 'false');
       })
       .catch(() => setAiOptionEnabled(true));
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/ai/recommend')
+      .then((r) => r.json())
+      .then((data: { remaining?: number }) => {
+        if (typeof data.remaining === 'number') setRemaining(data.remaining);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/ai/preferences')
+      .then((r) => r.json())
+      .then((data: { preferences: AiPreferences | null }) => {
+        const prefs = data.preferences;
+        if (!prefs) {
+          setHasSavedPreferences(false);
+          return;
+        }
+        setAgeMin(prefs.preferred_age_min != null ? String(prefs.preferred_age_min) : '');
+        setAgeMax(prefs.preferred_age_max != null ? String(prefs.preferred_age_max) : '');
+        setPrefecturePref(
+          prefs.preferred_prefecture === 'near' || prefs.preferred_prefecture === 'anywhere'
+            ? prefs.preferred_prefecture
+            : ''
+        );
+        setMustConditions(prefs.must_conditions ?? []);
+        setPriorityPoints(prefs.priority_points ?? []);
+        setFreeMessage(prefs.free_message ?? '');
+        setIncomeMin(prefs.preferred_income_min != null ? String(prefs.preferred_income_min) : '');
+        setHasSavedPreferences(true);
+      })
+      .catch(() => setHasSavedPreferences(false));
   }, []);
 
   const handleSubmitPreferences = async () => {
@@ -187,20 +275,82 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
           must_conditions: mustConditions,
           priority_points: priorityPoints,
           free_message: freeMessage || null,
+          preferred_income_min: incomeMin ? Number(incomeMin) : null,
         }),
       });
 
       const res = await fetch('/api/ai/recommend', { method: 'POST' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json() as { candidates: RecommendResult[]; isDemo?: boolean };
-      setResults(data.candidates ?? []);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({})) as { error?: string; limitExceeded?: boolean };
+        throw new Error(errData.error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json() as { candidates: RecommendResult[]; isDemo?: boolean; remaining?: number };
+      const candidates = data.candidates ?? [];
+      const newIdsArr = computeNewIds(candidates);
+      setResults(candidates);
+      setNewIds(new Set(newIdsArr));
       setIsDemo(data.isDemo ?? false);
+      persistLastResult(candidates, data.isDemo ?? false, newIdsArr);
+      if (typeof data.remaining === 'number') setRemaining(data.remaining);
+      setHasSavedPreferences(true);
       setStatus('done');
     } catch (err) {
       console.error('Recommend error:', err);
-      setErrorMsg('AI分析に失敗しました。しばらく待ってから再試行してください。');
+      const message = err instanceof Error ? err.message : '';
+      const isLimit = message === '1日3回までご利用いただけます';
+      setLimitExceeded(isLimit);
+      if (isLimit) setRemaining(0);
+      setErrorMsg(
+        message && message !== `HTTP 429` && !message.startsWith('HTTP ')
+          ? message
+          : 'AI分析に失敗しました。しばらく待ってから再試行してください。'
+      );
       setStatus('error');
     }
+  };
+
+  const handleStartWithSaved = async () => {
+    setStatus('loading');
+    setErrorMsg('');
+    setIsDemo(false);
+    try {
+      const res = await fetch('/api/ai/recommend', { method: 'POST' });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({})) as { error?: string; limitExceeded?: boolean };
+        throw new Error(errData.error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json() as { candidates: RecommendResult[]; isDemo?: boolean; remaining?: number };
+      const candidates = data.candidates ?? [];
+      const newIdsArr = computeNewIds(candidates);
+      setResults(candidates);
+      setNewIds(new Set(newIdsArr));
+      setIsDemo(data.isDemo ?? false);
+      persistLastResult(candidates, data.isDemo ?? false, newIdsArr);
+      if (typeof data.remaining === 'number') setRemaining(data.remaining);
+      setStatus('done');
+    } catch (err) {
+      console.error('Recommend error:', err);
+      const message = err instanceof Error ? err.message : '';
+      const isLimit = message === '1日3回までご利用いただけます';
+      setLimitExceeded(isLimit);
+      if (isLimit) setRemaining(0);
+      setErrorMsg(
+        message && message !== `HTTP 429` && !message.startsWith('HTTP ')
+          ? message
+          : 'AI分析に失敗しました。しばらく待ってから再試行してください。'
+      );
+      setStatus('error');
+    }
+  };
+
+  const handleReanalyze = () => {
+    setStatus('idle');
+    setErrorMsg('');
+  };
+
+  const handleCancelToResults = () => {
+    setStatus(results.length > 0 ? 'done' : 'idle');
+    setErrorMsg('');
   };
 
   if (aiOptionEnabled === null) {
@@ -244,14 +394,44 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">
 
+      {remaining !== null && (
+        <div className="flex justify-center mb-4">
+          <p className="inline-block px-4 py-2 rounded-lg border-2 border-teal-500 text-teal-400 text-base font-bold text-center">
+            本日の分析：{Math.max(3 - remaining, 0)}/3回実施済み（残り{remaining}回）
+          </p>
+        </div>
+      )}
+
       {status === 'idle' && (
         <div className="text-center py-12">
           <div className="w-20 h-20 bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center mx-auto mb-5">
             <Sparkles className="w-9 h-9 text-teal-400" />
           </div>
           <p className="text-zinc-300 font-medium mb-2">AIがあなたにぴったりのメンバーを分析します</p>
-          <p className="text-zinc-600 text-xs mb-7">※ 分析には少し時間がかかる場合があります（約30〜60秒）</p>
-          <Button onClick={() => setStatus('preferences')}><Bot className="w-5 h-5" />分析を開始する</Button>
+          <p className="text-zinc-600 text-xs mb-1">※ 分析には少し時間がかかる場合があります（約30〜60秒）</p>
+          <p className="text-zinc-600 text-xs mb-4">※ 同じ条件で分析すると、似た結果になる場合があります</p>
+          {remaining !== null && (
+            <div className="inline-flex flex-col items-center gap-0.5 bg-zinc-800 border border-teal-800 rounded-2xl px-5 py-3 mb-7">
+              <span className="text-teal-400 font-bold text-lg">本日の残り分析回数：{remaining}回／3回</span>
+              <span className="text-zinc-500 text-xs">（日本時間0時にリセット）</span>
+            </div>
+          )}
+          {hasSavedPreferences === true ? (
+            <div className="flex flex-col items-center gap-3">
+              <Button onClick={handleStartWithSaved}><Bot className="w-5 h-5" />前回の内容で分析する</Button>
+              <Button variant="outline" onClick={() => setStatus('preferences')}>希望条件を変更する</Button>
+              {results.length > 0 && (
+                <Button variant="outline" onClick={handleCancelToResults}>キャンセル</Button>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+              <Button onClick={() => setStatus('preferences')}><Bot className="w-5 h-5" />分析を開始する</Button>
+              {results.length > 0 && (
+                <Button variant="outline" onClick={handleCancelToResults}>キャンセル</Button>
+              )}
+            </div>
+          )}
         </div>
       )}
       {status === 'preferences' && (
@@ -284,6 +464,21 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
                 className="w-24 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-teal-700 transition-colors"
               />
               <span className="text-zinc-500 text-sm">歳</span>
+            </div>
+          </div>
+
+          {/* 希望年収 */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <p className="text-white font-medium text-sm mb-3">希望年収（下限）</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                value={incomeMin}
+                onChange={(e) => setIncomeMin(e.target.value)}
+                placeholder="例：400"
+                className="w-24 bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-teal-700 transition-colors"
+              />
+              <span className="text-zinc-500 text-sm">万円以上</span>
             </div>
           </div>
 
@@ -350,7 +545,10 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
             />
           </div>
 
-          <Button onClick={handleSubmitPreferences}><Bot className="w-5 h-5" />分析を開始する</Button>
+          <div className="flex flex-col gap-3">
+            <Button onClick={handleSubmitPreferences}><Bot className="w-5 h-5" />分析を開始する</Button>
+            <Button variant="outline" onClick={handleCancelToResults}>キャンセル</Button>
+          </div>
         </div>
       )}
       {status === 'loading' && (
@@ -366,11 +564,16 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
             <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
           <p className="text-red-400 font-medium mb-2">{errorMsg}</p>
-          <Button onClick={handleSubmitPreferences} className="mt-2">再試行する</Button>
+          {limitExceeded ? (
+            <p className="text-zinc-500 text-xs mb-2">日本時間0時にリセットされ、また分析できるようになります</p>
+          ) : (
+            <Button onClick={handleSubmitPreferences} className="mt-2">再試行する</Button>
+          )}
         </div>
       )}
       {status === 'done' && results.length > 0 && (
         <div className="flex flex-col gap-6">
+          <p className="text-center text-teal-400 text-base font-bold">再度分析したい場合は、画面下の「再度分析する」ボタンを押してください</p>
           {isDemo && (
             <div className="flex items-start gap-2.5 bg-amber-950/50 border border-amber-800 rounded-xl px-4 py-3">
               <TriangleAlert className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
@@ -383,7 +586,7 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
           {/* 最高相性エリア */}
           <div>
             <p className="text-xl font-bold text-yellow-400 mb-3">👑 ベストマッチ</p>
-            <BestMatchCard member={results[0]} />
+            <BestMatchCard member={results[0]} isNew={newIds.has(results[0].id)} />
           </div>
 
           {/* その他のおすすめエリア */}
@@ -391,10 +594,14 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
             <div>
               <p className="text-xs font-semibold text-zinc-400 uppercase tracking-widest mb-3">その他のおすすめ</p>
               <div className="grid gap-4">
-                {results.slice(1).map((member, i) => <ResultCard key={member.id} member={member} rank={i + 2} />)}
+                {results.slice(1).map((member, i) => <ResultCard key={member.id} member={member} rank={i + 2} isNew={newIds.has(member.id)} />)}
               </div>
             </div>
           )}
+
+          <Button variant="outline" onClick={handleReanalyze} className="w-full">
+            <Bot className="w-5 h-5" />再度分析する
+          </Button>
         </div>
       )}
     </div>

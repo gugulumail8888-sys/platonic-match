@@ -843,6 +843,24 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
 
 export default function MyPage() {
   const [activeTab, setActiveTab] = useState<TabId>('profile');
+  // ブロック機能はプレリリース中(お見合い申請受付=omiai_open設定がOFF)は非表示にする
+  // (2026/7/14、ユーザーと合意)
+  const [omiaiOpen, setOmiaiOpen] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings/omiai')
+      .then((res) => res.json())
+      .then((data) => setOmiaiOpen(!!data.omiai_open))
+      .catch(() => setOmiaiOpen(false));
+  }, []);
+
+  useEffect(() => {
+    if (!omiaiOpen && activeTab === 'blocked') {
+      setActiveTab('profile');
+    }
+  }, [omiaiOpen, activeTab]);
+
+  const visibleTabs = omiaiOpen ? TABS : TABS.filter((t) => t.id !== 'blocked');
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto">
@@ -876,9 +894,9 @@ export default function MyPage() {
           })}
         </div>
 
-        {/* 下段: ブロックリスト・アカウント設定（均等幅） */}
+        {/* 下段: ブロックリスト・アカウント設定（均等幅、プレリリース中はブロックを非表示） */}
         <div className="flex">
-          {TABS.slice(1).map(({ id, label, icon: Icon }) => {
+          {visibleTabs.slice(1).map(({ id, label, icon: Icon }) => {
             const isActive = activeTab === id;
             return (
               <button

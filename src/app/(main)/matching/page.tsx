@@ -22,6 +22,7 @@ interface Matching {
   id: string;
   status: ApplicationStatus;
   created_at: string;
+  expires_at: string | null;
   applicant_id: string;
   partner_id: string;
   applicant_dating_wish: boolean;
@@ -31,6 +32,12 @@ interface Matching {
   zoom_url: string | null;
   meeting_ended_at: string | null;
   postponed_count: number;
+  payment_intent_id: string | null;
+  amount: number | null;
+  partner_payment_intent_id: string | null;
+  partner_amount: number | null;
+  cancel_reported_by: string | null;
+  second_cancel_reported_by: string | null;
 }
 
 function calcAge(birthDate: string) {
@@ -52,6 +59,13 @@ function getPostponeDeadline(scheduledAt: string): number {
   const d = jst.getUTCDate();
   return Date.UTC(y, m, d - 1, 8, 0, 0); // 17:00 JST = 08:00 UTC
 }
+
+const REJECT_REASON_OPTIONS = [
+  '年齢・条件が希望と合わない',
+  '雰囲気・価値観が合わなそう',
+  '日程・タイミングが合わない',
+  'その他',
+];
 
 const STATUS_CONFIG: Record<ApplicationStatus, { label: string; className: string }> = {
   pending: {
@@ -93,12 +107,15 @@ function StatusBadge({ status }: { status: ApplicationStatus }) {
   );
 }
 
-function MatchingCard({ matching, currentUserId }: { matching: Matching; currentUserId: string }) {
+function MatchingCard({ matching, currentUserId, myIsPremium }: { matching: Matching; currentUserId: string; myIsPremium: boolean }) {
   const router = useRouter();
   const [wished, setWished] = useState(matching.applicant_dating_wish);
   const [responding, setResponding] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [postponing, setPostponing] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectReasonOther, setRejectReasonOther] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -124,13 +141,18 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
     window.location.reload();
   }
 
-  async function handleReject() {
-    if (!window.confirm('このお見合い申請をお断りしますか？')) return;
+  function handleReject() {
+    setShowRejectModal(true);
+  }
+
+  async function submitReject() {
+    setShowRejectModal(false);
     setResponding(true);
+    const finalReason = rejectReason === 'その他' ? `その他：${rejectReasonOther.trim()}` : rejectReason;
     await fetch('/api/matching/reject', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matchingId: matching.id }),
+      body: JSON.stringify({ matchingId: matching.id, reason: finalReason || undefined }),
     });
     window.location.reload();
   }
@@ -153,7 +175,9 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
   }
 
   const isReceiver = matching.partner_id === currentUserId;
-  const { partner, status, created_at, id } = matching;
+  const myPaidAmount = isReceiver ? matching.partner_amount : matching.amount;
+  const myFee = myPaidAmount ?? (myIsPremium ? 3000 : 3500);
+  const { partner, status, created_at, expires_at, id } = matching;
 
   let countdown: { text: string; className: string } | null = null;
   if (status === 'zoom_completed' && matching.scheduled_at !== null && matching.meeting_ended_at === null) {
@@ -186,6 +210,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
   }
 
   return (
+    <>
     <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 hover:border-zinc-600 transition-all">
       {/* 上段: アバター + メンバー情報 + ステータス */}
       <div className="flex items-start gap-3">
@@ -223,7 +248,7 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
       <div className="border-t border-zinc-700 my-4" />
 
       {/* 下段: 申請日・申請番号・料金 */}
-      <div className={`grid gap-2 text-xs ${isReceiver ? 'grid-cols-2' : 'grid-cols-3'}`}>
+      <div className="grid gap-2 text-xs grid-cols-3">
         <div>
           <p className="text-zinc-500 mb-0.5 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
@@ -240,19 +265,23 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           </p>
           <p className="text-zinc-200 font-mono font-medium">{id.slice(0, 8).toUpperCase()}</p>
         </div>
-        {!isReceiver && (
-          <div>
-            <p className="text-zinc-500 mb-0.5">料金</p>
-            <p className="text-zinc-200 font-medium">
-              無料プラン ¥3,500・AIおすすめプラン ¥3,000
-              <span className="text-zinc-500 font-normal">（税込）</span>
-            </p>
-          </div>
-        )}
+        <div>
+          <p className="text-zinc-500 mb-0.5">あなたの料金</p>
+          <p className="text-zinc-200 font-medium">
+            ¥{myFee.toLocaleString()}
+            <span className="text-zinc-500 font-normal">（税込）</span>
+          </p>
+        </div>
       </div>
 
       {/* ボタンエリア */}
       <div className="mt-4 flex flex-col gap-2">
+        {/* 応答期限表示（申請中の場合、双方に表示） */}
+        {status === 'pending' && (
+          <p className="text-center text-xs text-amber-400">
+            この申請の応答期限は{new Date(expires_at ?? new Date(created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('ja-JP')}です（期限内に応答がない場合は自動的に不成立となります）
+          </p>
+        )}
         {/* 承認・拒否ボタン（申請中かつ自分がお相手の場合のみ） */}
         {status === 'pending' && isReceiver && (
           <div className="flex gap-2">
@@ -279,7 +308,24 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           </div>
         )}
 
-        {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && (
+        {matching.scheduled_at !== null && (status === 'scheduling' || status === 'zoom_completed') && (
+          <div className="mb-3 p-3 bg-teal-900/30 border border-teal-700 rounded-lg">
+            <p className="text-teal-400 text-sm font-medium">✅ 日程が確定しました！</p>
+            <p className="text-white text-sm mt-1">
+              📅 {new Date(matching.scheduled_at!).toLocaleString('ja-JP', {
+                timeZone: 'Asia/Tokyo',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                weekday: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}〜
+            </p>
+          </div>
+        )}
+
+        {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && matching.scheduled_at !== null && now >= new Date(matching.scheduled_at).getTime() - 2 * 60 * 60 * 1000 && (
           <button
             onClick={() => {
               router.push(`/zoom-check?matchingId=${matching.id}`);
@@ -290,8 +336,14 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           </button>
         )}
 
+        {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && matching.scheduled_at !== null && now < new Date(matching.scheduled_at).getTime() - 2 * 60 * 60 * 1000 && (
+          <div className="mb-2 p-2.5 rounded-xl bg-amber-900/20 border border-amber-800 text-center">
+            <p className="text-amber-400 text-sm font-semibold">⏳ お見合い開始2時間前からGoogle Meetに参加できます</p>
+          </div>
+        )}
+
         {/* 交際希望ボタン（Google Meet完了時のみ） */}
-        {status === 'zoom_completed' && (
+        {status === 'zoom_completed' && matching.meeting_ended_at !== null && (
           <button
             onClick={handleDatingWish}
             disabled={wished}
@@ -309,28 +361,21 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
         {status === 'scheduling' && (
           matching.scheduled_at !== null ? (
             <>
-              <div className="mb-3 p-3 bg-teal-900/30 border border-teal-700 rounded-lg">
-                <p className="text-teal-400 text-sm font-medium">✅ 日程が確定しました！</p>
-                <p className="text-white text-sm mt-1">
-                  📅 {new Date(matching.scheduled_at!).toLocaleString('ja-JP', {
-                    timeZone: 'Asia/Tokyo',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    weekday: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}〜
-                </p>
-              </div>
-              {!isReceiver && (
-                <Link
-                  href={`/payment/omiai?matchingId=${id}`}
-                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm mb-2"
-                >
-                  💳 お見合い料を支払う
-                </Link>
-              )}
+              {(() => {
+                const myPaid = isReceiver ? !!matching.partner_payment_intent_id : !!matching.payment_intent_id;
+                return myPaid ? (
+                  <div className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold bg-teal-950/50 text-teal-400 border border-teal-800 mb-2">
+                    ✅ お支払い済みです
+                  </div>
+                ) : (
+                  <Link
+                    href={`/payment/omiai?matchingId=${id}`}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm mb-2"
+                  >
+                    💳 お見合い料を支払う
+                  </Link>
+                );
+              })()}
               {matching.postponed_count < 1 && (
                 getPostponeDeadline(matching.scheduled_at) < now ? (
                   <div className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium bg-zinc-800 text-zinc-500 cursor-not-allowed">
@@ -386,17 +431,73 @@ function MatchingCard({ matching, currentUserId }: { matching: Matching; current
           プロフィールを見る
         </Link>
 
-        {/* キャンセル・変更ボタン */}
-        {!isReceiver && (status === 'pending' || status === 'scheduling' || status === 'completed') && (
-          <button
-            onClick={() => router.push(`/cancel-report?applicationId=${matching.id}`)}
-            className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-900 text-red-500 text-xs hover:bg-red-950/50 hover:border-red-800 transition-colors w-full"
-          >
-            キャンセル・変更を申請する
-          </button>
-        )}
+        {/* キャンセル・変更ボタン（申請者・お相手どちらも表示。キャンセル済みでも自分がまだ報告していなければ追加報告可） */}
+        {(() => {
+          const alreadyReportedByMe = matching.cancel_reported_by === currentUserId || matching.second_cancel_reported_by === currentUserId;
+          const bothReported = !!matching.cancel_reported_by && !!matching.second_cancel_reported_by;
+          const canReport = (status === 'pending' || status === 'scheduling' || status === 'zoom_completed' || status === 'completed')
+            || (status === 'cancelled' && !alreadyReportedByMe && !bothReported);
+          return canReport && (
+            <button
+              onClick={() => router.push(`/cancel-report?applicationId=${matching.id}`)}
+              className="flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-900 text-red-500 text-xs hover:bg-red-950/50 hover:border-red-800 transition-colors w-full"
+            >
+              ドタキャン・キャンセルを報告する
+            </button>
+          );
+        })()}
       </div>
     </div>
+
+    {showRejectModal && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowRejectModal(false)}>
+        <div className="bg-zinc-800 border border-zinc-700 rounded-2xl p-5 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-white font-semibold text-base mb-1">お見合い申請をお断りしますか？</h3>
+          <p className="text-xs text-zinc-400 mb-4">
+            よろしければ理由をお選びください(任意)。この理由は相手には伝わりません。運営の統計のみに使用します。
+          </p>
+          <div className="space-y-2 mb-3">
+            {REJECT_REASON_OPTIONS.map((opt) => (
+              <label key={opt} className="flex items-center gap-2 text-sm text-zinc-200 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`reject-reason-${matching.id}`}
+                  value={opt}
+                  checked={rejectReason === opt}
+                  onChange={() => setRejectReason(opt)}
+                  className="accent-red-500"
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
+          {rejectReason === 'その他' && (
+            <textarea
+              value={rejectReasonOther}
+              onChange={(e) => setRejectReasonOther(e.target.value)}
+              placeholder="理由を入力してください"
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-sm text-white mb-3"
+              rows={3}
+            />
+          )}
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => setShowRejectModal(false)}
+              className="flex-1 py-2 rounded-xl border border-zinc-600 text-zinc-300 text-sm font-semibold hover:bg-zinc-700 transition-colors"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={submitReject}
+              className="flex-1 py-2 rounded-xl bg-red-700 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
+            >
+              お断りする
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
@@ -404,6 +505,7 @@ export default function MatchingPage() {
   const [matchings, setMatchings] = useState<Matching[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState('');
+  const [myIsPremium, setMyIsPremium] = useState(false);
 
   useEffect(() => {
     async function fetchMatchings() {
@@ -412,9 +514,16 @@ export default function MatchingPage() {
       if (!user) { setLoading(false); return; }
       setCurrentUserId(user.id);
 
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('is_premium')
+        .eq('id', user.id)
+        .single();
+      setMyIsPremium(!!myProfile?.is_premium);
+
       const { data: rows, error } = await supabase
         .from('matchings')
-        .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at, zoom_url, meeting_ended_at, postponed_count')
+        .select('id, status, created_at, expires_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at, zoom_url, meeting_ended_at, postponed_count, payment_intent_id, amount, partner_payment_intent_id, partner_amount, cancel_reported_by, second_cancel_reported_by')
         .or(`applicant_id.eq.${user.id},partner_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 
@@ -491,7 +600,7 @@ export default function MatchingPage() {
       ) : matchings.length > 0 ? (
         <div className="space-y-4">
           {matchings.map((m) => (
-            <MatchingCard key={m.id} matching={m} currentUserId={currentUserId} />
+            <MatchingCard key={m.id} matching={m} currentUserId={currentUserId} myIsPremium={myIsPremium} />
           ))}
         </div>
       ) : (

@@ -27,7 +27,7 @@ const EDUCATION_OPTIONS = ['中学卒', '高校卒', '専門卒', '短大卒', '
 const MARRIAGE_TIMING_OPTIONS = ['すぐにでも', '1〜2年以内', '2〜3年以内', '未定'];
 const SEXUALITY_OPTIONS = ['異性愛', '同性愛', 'バイセクシュアル', 'その他'];
 const LIVING_ARRANGEMENT_OPTIONS = ['一人暮らし', '実家', '家族と同居', 'その他'];
-const POST_MARRIAGE_LIVING_OPTIONS = ['同居', '別居', 'その他'];
+const POST_MARRIAGE_LIVING_OPTIONS = ['同居', '別居', '家族と同居', '将来的に家族と同居を検討', 'その他'];
 const FINANCE_MANAGEMENT_OPTIONS = ['完全折半', '相談次第', 'その他'];
 const FERTILITY_METHODS_OPTIONS = ['人工授精', '体外受精', '養子縁組', '里親', 'その他・未定'];
 const SEXUAL_ACTIVITY_OPTIONS = [
@@ -497,7 +497,7 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
           <Select label="性別" options={genderOptions} error={errors.gender?.message} required {...register("gender")} />
           <Select label="住所（都道府県）" options={prefectureOptions} placeholder="選択してください" error={errors.prefecture?.message} required {...register("prefecture")} />
           <div className="md:col-span-2">
-            <Input label="住所（詳細）" placeholder="例：東京都渋谷区..." error={errors.address_detail?.message} required {...register("address_detail")} />
+            <Input label="住所（詳細）" placeholder="例：渋谷区..." error={errors.address_detail?.message} required {...register("address_detail")} />
           </div>
           <div className="md:col-span-2">
             <Input label="職業" placeholder="例：会社員、医師、教師..." error={errors.occupation?.message} required {...register("occupation")} />

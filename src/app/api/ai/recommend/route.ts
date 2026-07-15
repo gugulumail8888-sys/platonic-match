@@ -40,6 +40,28 @@ function getJstDayRange(): { start: Date; end: Date } {
   return { start, end };
 }
 
+export async function GET() {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
+
+    const { start, end } = getJstDayRange();
+    const { count: usageCount } = await supabase
+      .from('ai_usage_logs')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString());
+
+    const remaining = Math.max(DAILY_LIMIT - (usageCount ?? 0), 0);
+    return NextResponse.json({ remaining });
+  } catch (err) {
+    console.error('recommend usage check error:', err);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
 export async function POST() {
   try {
     const supabase = await createClient();
@@ -57,12 +79,13 @@ export async function POST() {
 
     if ((usageCount ?? 0) >= DAILY_LIMIT) {
       return NextResponse.json(
-        { error: '1日3回までご利用いただけます', limitExceeded: true },
+        { error: '1日3回までご利用いただけます', limitExceeded: true, remaining: 0 },
         { status: 429 }
       );
     }
 
     await supabase.from('ai_usage_logs').insert({ user_id: user.id });
+    const remaining = Math.max(DAILY_LIMIT - (usageCount ?? 0) - 1, 0);
 
     // ログインユーザーのプロフィール取得
     const { data: myProfile } = await supabase
@@ -95,7 +118,7 @@ export async function POST() {
 
 
     if (!candidates || candidates.length === 0) {
-      return NextResponse.json({ candidates: [], isDemo: true });
+      return NextResponse.json({ candidates: [], isDemo: true, remaining });
     }
 
     // デモモード
@@ -112,7 +135,7 @@ export async function POST() {
         reason: DEMO_REASONS[i % DEMO_REASONS.length],
       }));
       results.sort((a, b) => b.score - a.score);
-      return NextResponse.json({ candidates: results, isDemo: true });
+      return NextResponse.json({ candidates: results, isDemo: true, remaining });
     }
 
     // 本番AIモード
@@ -146,8 +169,8 @@ ${JSON.stringify(candidates)}
 6. 喫煙・飲酒の相性：5点
 7. 趣味・PR・希望条件のテキスト相性分析：10点
 
-聞き取り結果の希望年齢範囲・居住地の希望・絶対に譲れない条件・重視するポイント・一言メッセージも考慮し、
-絶対に譲れない条件に反する候補者は大きく減点してください。
+聞き取り結果の希望年齢範囲・希望年収・居住地の希望・絶対に譲れない条件・重視するポイント・一言メッセージも考慮し、
+絶対に譲れない条件に反する候補者、および希望年収を大きく下回る候補者は大きく減点してください。
 
 各候補者に対してスコア（0-100の整数）と、マッチング理由を日本語50文字程度で返してください。
 JSON形式で返答: { "results": [{ "id": "...", "score": 数値, "reason": "..." }] }`;
@@ -178,7 +201,7 @@ JSON形式で返答: { "results": [{ "id": "...", "score": 数値, "reason": "..
     });
 
     results.sort((a, b) => b.score - a.score);
-    return NextResponse.json({ candidates: results, isDemo: false });
+    return NextResponse.json({ candidates: results, isDemo: false, remaining });
 
   } catch (err) {
     console.error('recommend error:', err);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Smartphone, Wifi, Mic, Camera, Video, CheckCircle, AlertCircle, Download } from 'lucide-react';
+import { Smartphone, Wifi, Mic, Camera, Video, CheckCircle, AlertCircle, Download, FileText } from 'lucide-react';
 import { RULES } from '@/lib/zoom-check-rules';
 
 const IPHONE_STEPS = [
@@ -29,9 +29,9 @@ const IPHONE_STEPS = [
   {
     step: 4,
     title: 'Googleアカウントでログイン（任意）',
-    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。なくても参加できます。',
+    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。Googleアカウントがなくても参加できます。',
     icon: '👤',
-    tip: 'ログインしない場合は名前の入力を求められます',
+    tip: 'Googleアカウントにログインしない場合は名前の入力を求められます。名前はニックネームで大丈夫です',
   },
   {
     step: 5,
@@ -74,9 +74,9 @@ const ANDROID_STEPS = [
   {
     step: 4,
     title: 'Googleアカウントでログイン（任意）',
-    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。なくても参加できます。',
+    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。Googleアカウントがなくても参加できます。',
     icon: '👤',
-    tip: 'ログインしない場合は名前の入力を求められます',
+    tip: 'Googleアカウントにログインしない場合は名前の入力を求められます。名前はニックネームで大丈夫です',
   },
   {
     step: 5,
@@ -119,9 +119,9 @@ const WINDOWS_STEPS = [
   {
     step: 4,
     title: 'Googleアカウントでログイン（任意）',
-    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。なくても参加できます。',
+    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。Googleアカウントがなくても参加できます。',
     icon: '👤',
-    tip: 'ログインしない場合は名前の入力を求められます',
+    tip: 'Googleアカウントにログインしない場合は名前の入力を求められます。名前はニックネームで大丈夫です',
   },
   {
     step: 5,
@@ -164,9 +164,9 @@ const MAC_STEPS = [
   {
     step: 4,
     title: 'Googleアカウントでログイン（任意）',
-    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。なくても参加できます。',
+    desc: 'Googleアカウントをお持ちの場合はログインすると名前が表示されます。Googleアカウントがなくても参加できます。',
     icon: '👤',
-    tip: 'ログインしない場合は名前の入力を求められます',
+    tip: 'Googleアカウントにログインしない場合は名前の入力を求められます。名前はニックネームで大丈夫です',
   },
   {
     step: 5,
@@ -191,6 +191,7 @@ const CHECKLIST = [
   { icon: Smartphone, text: 'バッテリーが十分にある（30%以上推奨）', color: 'text-amber-400' },
   { icon: CheckCircle, text: 'ChromeまたはSafariなど対応ブラウザを使用している', color: 'text-green-400' },
   { icon: AlertCircle, text: '静かで明るい場所にいる', color: 'text-orange-400' },
+  { icon: FileText, text: 'お見合いの前にお相手のプロフィールを確認し、必要であればメモを準備している', color: 'text-pink-400' },
 ];
 
 type TabKey = 'iphone' | 'android' | 'windows' | 'mac';

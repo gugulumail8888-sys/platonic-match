@@ -2,10 +2,29 @@
 
 import { useEffect, useState } from 'react';
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { getCampaignPeriodLabel, CAMPAIGN_SLOT_LIMIT } from "@/lib/campaign";
 
 export default function LpPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+
+  const [omiaiOpen, setOmiaiOpen] = useState(false);
+  useEffect(() => {
+    fetch('/api/settings/omiai')
+      .then((res) => res.json())
+      .then((data) => setOmiaiOpen(!!data.omiai_open))
+      .catch(() => setOmiaiOpen(false));
+  }, []);
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const [showCampaignBanner, setShowCampaignBanner] = useState(false);
+  useEffect(() => {
+    fetch('/api/campaign-banner')
+      .then((res) => res.json())
+      .then((data) => setShowCampaignBanner(!!data.active))
+      .catch(() => setShowCampaignBanner(false));
+  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -117,6 +136,12 @@ export default function LpPage() {
         nav ul a:hover { color: var(--teal-light); }
         .nav-cta { background: transparent; border: 1px solid var(--teal); color: var(--teal-light) !important; padding: 8px 22px; border-radius: 2px; transition: background .2s, color .2s !important; }
         .nav-cta:hover { background: var(--teal) !important; color: #fff !important; }
+        .nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 8px; z-index: 101; }
+        .nav-hamburger span { display: block; width: 22px; height: 2px; background: #fff; margin: 5px 0; }
+        .mobile-menu { position: fixed; inset: 0; z-index: 150; background: rgba(26,37,64,.98); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; }
+        .mobile-menu a { color: #fff; font-size: 1.1rem; text-decoration: none; letter-spacing: .04em; }
+        .mobile-menu a.nav-cta { border: 1px solid var(--teal); padding: 10px 32px; border-radius: 3px; color: var(--teal-light) !important; }
+        .mobile-menu-close { position: absolute; top: 24px; right: 24px; background: none; border: none; color: #fff; font-size: 1.8rem; line-height: 1; cursor: pointer; }
         #hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; background: radial-gradient(ellipse 80% 60% at 50% 30%, #0d948820 0%, transparent 70%), linear-gradient(160deg, #2a3f6a 0%, #1e3058 40%, #182848 100%); }
         .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .18; pointer-events: none; animation: drift 18s ease-in-out infinite alternate; }
         .orb-1 { width: 600px; height: 600px; background: var(--teal); top: -100px; left: -200px; }
@@ -155,6 +180,27 @@ export default function LpPage() {
         .concept-label { position: absolute; display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--teal); letter-spacing: .08em; }
         .concept-label::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
         .label-top { top: 24%; left: 50%; transform: translateX(-50%); } .label-left { top: 58%; left: 8%; } .label-right { top: 58%; right: 8%; }
+        #compare { background: var(--dark); }
+        #compare .section-eyebrow { color: var(--teal-light); }
+        #compare .section-title { color: var(--white); }
+        #compare .section-title em { color: var(--teal-light); font-style: normal; }
+        .compare-header { text-align: center; }
+        .compare-header .section-desc { margin: 0 auto; color: rgba(255,255,255,.55); }
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 820px; margin: 40px auto 0; }
+        .compare-card { border-radius: 12px; padding: 32px 28px; }
+        .compare-card.no { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+        .compare-card.yes { background: rgba(13,148,136,.12); border: 1px solid rgba(13,148,136,.4); }
+        .compare-card h3 { font-size: .95rem; font-weight: 700; margin-bottom: 16px; }
+        .compare-card.no h3 { color: rgba(255,255,255,.6); }
+        .compare-card.yes h3 { color: var(--teal-light); }
+        .compare-card ul { list-style: none; }
+        .compare-card li { font-size: .85rem; padding: 8px 0; line-height: 1.6; }
+        .compare-card.no li { color: rgba(255,255,255,.55); }
+        .compare-card.yes li { color: rgba(255,255,255,.9); }
+        #safety { background: #dfe9f4; }
+        #safety .section-eyebrow { color: var(--teal); }
+        #safety .section-title { color: var(--dark-text); }
+        #safety .section-title em { color: var(--teal); }
         #how { background: #d4e4f2; }
         #how .section-eyebrow { color: var(--teal); }
         #how .section-title { color: var(--dark-text); }
@@ -167,6 +213,24 @@ export default function LpPage() {
         .step-title { font-size: .92rem; font-weight: 600; color: var(--dark-text); margin-bottom: 12px; }
         .step-desc { font-size: .82rem; color: var(--muted); line-height: 1.8; }
         .step-badge { display: inline-block; margin-top: 16px; font-size: .68rem; letter-spacing: .1em; color: var(--teal); border: 1px solid var(--teal-mid); padding: 4px 12px; border-radius: 2px; }
+        #preview { background: var(--dark); }
+        #preview .section-eyebrow { color: var(--teal-light); }
+        #preview .section-title { color: var(--white); }
+        #preview .section-title em { color: var(--teal-light); font-style: normal; }
+        .preview-header { text-align: center; margin-bottom: 56px; }
+        .preview-header .section-desc { margin: 0 auto; color: rgba(255,255,255,.55); }
+        .browser-mock { max-width: 760px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.08); }
+        .browser-bar { background: #e8ecf1; padding: 10px 16px; display: flex; gap: 6px; }
+        .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .browser-dot.red { background: #ff5f57; } .browser-dot.yellow { background: #ffbd2e; } .browser-dot.green { background: #28c840; }
+        .browser-body { background: #f7f8fa; padding: 28px; }
+        .member-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .member-card { background: #fff; border-radius: 6px; padding: 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 10px rgba(26,37,64,.08); }
+        .member-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: .9rem; flex-shrink: 0; }
+        .member-info-name { font-size: .85rem; font-weight: 600; color: var(--dark-text); }
+        .member-info-meta { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+        .member-badge { margin-top: 6px; display: inline-block; font-size: .62rem; color: var(--teal); background: #e6f7f5; padding: 2px 8px; border-radius: 10px; }
+        .preview-caption { text-align: center; margin-top: 20px; font-size: .72rem; color: rgba(255,255,255,.4); }
         #pricing { background: #c8dcee; }
         #pricing .section-eyebrow { color: var(--teal); }
         #pricing .section-title { color: var(--dark-text); }
@@ -196,6 +260,12 @@ export default function LpPage() {
         .value-icon svg { width: 22px; height: 22px; stroke: var(--teal); fill: none; stroke-width: 1.5; }
         .value-title { font-size: 1rem; font-weight: 600; color: var(--dark-text); margin-bottom: 12px; }
         .value-desc { font-size: .83rem; color: var(--muted); line-height: 1.85; }
+        #founder { background: var(--dark); }
+        #founder .section-title em { color: var(--teal-light); font-style: normal; }
+        .founder-mark { font-family: "DM Serif Display", serif; font-size: 3rem; color: var(--teal); line-height: 1; margin-bottom: 8px; }
+        .founder-box { max-width: 720px; margin: 0 auto; text-align: center; }
+        .founder-text { font-size: .95rem; color: rgba(255,255,255,.75); line-height: 2.1; }
+        .founder-signature { margin-top: 32px; font-size: .78rem; letter-spacing: .1em; color: var(--teal-light); }
         #faq { background: #c8dcee; }
         #faq .section-eyebrow { color: var(--teal); }
         #faq .section-title { color: var(--dark-text); }
@@ -229,7 +299,7 @@ export default function LpPage() {
         .reveal { opacity: 1 !important; transform: none !important; transition: opacity .65s ease, transform .65s ease; }
         .reveal.visible { opacity: 1 !important; transform: translateY(0) !important; }
         @media (max-width: 900px) {
-          nav { padding: 18px 24px; } nav ul { display: none; }
+          nav { padding: 18px 24px; } nav ul { display: none; } .nav-hamburger { display: block; }
           section { padding: 72px 24px; }
           .concept-grid { grid-template-columns: 1fr; gap: 40px; }
           .steps { grid-template-columns: 1fr 1fr; }
@@ -239,10 +309,20 @@ export default function LpPage() {
           .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
         }
         @media (max-width: 600px) {
-          .steps { grid-template-columns: 1fr; } .values-grid { grid-template-columns: 1fr; }
+          .steps { grid-template-columns: 1fr; } .values-grid { grid-template-columns: 1fr; } .member-grid { grid-template-columns: 1fr; } .compare-grid { grid-template-columns: 1fr; }
           .hero-actions { flex-direction: column; align-items: center; }
           #cta { padding: 80px 24px; } footer { padding: 40px 24px 24px; }
         }
+        .prerelease-notice { position: relative; z-index: 3; text-align: center; padding: 12px 24px; font-size: .78rem; color: rgba(255,255,255,.85); letter-spacing: .02em; background: rgba(13,148,136,.16); border-bottom: 1px solid rgba(13,148,136,.35); }
+        .top-notice-wrap { position: relative; z-index: 3; }
+        .lp-campaign-wrap { padding: 16px 24px 0; }
+        .lp-campaign-banner { max-width: 900px; margin: 0 auto; border-radius: 16px; padding: 20px 28px; background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%); color: #fff; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .lp-campaign-emoji { font-size: 2.2rem; flex-shrink: 0; }
+        .lp-campaign-badge { display: inline-block; background: #dc2626; color: #fff; font-size: .68rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin-left: 10px; vertical-align: middle; }
+        .lp-campaign-title { font-size: 1.05rem; font-weight: 700; }
+        .lp-campaign-text { font-size: .85rem; line-height: 1.7; color: rgba(255,255,255,.92); margin-top: 6px; }
+        .lp-campaign-cta { flex-shrink: 0; background: #fff; color: #ea580c; font-weight: 600; font-size: .82rem; padding: 10px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
+        .price-campaign-badge { display: inline-block; margin-bottom: 12px; font-size: .68rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%); padding: 4px 12px; border-radius: 999px; }
       `}</style>
 
       <nav id="mainNav">
@@ -254,7 +334,42 @@ export default function LpPage() {
           <li><a href="#faq">よくある質問</a></li>
           <li><a href="/signup" className="nav-cta">無料登録</a></li>
         </ul>
+        <button className="nav-hamburger" onClick={() => setMobileMenuOpen(true)} aria-label="メニューを開く">
+          <span /><span /><span />
+        </button>
       </nav>
+
+      {mobileMenuOpen && (
+        <div className="mobile-menu">
+          <button className="mobile-menu-close" onClick={() => setMobileMenuOpen(false)} aria-label="メニューを閉じる">×</button>
+          <a href="#concept" onClick={() => setMobileMenuOpen(false)}>サービスについて</a>
+          <a href="#how" onClick={() => setMobileMenuOpen(false)}>ご利用の流れ</a>
+          <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>料金</a>
+          <a href="#faq" onClick={() => setMobileMenuOpen(false)}>よくある質問</a>
+          <a href="/signup" className="nav-cta" onClick={() => setMobileMenuOpen(false)}>無料登録</a>
+        </div>
+      )}
+
+      <div className="top-notice-wrap" style={{ paddingTop: 'calc(var(--banner-offset) + 4.5rem)' }}>
+        {!omiaiOpen && (
+          <div className="prerelease-notice">
+            現在プレリリース期間中です。今は新規登録・プロフィール閲覧のみご利用いただけます。お見合い申請などの機能は近日公開予定です。
+          </div>
+        )}
+        {showCampaignBanner && (
+          <div className="lp-campaign-wrap">
+            <div className="lp-campaign-banner">
+              <div className="lp-campaign-emoji">🎉</div>
+              <div style={{flex:1}}>
+                <span className="lp-campaign-title">オープン記念！初期限定キャンペーン</span>
+                <span className="lp-campaign-badge">期間限定</span>
+                <p className="lp-campaign-text">{getCampaignPeriodLabel()}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）</p>
+              </div>
+              <a href="#pricing" className="lp-campaign-cta">料金を見る</a>
+            </div>
+          </div>
+        )}
+      </div>
 
       <section id="hero">
         <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
@@ -292,6 +407,62 @@ export default function LpPage() {
         </div>
       </section>
 
+      <section id="compare">
+        <div className="container">
+          <div className="compare-header reveal">
+            <div className="section-eyebrow">Difference</div>
+            <h2 className="section-title">一般的な婚活との<em>違い</em></h2>
+            <p className="section-desc">恋愛から始まる婚活とは、少し違います</p>
+          </div>
+          <div className="compare-grid reveal">
+            <div className="compare-card no">
+              <h3>❌ 一般的な婚活</h3>
+              <ul>
+                <li>・ 第一印象や外見が重視される</li>
+                <li>・ 恋愛感情が前提</li>
+                <li>・ 「好き」という気持ちから始まる</li>
+                <li>・ 早期に交際・プレッシャー</li>
+              </ul>
+            </div>
+            <div className="compare-card yes">
+              <h3>✅ amistaの友情婚活</h3>
+              <ul>
+                <li>・ 価値観・人柄・考え方を重視</li>
+                <li>・ 友人として信頼関係を築く</li>
+                <li>・ 「この人と人生を歩みたい」から始まる</li>
+                <li>・ プレッシャーなく自分らしく</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="safety">
+        <div className="container">
+          <div className="reveal">
+            <div className="section-eyebrow">Safety</div>
+            <h2 className="section-title">安心・安全への<em>取り組み</em></h2>
+          </div>
+          <div className="values-grid">
+            <div className="value-card reveal">
+              <div className="value-icon"><svg viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3z"/><path d="m9 12 2 2 4-4"/></svg></div>
+              <div className="value-title">全会員に本人確認審査</div>
+              <p className="value-desc">運転免許証・マイナンバーカード・パスポートのいずれかをご提出いただき、事務局が本人確認を実施(通常1〜3営業日)。確認が完了した会員のみお見合いに進めます。</p>
+            </div>
+            <div className="value-card reveal">
+              <div className="value-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg></div>
+              <div className="value-title">困ったときは事務局が対応</div>
+              <p className="value-desc">マッチングはシステムに沿ってスムーズに進みます。万が一トラブルがあった場合も、通報機能から事務局にご連絡いただければ内容を確認し対応します。</p>
+            </div>
+            <div className="value-card reveal">
+              <div className="value-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <div className="value-title">個人情報の厳重な管理</div>
+              <p className="value-desc">プライバシーポリシーに基づき、会員情報を厳重に管理しています。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="how">
         <div className="container">
           <div className="steps-header reveal">
@@ -305,6 +476,40 @@ export default function LpPage() {
             <div className="step reveal"><div className="step-num">3</div><div className="step-title">Google Meetお見合い</div><p className="step-desc">Google Meetで顔を見ながらお話し。事務局が事前に双方を確認・調整します。</p><span className="step-badge">3,500円（税込）/件</span></div>
             <div className="step reveal"><div className="step-num">4</div><div className="step-title">交際・成婚へ</div><p className="step-desc">相性が合えば連絡先交換。お互いのペースで関係を深めていきます。</p></div>
           </div>
+        </div>
+      </section>
+
+      <section id="preview">
+        <div className="container">
+          <div className="preview-header reveal">
+            <div className="section-eyebrow">Preview</div>
+            <h2 className="section-title">実際の画面は<em>こんな感じ</em></h2>
+            <p className="section-desc">シンプルで見やすい会員一覧画面。気になる方のプロフィールをじっくり見てから、お見合いを申し込めます。</p>
+          </div>
+          <div className="browser-mock reveal">
+            <div className="browser-bar"><span className="browser-dot red" /><span className="browser-dot yellow" /><span className="browser-dot green" /></div>
+            <div className="browser-body">
+              <div className="member-grid">
+                <div className="member-card">
+                  <div className="member-avatar" style={{background:'#0d9488'}}>さ</div>
+                  <div><div className="member-info-name">さくら</div><div className="member-info-meta">32歳・女性・東京都</div><span className="member-badge">本人確認済み</span></div>
+                </div>
+                <div className="member-card">
+                  <div className="member-avatar" style={{background:'#1e3a5f'}}>た</div>
+                  <div><div className="member-info-name">たくみ</div><div className="member-info-meta">38歳・男性・大阪府</div><span className="member-badge">本人確認済み</span></div>
+                </div>
+                <div className="member-card">
+                  <div className="member-avatar" style={{background:'#14b8a6'}}>み</div>
+                  <div><div className="member-info-name">みゆき</div><div className="member-info-meta">29歳・女性・神奈川県</div><span className="member-badge">本人確認済み</span></div>
+                </div>
+                <div className="member-card">
+                  <div className="member-avatar" style={{background:'#2a3f6a'}}>け</div>
+                  <div><div className="member-info-name">けんじ</div><div className="member-info-meta">45歳・男性・福岡県</div><span className="member-badge">本人確認済み</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="preview-caption">※画面はイメージです</p>
         </div>
       </section>
 
@@ -341,12 +546,13 @@ export default function LpPage() {
             </div>
             <div className="price-card featured reveal">
               <div className="price-label">Option</div>
+              {showCampaignBanner && <div className="price-campaign-badge">🎉 今なら申込日から3ヶ月無料（先着{CAMPAIGN_SLOT_LIMIT}名まで）</div>}
               <div className="price-name">AIおすすめプラン</div>
-              <div className="price-amount">¥980<span>〜 / 月</span></div>
-              <div className="price-note">税込 ¥1,078〜 / 月　仕事や育児で忙しいあなたへ</div>
+              <div className="price-amount">¥1,078<span>〜 / 月（税込）</span></div>
+              <div className="price-note">仕事や育児で忙しいあなたへ</div>
               <ul className="price-features">
                 <li>お見合い申請（1件 ¥3,000 税込）</li>
-                <li>AIがあなたに合う相手を自動で選定</li>
+                <li>AIがあなたに合う相手を自動で選定（1日3回まで）</li>
                 <li>毎週おすすめメンバーをご提案</li>
                 <li>AIがあなたの代わりに相手を探す</li>
                 <li>優先サポート</li>
@@ -378,6 +584,20 @@ export default function LpPage() {
               <div className="value-title">事務局が丁寧にサポート</div>
               <p className="value-desc">マッチングから面談調整・成婚まで、事務局スタッフが伴走。婚活が初めての方も、安心して活動を続けられます。</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="founder">
+        <div className="container">
+          <div className="reveal">
+            <div className="section-eyebrow" style={{color:'var(--teal-light)'}}>Our Story</div>
+            <h2 className="section-title" style={{color:'var(--white)', textAlign:'center'}}>運営者の<em>想い</em></h2>
+          </div>
+          <div className="founder-box reveal">
+            <div className="founder-mark">"</div>
+            <p className="founder-text">「恋愛感情がなければ結婚できない」――そんな空気に、息苦しさを感じたことはありませんか。amistaは、そんな声から生まれました。ドキドキよりも、信頼。一時の高揚感よりも、長く一緒にいられる安心感。そうした価値観を大切にする方々に、もっと自然体で出会える場所を届けたいという想いで、このサービスを立ち上げました。まだ始まったばかりのサービスですが、一人ひとりと丁寧に向き合いながら、育てていきたいと思っています。</p>
+            <div className="founder-signature">amista 運営チーム</div>
           </div>
         </div>
       </section>

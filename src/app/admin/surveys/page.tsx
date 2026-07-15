@@ -1,5 +1,8 @@
+import Link from 'next/link';
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/server';
+
+const PAGE_SIZE = 10;
 
 async function confirmOmiaiSurvey(formData: FormData) {
   'use server';
@@ -19,20 +22,66 @@ async function confirmMarriageReport(formData: FormData) {
   revalidatePath('/admin/surveys');
 }
 
-export default async function AdminSurveysPage() {
+function PaginationBar({
+  currentPage,
+  totalPages,
+  buildHref,
+}: {
+  currentPage: number;
+  totalPages: number;
+  buildHref: (page: number) => string;
+}) {
+  return (
+    <div className="flex items-center justify-end gap-2 mt-3">
+      {currentPage > 1 ? (
+        <Link
+          href={buildHref(currentPage - 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+        >
+          前へ
+        </Link>
+      ) : (
+        <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">前へ</span>
+      )}
+      <span className="text-xs text-zinc-400">{currentPage} / {totalPages}</span>
+      {currentPage < totalPages ? (
+        <Link
+          href={buildHref(currentPage + 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+        >
+          次へ
+        </Link>
+      ) : (
+        <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">次へ</span>
+      )}
+    </div>
+  );
+}
+
+export default async function AdminSurveysPage({
+  searchParams,
+}: {
+  searchParams: { surveyPage?: string; reportPage?: string };
+}) {
   const supabase = createAdminClient();
 
-  const { data: omiaiSurveys } = await supabase
-    .from('omiai_surveys')
-    .select('*, profiles!omiai_surveys_user_id_fkey(nickname)')
-    .order('created_at', { ascending: false })
-    .limit(50);
+  const surveyPage = Math.max(1, parseInt(searchParams.surveyPage ?? '1', 10) || 1);
+  const reportPage = Math.max(1, parseInt(searchParams.reportPage ?? '1', 10) || 1);
 
-  const { data: marriageReports } = await supabase
-    .from('marriage_reports')
-    .select('*, profiles!marriage_reports_user_id_fkey(nickname)')
+  const { data: omiaiSurveys, count: omiaiCount } = await supabase
+    .from('omiai_surveys')
+    .select('*, profiles!omiai_surveys_user_id_fkey(nickname)', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(50);
+    .range((surveyPage - 1) * PAGE_SIZE, surveyPage * PAGE_SIZE - 1);
+
+  const { data: marriageReports, count: reportCount } = await supabase
+    .from('marriage_reports')
+    .select('*, profiles!marriage_reports_user_id_fkey(nickname)', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range((reportPage - 1) * PAGE_SIZE, reportPage * PAGE_SIZE - 1);
+
+  const omiaiTotalPages  = Math.max(1, Math.ceil((omiaiCount ?? 0) / PAGE_SIZE));
+  const reportTotalPages = Math.max(1, Math.ceil((reportCount ?? 0) / PAGE_SIZE));
 
   return (
     <div className="p-6 space-y-10">
@@ -40,7 +89,7 @@ export default async function AdminSurveysPage() {
 
       {/* お見合い後アンケート */}
       <section>
-        <h2 className="text-xl font-semibold text-teal-400 mb-4">お見合い後アンケート</h2>
+        <h2 className="text-xl font-semibold text-teal-400 mb-4">お見合い後アンケート（全{omiaiCount ?? 0}件）</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-zinc-300 border border-zinc-700">
             <thead className="bg-zinc-800">
@@ -61,8 +110,8 @@ export default async function AdminSurveysPage() {
                   <td className="p-3">{new Date(s.created_at).toLocaleDateString('ja-JP')}</td>
                   <td className="p-3">{(s.profiles as any)?.nickname ?? '-'}</td>
                   <td className="p-3">{'★'.repeat(s.omiai_satisfaction)}</td>
-                  <td className="p-3">{s.partner_impression}</td>
-                  <td className="p-3">{s.want_to_meet_again}</td>
+                  <td className="p-3">{{ good: '良い', normal: '普通', bad: '合わなかった' }[s.partner_impression as string] ?? s.partner_impression}</td>
+                  <td className="p-3">{{ yes: 'はい', no: 'いいえ', considering: '検討中' }[s.want_to_meet_again as string] ?? s.want_to_meet_again}</td>
                   <td className="p-3">{'★'.repeat(s.service_satisfaction)}</td>
                   <td className="p-3 max-w-xs truncate">{s.comment ?? '-'}</td>
                   <td className="p-3 whitespace-nowrap">
@@ -88,11 +137,18 @@ export default async function AdminSurveysPage() {
             </tbody>
           </table>
         </div>
+        {(omiaiCount ?? 0) > 0 && (
+          <PaginationBar
+            currentPage={surveyPage}
+            totalPages={omiaiTotalPages}
+            buildHref={(p) => `/admin/surveys?surveyPage=${p}&reportPage=${reportPage}`}
+          />
+        )}
       </section>
 
       {/* 成婚報告アンケート */}
       <section>
-        <h2 className="text-xl font-semibold text-teal-400 mb-4">成婚報告アンケート</h2>
+        <h2 className="text-xl font-semibold text-teal-400 mb-4">成婚報告アンケート（全{reportCount ?? 0}件）</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-zinc-300 border border-zinc-700">
             <thead className="bg-zinc-800">
@@ -138,6 +194,13 @@ export default async function AdminSurveysPage() {
             </tbody>
           </table>
         </div>
+        {(reportCount ?? 0) > 0 && (
+          <PaginationBar
+            currentPage={reportPage}
+            totalPages={reportTotalPages}
+            buildHref={(p) => `/admin/surveys?surveyPage=${surveyPage}&reportPage=${p}`}
+          />
+        )}
       </section>
     </div>
   );

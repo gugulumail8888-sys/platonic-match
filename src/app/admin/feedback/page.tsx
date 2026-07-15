@@ -1,5 +1,8 @@
+import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
+
+const PAGE_SIZE = 10
 
 async function confirmFeedback(formData: FormData) {
   'use server'
@@ -10,18 +13,27 @@ async function confirmFeedback(formData: FormData) {
   revalidatePath('/admin/feedback')
 }
 
-export default async function AdminFeedbackPage() {
+export default async function AdminFeedbackPage({
+  searchParams,
+}: {
+  searchParams: { page?: string }
+}) {
   const supabase = createAdminClient()
-  const { data: feedbacks, error } = await supabase
+  const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1)
+
+  const { data: feedbacks, error, count } = await supabase
     .from('feedback')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
   return (
     <div className="p-6 md:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">ご意見・ご要望一覧</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">amista 管理者パネル</p>
+        <p className="text-sm text-zinc-400 mt-0.5">amista 管理者パネル（全{count ?? 0}件）</p>
       </div>
 
       {error && (
@@ -75,6 +87,32 @@ export default async function AdminFeedbackPage() {
           </tbody>
         </table>
       </div>
+
+      {(count ?? 0) > 0 && (
+        <div className="flex items-center justify-end gap-2">
+          {page > 1 ? (
+            <Link
+              href={`/admin/feedback?page=${page - 1}`}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+            >
+              前へ
+            </Link>
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">前へ</span>
+          )}
+          <span className="text-xs text-zinc-400">{page} / {totalPages}</span>
+          {page < totalPages ? (
+            <Link
+              href={`/admin/feedback?page=${page + 1}`}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+            >
+              次へ
+            </Link>
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">次へ</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

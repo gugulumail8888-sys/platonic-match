@@ -18,10 +18,6 @@ function LoginFormInner() {
       : null
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [failCount, setFailCount] = useState(0);
-  const MAX_FAIL = 5;
-  const LOCK_SECONDS = 300; // 5分
-  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const supabase = createClient();
 
   const handleGoogleLogin = async () => {
@@ -40,32 +36,22 @@ function LoginFormInner() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ロック中チェック
-    if (lockedUntil && Date.now() < lockedUntil) {
-      const remaining = Math.ceil((lockedUntil - Date.now()) / 1000 / 60);
-      setServerError(`ログイン試行回数が上限に達しました。${remaining}分後に再試行してください。`);
-      return;
-    }
-
     setServerError(null);
     setIsSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
     setIsSubmitting(false);
-    if (error) {
-      setServerError("メールアドレスまたはパスワードが正しくありません");
-      const next = failCount + 1;
-      setFailCount(next);
-      if (next >= MAX_FAIL) {
-        setLockedUntil(Date.now() + LOCK_SECONDS * 1000);
-        setServerError(`ログイン試行回数が上限に達しました。5分後に再試行してください。`);
-      }
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      setServerError(body.error ?? "ログインに失敗しました");
       return;
     }
 
-    setFailCount(0);
-    setLockedUntil(null);
-
-    // auth cookie は /api/auth/me がサーバー側でhttpOnlyセットする
+    // auth cookie は /api/auth/login がサーバー側でhttpOnlyセットする
     try {
       const res = await fetch('/api/auth/me');
       if (res.ok) {

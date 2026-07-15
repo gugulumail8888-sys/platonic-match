@@ -163,6 +163,10 @@ export default function PrivacyPage() {
               '1年経過後は自動的に削除',
             ]}
           />
+          <p className="mt-3 text-sm">
+            なお、本人確認書類の画像以外の登録情報(氏名・生年月日・プロフィール内容等)については、
+            退会後3年間保管の上、削除いたします。
+          </p>
         </ArticleSection>
 
         {/* 第4条 */}

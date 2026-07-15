@@ -14,7 +14,7 @@ type AppStatus = 'pending' | 'scheduling' | 'zoom_completed' | 'completed' | 'ca
 const APP_STATUS_CONFIG: Record<AppStatus, { label: string; className: string; barColor: string }> = {
   pending:        { label: '申請中',          className: 'bg-amber-900/50 text-amber-300 border border-amber-800', barColor: 'bg-amber-500' },
   scheduling:     { label: '日程調整中',      className: 'bg-blue-900/50  text-blue-300  border border-blue-800',  barColor: 'bg-blue-500'  },
-  zoom_completed: { label: 'Google Meet完了', className: 'bg-blue-900    text-blue-300',                            barColor: 'bg-sky-500'   },
+  zoom_completed: { label: 'Google Meet送信済', className: 'bg-blue-900    text-blue-300',                            barColor: 'bg-sky-500'   },
   completed:      { label: '完了',            className: 'bg-green-900/50 text-green-300 border border-green-800', barColor: 'bg-green-500' },
   cancelled:      { label: 'キャンセル',      className: 'bg-red-900/50 text-red-300 border border-red-800',       barColor: 'bg-red-500'   },
   rejected:       { label: '拒否',            className: 'bg-zinc-700 text-zinc-400 border border-zinc-600',       barColor: 'bg-zinc-500'  },
@@ -94,8 +94,22 @@ function Avatar({ nickname, avatarUrl, className }: { nickname: string; avatarUr
 // Page
 // ============================================================
 
-export default async function AdminDashboardPage() {
+const PREMIUM_PAGE_SIZE = 10;
+
+// AIおすすめオプションは1プランのみ(ライト/スタンダードの2階層UIは存在しない、2026/7/14確認)。
+// DB上の値は既存データとの互換のため'standard'のまま、表示名のみ実態に合わせて統一する。
+const SUBSCRIPTION_PLAN_LABELS: Record<string, string> = {
+  standard: 'AIおすすめオプション',
+};
+
+export default async function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams: { premiumPage?: string };
+}) {
   const supabase = createAdminClient();
+
+  const premiumPage = Math.max(1, parseInt(searchParams.premiumPage ?? '1', 10) || 1);
 
   // ── 日本時間での「今月」「先月」「直近7日間」の境界を算出 ──
   const nowShifted = jstShift(new Date());
@@ -121,11 +135,13 @@ export default async function AdminDashboardPage() {
     { count: newMembersThisMonth },
     { count: newMembersLastMonth },
     { data: matchingsThisMonth },
+    { data: revenueRows },
     { data: refundsThisMonth },
     { data: dailyMatchings },
     { data: recentAppsRaw },
     { data: recentMembers },
     { count: campaignSignupCount },
+    { data: premiumMembers, count: premiumCount },
   ] = await Promise.all([
     supabase.from('profiles').select('id', { count: 'exact', head: true }),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'male'),
@@ -134,8 +150,10 @@ export default async function AdminDashboardPage() {
       .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .gte('created_at', prevMonthStartIso).lt('created_at', monthStartIso),
-    supabase.from('matchings').select('id, status, created_at, amount, payment_intent_id')
+    supabase.from('matchings').select('id, status, created_at')
       .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
+    supabase.from('matchings').select('amount, partner_amount, paid_at, partner_paid_at')
+      .or(`and(paid_at.gte.${monthStartIso},paid_at.lt.${nextMonthStartIso}),and(partner_paid_at.gte.${monthStartIso},partner_paid_at.lt.${nextMonthStartIso})`),
     supabase.from('refunds').select('amount')
       .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
     supabase.from('matchings').select('created_at')
@@ -152,7 +170,15 @@ export default async function AdminDashboardPage() {
     supabase.from('profiles').select('id', { count: 'exact', head: true })
       .gte('subscription_started_at', CAMPAIGN_START.toISOString())
       .lte('subscription_started_at', CAMPAIGN_END.toISOString()),
+    // AIオプション契約者一覧（ダッシュボード新セクション用）
+    supabase.from('profiles')
+      .select('id, nickname, subscription_plan, subscription_started_at, current_period_end', { count: 'exact' })
+      .eq('is_premium', true)
+      .order('subscription_started_at', { ascending: false })
+      .range((premiumPage - 1) * PREMIUM_PAGE_SIZE, premiumPage * PREMIUM_PAGE_SIZE - 1),
   ]);
+
+  const premiumTotalPages = Math.max(1, Math.ceil((premiumCount ?? 0) / PREMIUM_PAGE_SIZE));
 
   // ── 最新申請の申請者・お相手プロフィールをまとめて取得 ──
   const recentApps = recentAppsRaw ?? [];
@@ -170,9 +196,12 @@ export default async function AdminDashboardPage() {
 
   const matchingsCountThisMonth = matchingsThisMonth?.length ?? 0;
 
-  const grossRevenue = (matchingsThisMonth ?? [])
-    .filter((m) => m.payment_intent_id !== null)
-    .reduce((sum, m) => sum + (m.amount ?? 0), 0);
+  const grossRevenue = (revenueRows ?? []).reduce((sum, m) => {
+    let s = 0;
+    if (m.paid_at && m.paid_at >= monthStartIso && m.paid_at < nextMonthStartIso) s += m.amount ?? 0;
+    if (m.partner_paid_at && m.partner_paid_at >= monthStartIso && m.partner_paid_at < nextMonthStartIso) s += m.partner_amount ?? 0;
+    return sum + s;
+  }, 0);
   const refundTotal = (refundsThisMonth ?? []).reduce((sum, r) => sum + (r.amount ?? 0), 0);
   const refundCount = (refundsThisMonth ?? []).length;
   const netRevenue = grossRevenue - refundTotal;
@@ -282,7 +311,10 @@ export default async function AdminDashboardPage() {
               {campaignSignupCount ?? 0} / {CAMPAIGN_SLOT_LIMIT}名
             </p>
             <p className="text-xs text-zinc-500 mt-0.5">
-              先着{CAMPAIGN_SLOT_LIMIT}名到達で新規は特典対象外（現在は自動判定なし・目視確認用）
+              先着{CAMPAIGN_SLOT_LIMIT}名到達で新規は特典対象外（トップページ・LPのキャンペーンバナーは到達時に自動的に非表示になります。2026/7/15対応）
+            </p>
+            <p className="text-[10px] text-zinc-600 mt-1">
+              ※キャンペーン期間中に契約開始した人数（解約済みも含む）。現在契約中の人数は下記「AIオプション契約者一覧」をご覧ください。
             </p>
           </div>
         </div>
@@ -488,6 +520,76 @@ export default async function AdminDashboardPage() {
             すべての会員を見る →
           </Link>
         </div>
+      </SectionCard>
+
+      {/* ===== AIオプション契約者一覧 ===== */}
+      <SectionCard title={`AIオプション契約者一覧（全${premiumCount ?? 0}件）`}>
+        <p className="text-[10px] text-zinc-600 -mt-2 mb-3">
+          ※現在契約中（is_premium）の会員一覧です。契約開始時期は問いません。上記「AIオプション キャンペーン契約者数」（キャンペーン期間中に契約開始した人数）とは集計範囲が異なるため件数が一致しない場合があります。
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[500px]">
+            <thead>
+              <tr className="border-b border-zinc-800">
+                {['ニックネーム', 'プラン', '契約開始日', '次回更新日'].map((h) => (
+                  <th key={h} className="text-left px-3 py-2.5 text-xs text-zinc-400 font-medium uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {(premiumMembers ?? []).map((p) => (
+                <tr key={p.id} className="hover:bg-zinc-800/50 transition-colors">
+                  <td className="px-3 py-3">
+                    <Link href={`/admin/members/${p.id}`} className="text-zinc-200 hover:text-teal-400 transition-colors">
+                      {p.nickname}
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3 text-zinc-400 text-xs">
+                    {SUBSCRIPTION_PLAN_LABELS[p.subscription_plan ?? ''] ?? p.subscription_plan ?? '-'}
+                  </td>
+                  <td className="px-3 py-3 text-zinc-400 text-xs">
+                    {p.subscription_started_at ? formatDate(p.subscription_started_at) : '-'}
+                  </td>
+                  <td className="px-3 py-3 text-zinc-400 text-xs">
+                    {p.current_period_end ? formatDate(p.current_period_end) : '-'}
+                  </td>
+                </tr>
+              ))}
+              {(premiumMembers ?? []).length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-3 py-6 text-center text-zinc-500 text-xs">AIオプション契約者はまだいません</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        {(premiumCount ?? 0) > 0 && (
+          <div className="flex items-center justify-end gap-2 mt-3">
+            {premiumPage > 1 ? (
+              <Link
+                href={`/admin?premiumPage=${premiumPage - 1}`}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+              >
+                前へ
+              </Link>
+            ) : (
+              <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">前へ</span>
+            )}
+            <span className="text-xs text-zinc-400">{premiumPage} / {premiumTotalPages}</span>
+            {premiumPage < premiumTotalPages ? (
+              <Link
+                href={`/admin?premiumPage=${premiumPage + 1}`}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+              >
+                次へ
+              </Link>
+            ) : (
+              <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">次へ</span>
+            )}
+          </div>
+        )}
       </SectionCard>
     </div>
   );

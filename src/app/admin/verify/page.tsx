@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, ShieldX, Clock, FileText, MapPin, RefreshCw, CheckSquare } from 'lucide-react';
+import { ShieldCheck, ShieldX, Clock, FileText, MapPin, RefreshCw, CheckSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAvatarColor } from '@/lib/utils';
 
 type VerifyStatus = 'pending' | 'approved' | 'verified' | 'rejected';
@@ -20,11 +20,12 @@ interface VerifyItem {
   resubmitted_at: string | null;
 }
 
+// 会員管理画面(AdminMembersClient.tsx)のMEMBER_STATUS_CONFIGと同じ日本語訳に統一（自動/手動の区別のみ括弧で補足）
 const STATUS_CONFIG: Record<VerifyStatus, { label: string; className: string; icon: React.ElementType }> = {
-  pending:  { label: '審査待ち',       className: 'bg-amber-900/50 text-amber-300 border border-amber-800', icon: Clock },
-  approved: { label: '自動承認済み',   className: 'bg-blue-900/50 text-blue-300 border border-blue-800',   icon: ShieldCheck },
+  pending:  { label: '審査中',         className: 'bg-amber-900/50 text-amber-300 border border-amber-800', icon: Clock },
+  approved: { label: '承認済み（自動）', className: 'bg-blue-900/50 text-blue-300 border border-blue-800',   icon: ShieldCheck },
   verified: { label: '手動チェック済み', className: 'bg-green-900/50 text-green-300 border border-green-800', icon: CheckSquare },
-  rejected: { label: '否認',           className: 'bg-red-900/50 text-red-300 border border-red-800',      icon: ShieldX },
+  rejected: { label: '拒否',           className: 'bg-red-900/50 text-red-300 border border-red-800',      icon: ShieldX },
 };
 
 function StatusBadge({ status }: { status: VerifyStatus }) {
@@ -42,12 +43,14 @@ type FilterTab = 'all' | VerifyStatus | 'resubmitted';
 
 const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
   { value: 'all',         label: 'すべて' },
-  { value: 'pending',     label: '審査待ち' },
-  { value: 'approved',    label: '自動承認済み' },
+  { value: 'pending',     label: '審査中' },
+  { value: 'approved',    label: '承認済み（自動）' },
   { value: 'resubmitted', label: '再審査待ち' },
   { value: 'verified',    label: '手動チェック済み' },
-  { value: 'rejected',    label: '否認' },
+  { value: 'rejected',    label: '拒否' },
 ];
+
+const PAGE_SIZE = 12;
 
 export default function AdminVerifyPage() {
   const router = useRouter();
@@ -56,6 +59,7 @@ export default function AdminVerifyPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [checkingId, setCheckingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const fetchItems = useCallback(() => {
     setIsLoading(true);
@@ -101,6 +105,10 @@ export default function AdminVerifyPage() {
     return v.status === filter;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
   const counts = {
     all:         items.length,
     pending:     items.filter((v) => v.status === 'pending').length,
@@ -135,7 +143,7 @@ export default function AdminVerifyPage() {
           return (
             <button
               key={opt.value}
-              onClick={() => setFilter(opt.value)}
+              onClick={() => { setFilter(opt.value); setPage(1); }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-teal-950 text-teal-400 border border-teal-900'
@@ -162,7 +170,7 @@ export default function AdminVerifyPage() {
         <div className="text-center py-16 text-zinc-500">該当する申請が見つかりませんでした</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((item) => (
+          {paged.map((item) => (
             <div
               key={item.id}
               className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5 hover:border-zinc-700 transition-all"
@@ -249,6 +257,34 @@ export default function AdminVerifyPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ページネーション */}
+      {!isLoading && !loadError && filtered.length > 0 && (
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs text-zinc-500">
+            全{filtered.length}件中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, filtered.length)}件を表示
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              前へ
+            </button>
+            <span className="text-xs text-zinc-400">{currentPage} / {totalPages}</span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+            >
+              次へ
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       )}
     </div>

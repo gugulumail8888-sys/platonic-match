@@ -26,108 +26,6 @@ function calcAge(birthDate: string): number {
   return age;
 }
 
-// 相互いいねを検出し、未作成であればマッチングを自動生成する
-async function tryCreateMutualMatch(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  likerId: string,
-  likedId: string,
-  origin: string
-): Promise<boolean> {
-  try {
-    const { data: reciprocal } = await supabase
-      .from('likes')
-      .select('id')
-      .eq('liker_id', likedId)
-      .eq('liked_id', likerId)
-      .maybeSingle();
-
-    if (!reciprocal) return false;
-
-    const admin = createAdminClient();
-
-    const { data: existingMatching } = await admin
-      .from('matchings')
-      .select('id')
-      .or(
-        `and(applicant_id.eq.${likerId},partner_id.eq.${likedId}),and(applicant_id.eq.${likedId},partner_id.eq.${likerId})`
-      )
-      .maybeSingle();
-
-    if (existingMatching) return false;
-
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-    const { data: newMatching, error: insertError } = await admin
-      .from('matchings')
-      .insert({
-        applicant_id: likerId,
-        partner_id: likedId,
-        status: 'scheduling',
-        applied_at: now.toISOString(),
-        expires_at: expiresAt.toISOString(),
-      })
-      .select('id')
-      .single();
-
-    if (insertError) {
-      console.error('Mutual match insert error:', insertError);
-      return false;
-    }
-
-    // マッチング成立メール送信（失敗してもマッチング作成自体は成功扱い）
-    try {
-      const { data: profiles } = await admin
-        .from('profiles')
-        .select('id, nickname, birth_date, prefecture, occupation')
-        .in('id', [likerId, likedId]);
-
-      const profLiker = profiles?.find((p) => p.id === likerId);
-      const profLiked = profiles?.find((p) => p.id === likedId);
-
-      const [{ data: authLiker }, { data: authLiked }] = await Promise.all([
-        admin.auth.admin.getUserById(likerId),
-        admin.auth.admin.getUserById(likedId),
-      ]);
-
-      await fetch(`${origin}/api/admin/notify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
-        },
-        body: JSON.stringify({
-          type: 'matching_approved',
-          applicationId: newMatching?.id ?? '',
-          appliedAt: now.toISOString(),
-          applicant: {
-            nickname: profLiker?.nickname ?? '',
-            age: calcAge(profLiker?.birth_date ?? '2000-01-01'),
-            prefecture: profLiker?.prefecture ?? '',
-            occupation: profLiker?.occupation ?? '',
-            email: authLiker?.user?.email ?? '',
-          },
-          member: {
-            nickname: profLiked?.nickname ?? '',
-            age: calcAge(profLiked?.birth_date ?? '2000-01-01'),
-            prefecture: profLiked?.prefecture ?? '',
-            occupation: profLiked?.occupation ?? '',
-            email: authLiked?.user?.email ?? '',
-          },
-          amount: 0,
-        }),
-      });
-    } catch (mailError) {
-      console.error('Mutual match notify error:', mailError);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Mutual match check error:', error);
-    return false;
-  }
-}
-
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -203,11 +101,8 @@ export async function POST(req: NextRequest) {
 
   await supabase.from('likes').insert({ liker_id: user.id, liked_id: memberId });
 
-  const mutualMatch = await tryCreateMutualMatch(supabase, user.id, memberId, req.nextUrl.origin);
-
   return NextResponse.json({
     liked: true,
     remainingToday: dailyLikeLimit - (count ?? 0) - 1,
-    ...(mutualMatch ? { mutualMatch: true } : {}),
   });
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight, Sparkles, Heart, HeartHandshake } from 'lucide-react';
 import { LikesSentTab, LikesReceivedTab } from './LikesTabs';
 
@@ -60,8 +61,15 @@ function NewMembersGrid({ newMembers }: { newMembers: NewMember[] }) {
   );
 }
 
-export default function DashboardTabs({ newMembers }: { newMembers: NewMember[] }) {
+export default function DashboardTabs({ newMembers, mutualCount }: { newMembers: NewMember[]; mutualCount: number }) {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<DashboardTabId>('new-members');
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'likes-received') {
+      setActiveTab('likes-received');
+    }
+  }, [searchParams]);
 
   return (
     <div>
@@ -82,6 +90,11 @@ export default function DashboardTabs({ newMembers }: { newMembers: NewMember[] 
             >
               <Icon className={`w-4 h-4 ${isActive ? 'text-teal-400' : 'text-zinc-500'}`} />
               {label}
+              {id === 'likes-received' && mutualCount > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-pink-600 text-white text-[10px] font-bold">
+                  {mutualCount}
+                </span>
+              )}
             </button>
           );
         })}

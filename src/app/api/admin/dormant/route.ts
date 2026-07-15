@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
   const { data: profiles, error } = await adminSupabase
     .from('profiles')
-    .select('id, nickname, gender, birth_date, prefecture, occupation, status, created_at, avatar_color')
+    .select('id, nickname, gender, birth_date, prefecture, occupation, status, created_at, avatar_color, dormant_notice_sent_at')
     .in('id', dormantIds)
     .neq('role', 'admin');
 

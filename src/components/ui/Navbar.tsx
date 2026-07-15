@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -17,12 +18,14 @@ import {
   Video,
 } from "lucide-react";
 
+// requireOmiaiOpen: プレリリース中(お見合い申請受付=omiai_open設定がOFF)は
+// マッチング・AIおすすめの両方を全ユーザー一律でロックする(2026/7/14、ユーザーと合意)
 const navItems = [
-  { href: "/dashboard", label: "ホーム", icon: Home, requireAiOption: false },
-  { href: "/members", label: "会員一覧", icon: Users, requireAiOption: false },
-  { href: "/matching", label: "マッチング", icon: Handshake, requireAiOption: false },
-  { href: "/recommend", label: "AIおすすめ", icon: Bot, requireAiOption: true },
-  { href: "/mypage", label: "マイページ", icon: User, requireAiOption: false },
+  { href: "/dashboard", label: "ホーム", icon: Home, requireAiOption: false, requireOmiaiOpen: false },
+  { href: "/members", label: "会員一覧", icon: Users, requireAiOption: false, requireOmiaiOpen: false },
+  { href: "/matching", label: "マッチング", icon: Handshake, requireAiOption: false, requireOmiaiOpen: true },
+  { href: "/recommend", label: "AIおすすめ", icon: Bot, requireAiOption: true, requireOmiaiOpen: true },
+  { href: "/mypage", label: "マイページ", icon: User, requireAiOption: false, requireOmiaiOpen: false },
 ];
 
 const supportNavItems = [
@@ -34,6 +37,14 @@ const supportNavItems = [
 export function Navbar({ role, hasAiOption = false }: { role?: string; hasAiOption?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [omiaiOpen, setOmiaiOpen] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/settings/omiai')
+      .then((res) => res.json())
+      .then((data) => setOmiaiOpen(!!data.omiai_open))
+      .catch(() => setOmiaiOpen(false));
+  }, []);
 
   const handleSignOut = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -47,7 +58,8 @@ export function Navbar({ role, hasAiOption = false }: { role?: string; hasAiOpti
   const renderNavItem = (item: typeof navItems[0], mobileMode = false) => {
     const Icon = item.icon;
     const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-    const isLocked = item.requireAiOption && !hasAiOption;
+    const isPrereleaseLocked = item.requireOmiaiOpen && !omiaiOpen;
+    const isLocked = isPrereleaseLocked || (item.requireAiOption && !hasAiOption);
 
     if (mobileMode) {
       return (
@@ -82,7 +94,7 @@ export function Navbar({ role, hasAiOption = false }: { role?: string; hasAiOpti
             <span className="text-sm">{item.label}</span>
             <div className="ml-auto flex items-center gap-1">
               <Lock className="w-3 h-3 text-zinc-600" />
-              <span className="text-[10px] text-zinc-600">オプション</span>
+              <span className="text-[10px] text-zinc-600">{isPrereleaseLocked ? '準備中' : 'オプション'}</span>
             </div>
           </div>
         ) : (

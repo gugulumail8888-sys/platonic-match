@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { pauseAllAiOptionBilling, resumeAllAiOptionBilling } from '@/lib/ai-option-billing';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,22 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: '設定が指定されていません' }, { status: 400 });
   }
 
+  // ai_option_enabledが変更される場合は、Stripe側の請求一時停止/再開と連動させるため
+  // 更新前の値を保持しておく(2026/7/14、ユーザーと合意した対応)
+  let aiOptionEnabledChangedTo: boolean | null = null;
+  if ('ai_option_enabled' in body) {
+    const { data: current } = await admin
+      .from('settings')
+      .select('value')
+      .eq('key', 'ai_option_enabled')
+      .maybeSingle();
+    const currentValue = current?.value !== 'false'; // 未設定時のデフォルトはtrue扱い
+    const nextValue = String(body.ai_option_enabled) !== 'false';
+    if (currentValue !== nextValue) {
+      aiOptionEnabledChangedTo = nextValue;
+    }
+  }
+
   const rows = entries.map(([key, value]) => ({ key, value: String(value) }));
 
   const { error: upsertError } = await admin
@@ -77,5 +94,14 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: '設定の更新に失敗しました' }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  let billingResult: { paused?: number; resumed?: number; failed?: number } = {};
+  if (aiOptionEnabledChangedTo === false) {
+    const r = await pauseAllAiOptionBilling(admin);
+    billingResult = r;
+  } else if (aiOptionEnabledChangedTo === true) {
+    const r = await resumeAllAiOptionBilling(admin);
+    billingResult = r;
+  }
+
+  return NextResponse.json({ ok: true, billingResult });
 }

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, RotateCcw, MapPin, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, RotateCcw, MapPin, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ── 型定義 ────────────────────────────────────────────────────
 
@@ -46,6 +46,8 @@ const STATUS_FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'rejected',  label: '拒否' },
   { value: 'withdrawn', label: '退会済み' },
 ];
+
+const PAGE_SIZE = 10;
 
 // ── ヘルパー ──────────────────────────────────────────────────
 
@@ -148,6 +150,7 @@ export default function AdminMembersClient({
   const [blockCounts, setBlockCounts]   = useState<Record<string, number>>({});
   const [sortKey, setSortKey]           = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetch('/api/blocks/counts')
@@ -164,6 +167,10 @@ export default function AdminMembersClient({
       return true;
     });
   }, [members, search, genderFilter, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, genderFilter, statusFilter]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -185,6 +192,10 @@ export default function AdminMembersClient({
       return 0;
     });
   }, [filtered, sortKey, sortDirection, blockCounts]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handleReset = () => {
     setSearch('');
@@ -279,14 +290,14 @@ export default function AdminMembersClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {sorted.length === 0 ? (
+              {paged.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-zinc-500">
                     該当する会員が見つかりませんでした
                   </td>
                 </tr>
               ) : (
-                sorted.map((row) => (
+                paged.map((row) => (
                   <tr key={row.id} className="hover:bg-zinc-800/50 transition-colors">
                     {/* ID */}
                     <td className="px-4 py-3 text-zinc-500 text-xs font-mono">
@@ -388,8 +399,31 @@ export default function AdminMembersClient({
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 border-t border-zinc-800 text-xs text-zinc-500">
-          {filtered.length} 名表示 / 全 {members.length} 名
+        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
+          <span className="text-xs text-zinc-500">
+            全{sorted.length}名中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, sorted.length)}名を表示
+          </span>
+          {sorted.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                前へ
+              </button>
+              <span className="text-xs text-zinc-400">{currentPage} / {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                次へ
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

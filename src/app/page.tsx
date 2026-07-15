@@ -6,15 +6,24 @@ import { Users, Shield, MessageCircle, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ScrollHeader } from "@/components/ui/ScrollHeader";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { getCampaignPeriodLabel, CAMPAIGN_SLOT_LIMIT } from "@/lib/campaign";
 
 export default function HomePage() {
   const [showCampaignBanner, setShowCampaignBanner] = useState(false);
+  const [omiaiOpen, setOmiaiOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/campaign-banner")
       .then((res) => res.json())
       .then((data) => setShowCampaignBanner(!!data.active))
       .catch(() => setShowCampaignBanner(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/settings/omiai")
+      .then((res) => res.json())
+      .then((data) => setOmiaiOpen(!!data.omiai_open))
+      .catch(() => setOmiaiOpen(false));
   }, []);
 
   useEffect(() => {
@@ -88,6 +97,41 @@ export default function HomePage() {
       {/* スクロール対応ヘッダー（クライアントコンポーネント） */}
       <ScrollHeader />
 
+      {/* プレリリース告知・キャンペーンバナー(スクロールなしで見えるようヒーローセクションより前に表示。ヘッダー分の余白はこのdivでまとめて確保) */}
+      <div style={{ paddingTop: 'calc(var(--banner-offset) + 4.5rem)' }}>
+      {!omiaiOpen && (
+        <section className="px-4 pb-3 text-center text-sm text-white/85" style={{ background: 'rgba(13,148,136,.16)', borderBottom: '1px solid rgba(13,148,136,.35)' }}>
+          現在プレリリース期間中です。今は新規登録・プロフィール閲覧のみご利用いただけます。お見合い申請などの機能は近日公開予定です。
+        </section>
+      )}
+      {showCampaignBanner && (
+        <section className="px-4 pb-4">
+          <div
+            className="max-w-4xl mx-auto rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-5 md:gap-8 text-white"
+            style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}
+          >
+            <div className="text-5xl flex-shrink-0">🎉</div>
+            <div className="flex-1 text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center md:items-baseline gap-2 mb-2">
+                <h2 className="text-xl md:text-2xl font-bold">オープン記念！初期限定キャンペーン</h2>
+                <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                  期間限定
+                </span>
+              </div>
+              <p className="text-white/90 text-sm md:text-base leading-relaxed">
+                {getCampaignPeriodLabel()}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）
+              </p>
+            </div>
+            <Link href="/option-apply" className="flex-shrink-0">
+              <button className="bg-white text-orange-600 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-colors whitespace-nowrap">
+                AIおすすめ機能を見る
+              </button>
+            </Link>
+          </div>
+        </section>
+      )}
+      </div>
+
       {/* ヒーローセクション */}
       <section
         className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-teal-800 via-teal-700 to-cyan-700 relative overflow-hidden"
@@ -152,34 +196,6 @@ export default function HomePage() {
           </p>
         </div>
       </section>
-
-      {/* オープン記念・初期限定キャンペーンバナー */}
-      {showCampaignBanner && (
-        <section className="px-4 -mt-px">
-          <div
-            className="max-w-4xl mx-auto rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-5 md:gap-8 text-white"
-            style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}
-          >
-            <div className="text-5xl flex-shrink-0">🎉</div>
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col md:flex-row items-center md:items-baseline gap-2 mb-2">
-                <h2 className="text-xl md:text-2xl font-bold">オープン記念！初期限定キャンペーン</h2>
-                <span className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                  期間限定
-                </span>
-              </div>
-              <p className="text-white/90 text-sm md:text-base leading-relaxed">
-                7月〜9月にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！
-              </p>
-            </div>
-            <Link href="/option-apply" className="flex-shrink-0">
-              <button className="bg-white text-orange-600 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-colors whitespace-nowrap">
-                AIおすすめ機能を見る
-              </button>
-            </Link>
-          </div>
-        </section>
-      )}
 
       {/* 友情婚活とは */}
       <section id="about" className="py-16 px-4 bg-teal-100 scroll-mt-24">
@@ -342,6 +358,14 @@ export default function HomePage() {
               </div>
 
               <div className="mb-6">
+                {showCampaignBanner && (
+                  <div
+                    className="inline-block mb-3 text-white text-xs font-bold px-3 py-1 rounded-full"
+                    style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)' }}
+                  >
+                    🎉 今なら申込日から3ヶ月無料（先着{CAMPAIGN_SLOT_LIMIT}名まで）
+                  </div>
+                )}
                 <p className="text-sm font-medium text-pink-400 mb-1">AIおすすめプラン</p>
                 {/* キャッチコピー */}
                 <p className="text-xs text-pink-300/80 mb-2">仕事や育児で忙しいあなたへ</p>

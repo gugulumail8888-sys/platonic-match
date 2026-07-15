@@ -38,7 +38,7 @@ export async function GET() {
   // ① matchings取得（pending除外）
   const { data: matchings, error } = await admin
     .from('matchings')
-    .select('id, applicant_id, partner_id, status, zoom_sent, scheduled_at, payment_intent_id, refunded')
+    .select('id, applicant_id, partner_id, status, zoom_sent, scheduled_at, amount, payment_intent_id, refunded, partner_amount, partner_payment_intent_id, partner_refunded')
     .in('status', ['scheduling', 'completed', 'zoom_completed'])
     .order('created_at', { ascending: false })
 
@@ -101,6 +101,10 @@ export async function GET() {
       zoomSent:        m.zoom_sent ?? false,
       refunded:        m.refunded  ?? false,
       paymentIntentId: m.payment_intent_id ?? null,
+      amount:          m.amount ?? null,
+      partnerRefunded:        m.partner_refunded ?? false,
+      partnerPaymentIntentId: m.partner_payment_intent_id ?? null,
+      partnerAmount:          m.partner_amount ?? null,
       applicantUserId: m.applicant_id,
       partnerUserId:   m.partner_id,
     }

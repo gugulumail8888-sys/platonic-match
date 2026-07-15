@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AlertTriangle, CheckCircle, Send } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Send, Info } from 'lucide-react';
 
 const REASONS = [
   '相手が時間になっても現れなかった',
@@ -20,11 +20,38 @@ export default function CancelReportPage() {
   const searchParams = useSearchParams();
   const applicationId = searchParams.get('applicationId');
 
-  const [step, setStep] = useState<'form' | 'done'>('form');
+  const [step, setStep] = useState<'checking' | 'form' | 'done' | 'already' | 'both'>('checking');
   const [selectedReason, setSelectedReason] = useState('');
   const [detail, setDetail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [otherReportedNickname, setOtherReportedNickname] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!applicationId) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/matching/cancel?applicationId=${applicationId}`);
+        const data = await res.json();
+        if (!res.ok) {
+          setStep('form');
+          return;
+        }
+        if (data.bothReported) {
+          setStep('both');
+        } else if (data.alreadyReportedByMe) {
+          setStep('already');
+        } else {
+          if (data.reportedByOther) {
+            setOtherReportedNickname(data.otherNickname);
+          }
+          setStep('form');
+        }
+      } catch {
+        setStep('form');
+      }
+    })();
+  }, [applicationId]);
 
   const handleSubmit = async () => {
     if (!selectedReason || !applicationId) return;
@@ -66,6 +93,54 @@ export default function CancelReportPage() {
     );
   }
 
+  if (step === 'checking') {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center py-20">
+        <p className="text-zinc-400 text-sm">状況を確認しています...</p>
+      </div>
+    );
+  }
+
+  if (step === 'already') {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center py-20">
+        <div className="w-20 h-20 bg-teal-900 border border-teal-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-10 h-10 text-teal-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-white mb-3">すでに報告済みです</h1>
+        <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
+          この申請については、すでにあなたからの報告を受け付けています。運営が内容を確認しています。
+        </p>
+        <button
+          onClick={() => router.push('/matching')}
+          className="px-8 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-medium transition-all"
+        >
+          マッチング一覧に戻る
+        </button>
+      </div>
+    );
+  }
+
+  if (step === 'both') {
+    return (
+      <div className="p-6 md:p-8 max-w-xl mx-auto text-center py-20">
+        <div className="w-20 h-20 bg-teal-900 border border-teal-700 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle className="w-10 h-10 text-teal-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-white mb-3">双方からの報告を受け付けています</h1>
+        <p className="text-zinc-400 text-sm mb-8 leading-relaxed">
+          この申請については、すでに双方からの報告を受け付けています。運営が内容を確認しています。
+        </p>
+        <button
+          onClick={() => router.push('/matching')}
+          className="px-8 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-medium transition-all"
+        >
+          マッチング一覧に戻る
+        </button>
+      </div>
+    );
+  }
+
   if (step === 'done') {
     return (
       <div className="p-6 md:p-8 max-w-xl mx-auto text-center py-20">
@@ -74,7 +149,7 @@ export default function CancelReportPage() {
         </div>
         <h1 className="text-2xl font-bold text-white mb-3">報告を受け付けました</h1>
         <p className="text-zinc-400 text-sm mb-2 leading-relaxed">
-          運営が内容を確認し、24時間以内にご連絡いたします。
+          運営が内容を確認し、3営業日以内にご連絡いたします。
         </p>
         <p className="text-zinc-500 text-xs mb-8 leading-relaxed">
           ※ キャンセルの理由・状況によってはアカウント停止となる場合があります。<br />
@@ -102,6 +177,19 @@ export default function CancelReportPage() {
           <p className="text-xs text-zinc-400">相手が現れなかった場合や、キャンセルされた場合はこちらからご報告ください</p>
         </div>
       </div>
+
+      {/* 相手がすでに報告済みの案内 */}
+      {otherReportedNickname && (
+        <div className="flex items-start gap-3 bg-blue-950/50 border border-blue-800 rounded-2xl p-4 mb-6">
+          <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-blue-300 font-medium text-sm mb-1">相手がすでにキャンセル報告をしています</p>
+            <p className="text-blue-400/80 text-xs leading-relaxed">
+              {otherReportedNickname}さんからすでにキャンセルのご報告をいただいています。あなたの状況もあわせてご報告いただけます。
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 注意バナー */}
       <div className="flex items-start gap-3 bg-amber-950/50 border border-amber-800 rounded-2xl p-4 mb-6">
@@ -176,7 +264,7 @@ export default function CancelReportPage() {
       </button>
 
       <p className="text-center text-xs text-zinc-600 mt-4">
-        運営が内容を確認し、24時間以内にご連絡いたします
+        運営が内容を確認し、3営業日以内にご連絡いたします
       </p>
     </div>
   );

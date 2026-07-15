@@ -157,7 +157,11 @@ export default function ContactPage() {
             </div>
             <div className="flex items-start gap-2 text-xs text-zinc-400">
               <Clock className="w-3.5 h-3.5 text-teal-500 flex-shrink-0 mt-0.5" />
-              <span>営業時間：平日 10:00〜18:00（土日祝・年末年始を除く）</span>
+              <span>営業時間：平日 10:00〜17:00（土日祝日・年末年始を除く）</span>
+            </div>
+            <div className="flex items-start gap-2 text-xs text-zinc-400">
+              <Info className="w-3.5 h-3.5 text-teal-500 flex-shrink-0 mt-0.5" />
+              <span>本サイトにおける「営業日」とは、土日祝日および年末年始を除いた日をいいます。</span>
             </div>
           </div>
 

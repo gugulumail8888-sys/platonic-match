@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { calculateAge } from '@/lib/utils';
+import { refundOmiaiPayment } from '@/lib/refund';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder' | 'survey_reminder' | 'matching_expired' | 'approval_email';
+type ReminderType = 'payment_3days' | 'unpaid_cancel' | 'day_reminder' | 'survey_reminder' | 'matching_expired' | 'approval_email' | 'ai_option_renewal_reminder' | 'dormant_notice_batch' | 'ai_option_inactivity_notice';
 
 type Matching = {
   id: string;
@@ -18,6 +19,8 @@ type Matching = {
   scheduled_at: string | null;
   zoom_url: string | null;
   payment_intent_id: string | null;
+  partner_payment_intent_id: string | null;
+  partner_amount: number | null;
 };
 
 type Person = {
@@ -28,7 +31,7 @@ type Person = {
   email: string;
 };
 
-const MATCHING_COLUMNS = 'id, applicant_id, partner_id, amount, applied_at, scheduled_at, zoom_url, payment_intent_id';
+const MATCHING_COLUMNS = 'id, applicant_id, partner_id, amount, applied_at, scheduled_at, zoom_url, payment_intent_id, partner_payment_intent_id, partner_amount';
 
 // ============================================================
 // 認証チェック（Bearerトークン）
@@ -132,7 +135,7 @@ export async function POST(req: NextRequest) {
         .select(MATCHING_COLUMNS)
         .gte('scheduled_at', start)
         .lt('scheduled_at', end)
-        .is('payment_intent_id', null)
+        .or('payment_intent_id.is.null,partner_payment_intent_id.is.null')
         .neq('status', 'cancelled');
 
       if (error) {
@@ -157,7 +160,7 @@ export async function POST(req: NextRequest) {
         .select(MATCHING_COLUMNS)
         .gte('scheduled_at', start)
         .lt('scheduled_at', end)
-        .is('payment_intent_id', null)
+        .or('payment_intent_id.is.null,partner_payment_intent_id.is.null')
         .neq('status', 'cancelled');
 
       if (error) {
@@ -177,6 +180,14 @@ export async function POST(req: NextRequest) {
         if (updateError) {
           console.error('unpaid_cancel update error:', updateError);
           continue;
+        }
+
+        // 片方だけ支払い済みの場合、その支払い済みの側へ自動返金する。
+        // 両者とも未払いの場合は返金対象がない。
+        if (matching.payment_intent_id && !matching.partner_payment_intent_id) {
+          await refundOmiaiPayment(admin, matching.id, 'applicant', '前日17時までの相手方未入金による自動返金');
+        } else if (!matching.payment_intent_id && matching.partner_payment_intent_id) {
+          await refundOmiaiPayment(admin, matching.id, 'partner', '前日17時までの相手方未入金による自動返金');
         }
 
         await notifyAdmin(origin, 'cancel_unpaid', matching, personCache);
@@ -315,6 +326,194 @@ export async function POST(req: NextRequest) {
         await admin
           .from('profiles')
           .update({ approval_email_sent_at: now.toISOString() })
+          .eq('id', profile.id);
+
+        sentCount++;
+      }
+
+      return NextResponse.json({ ok: true, sentCount });
+    }
+
+    // ── ⑥ ai_option_renewal_reminder: AIおすすめオプションの請求期間終了7日前 → リマインドメール ──
+    if (type === 'ai_option_renewal_reminder') {
+      const { start, end } = jstDayRange(7);
+      const { data, error } = await admin
+        .from('profiles')
+        .select('id, nickname, current_period_end')
+        .eq('is_premium', true)
+        .gte('current_period_end', start)
+        .lt('current_period_end', end);
+
+      if (error) {
+        console.error('ai_option_renewal_reminder fetch error:', error);
+        return NextResponse.json({ error: 'データ取得に失敗しました' }, { status: 500 });
+      }
+
+      let sentCount = 0;
+      for (const profile of data ?? []) {
+        const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
+        const email = authUser?.user?.email;
+        if (!email) continue;
+
+        await fetch(`${origin}/api/admin/notify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+          },
+          body: JSON.stringify({
+            type: 'ai_option_renewal_reminder',
+            user: { nickname: profile.nickname ?? 'ユーザー', email },
+            renewalDate: profile.current_period_end,
+          }),
+        });
+
+        sentCount++;
+      }
+
+      return NextResponse.json({ ok: true, sentCount });
+    }
+
+    // ── ⑦ dormant_notice_batch: 11ヶ月(335日)以上未ログインの会員へ、資格取消し30日前の通知メール送信 ──
+    if (type === 'dormant_notice_batch') {
+      const { data: authUsers, error: authError } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      if (authError) {
+        console.error('dormant_notice_batch listUsers error:', authError);
+        return NextResponse.json({ error: 'ユーザー取得に失敗しました' }, { status: 500 });
+      }
+
+      const threshold = new Date(Date.now() - 335 * 24 * 60 * 60 * 1000);
+      const dormantIds = authUsers.users
+        .filter((u) => {
+          const lastSignIn = u.last_sign_in_at ? new Date(u.last_sign_in_at) : new Date(u.created_at);
+          return lastSignIn < threshold;
+        })
+        .map((u) => u.id);
+
+      if (dormantIds.length === 0) {
+        return NextResponse.json({ ok: true, sentCount: 0 });
+      }
+
+      const { data: profiles, error } = await admin
+        .from('profiles')
+        .select('id, nickname, status, dormant_notice_sent_at')
+        .in('id', dormantIds)
+        .neq('role', 'admin')
+        .neq('status', 'withdrawn')
+        .is('dormant_notice_sent_at', null);
+
+      if (error) {
+        console.error('dormant_notice_batch fetch error:', error);
+        return NextResponse.json({ error: 'データ取得に失敗しました' }, { status: 500 });
+      }
+
+      const authMap = new Map(authUsers.users.map((u) => [u.id, u]));
+      let sentCount = 0;
+      for (const profile of profiles ?? []) {
+        const email = authMap.get(profile.id)?.email;
+        if (!email) continue;
+
+        await fetch(`${origin}/api/admin/notify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+          },
+          body: JSON.stringify({
+            type: 'dormant_notice',
+            user: { nickname: profile.nickname ?? 'ユーザー', email },
+          }),
+        });
+
+        await admin
+          .from('profiles')
+          .update({ dormant_notice_sent_at: new Date().toISOString() })
+          .eq('id', profile.id);
+
+        sentCount++;
+      }
+
+      return NextResponse.json({ ok: true, sentCount });
+    }
+
+    // ── ⑧ ai_option_inactivity_notice: AIおすすめオプション契約者が45日間隔で最大3回まで未ログイン通知(タスク#72) ──
+    if (type === 'ai_option_inactivity_notice') {
+      const { data: authUsers, error: authError } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      if (authError) {
+        console.error('ai_option_inactivity_notice listUsers error:', authError);
+        return NextResponse.json({ error: 'ユーザー取得に失敗しました' }, { status: 500 });
+      }
+
+      const threshold = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000);
+      const authMap = new Map(authUsers.users.map((u) => [u.id, u]));
+
+      const inactiveIds: string[] = [];
+      const activeIds: string[] = [];
+      for (const u of authUsers.users) {
+        const lastSignIn = u.last_sign_in_at ? new Date(u.last_sign_in_at) : new Date(u.created_at);
+        if (lastSignIn < threshold) {
+          inactiveIds.push(u.id);
+        } else {
+          activeIds.push(u.id);
+        }
+      }
+
+      // 再ログイン済み(直近45日以内にログインあり)かつ過去に通知履歴が残っている会員は、次回の非アクティブ期間に備えてカウントをリセット
+      if (activeIds.length > 0) {
+        await admin
+          .from('profiles')
+          .update({ ai_inactivity_notice_count: 0, ai_inactivity_notice_sent_at: null })
+          .in('id', activeIds)
+          .eq('is_premium', true)
+          .gt('ai_inactivity_notice_count', 0);
+      }
+
+      if (inactiveIds.length === 0) {
+        return NextResponse.json({ ok: true, sentCount: 0 });
+      }
+
+      const { data: profiles, error } = await admin
+        .from('profiles')
+        .select('id, nickname, is_premium, ai_inactivity_notice_sent_at, ai_inactivity_notice_count')
+        .in('id', inactiveIds)
+        .eq('is_premium', true)
+        .neq('status', 'withdrawn')
+        .lt('ai_inactivity_notice_count', 3);
+
+      if (error) {
+        console.error('ai_option_inactivity_notice fetch error:', error);
+        return NextResponse.json({ error: 'データ取得に失敗しました' }, { status: 500 });
+      }
+
+      let sentCount = 0;
+      for (const profile of profiles ?? []) {
+        // 前回送信から45日以上経過している場合のみ送信(1回目は未送信なので無条件、2・3回目は間隔をあける)
+        if (profile.ai_inactivity_notice_sent_at) {
+          const lastSent = new Date(profile.ai_inactivity_notice_sent_at);
+          if (lastSent >= threshold) continue;
+        }
+
+        const email = authMap.get(profile.id)?.email;
+        if (!email) continue;
+
+        await fetch(`${origin}/api/admin/notify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+          },
+          body: JSON.stringify({
+            type: 'ai_option_inactivity_notice',
+            user: { nickname: profile.nickname ?? 'ユーザー', email },
+          }),
+        });
+
+        await admin
+          .from('profiles')
+          .update({
+            ai_inactivity_notice_sent_at: new Date().toISOString(),
+            ai_inactivity_notice_count: profile.ai_inactivity_notice_count + 1,
+          })
           .eq('id', profile.id);
 
         sentCount++;

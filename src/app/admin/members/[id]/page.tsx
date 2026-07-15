@@ -83,14 +83,16 @@ export default async function AdminMemberDetailPage({
   const email = authData?.user?.email ?? '';
 
   // 申請履歴（申請者側・相手側の両方から取得）
+  const MATCHING_COLUMNS = 'id, status, created_at, applicant_id, partner_id, amount, partner_amount, payment_intent_id, partner_payment_intent_id, refunded, partner_refunded';
+
   const [{ data: asApplicant }, { data: asPartner }] = await Promise.all([
     supabase
       .from('matchings')
-      .select('id, status, created_at, applicant_id, partner_id')
+      .select(MATCHING_COLUMNS)
       .eq('applicant_id', id),
     supabase
       .from('matchings')
-      .select('id, status, created_at, applicant_id, partner_id')
+      .select(MATCHING_COLUMNS)
       .eq('partner_id', id),
   ]);
 
@@ -113,6 +115,13 @@ export default async function AdminMemberDetailPage({
     status: r.status as AppStatus,
     created_at: r.created_at,
     partner: partnerMap.get(r.applicant_id === id ? r.partner_id : r.applicant_id) ?? null,
+    isApplicant: r.applicant_id === id,
+    amount: r.amount,
+    partnerAmount: r.partner_amount,
+    paymentIntentId: r.payment_intent_id,
+    partnerPaymentIntentId: r.partner_payment_intent_id,
+    refunded: r.refunded,
+    partnerRefunded: r.partner_refunded,
   }));
 
   const member: MemberDetail = {

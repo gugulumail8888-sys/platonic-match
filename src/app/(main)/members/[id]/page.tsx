@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Heart, ArrowLeft, MapPin, Briefcase,
   Ruler, User, GraduationCap, Users, Cigarette,
@@ -175,6 +175,8 @@ function ConfirmApplyModal({ member, onClose, onConfirm, aiLoading, aiScore, aiR
 
 export default function MemberProfilePage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const autoApplyTriggered = useRef(false);
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -294,6 +296,14 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
       .finally(() => setAiLoading(false));
   };
 
+  useEffect(() => {
+    if (autoApplyTriggered.current) return;
+    if (searchParams.get('apply') !== '1') return;
+    if (!member || !myProfile) return;
+    autoApplyTriggered.current = true;
+    handleOpenApply();
+  }, [member, myProfile, searchParams]);
+
   const handleConfirmApply = async () => {
     if (!member) return;
     setApplying(true);
@@ -356,6 +366,13 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
           <ArrowLeft className="w-4 h-4" />メンバー一覧へ戻る
         </Link>
 
+        {/* プレリリース中の案内(お見合い申請受付が開始されるまでの期間限定表示) */}
+        {!omiaiOpen && (
+          <div className="bg-teal-950/40 border border-teal-800/60 rounded-xl px-4 py-3 text-teal-300 text-xs sm:text-sm">
+            右下の「ご意見・ご要望」より、プロフィールについてのご意見をお寄せください。
+          </div>
+        )}
+
         {/* ヘッダー */}
         <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-6 flex flex-col sm:flex-row items-center sm:items-start gap-5">
           <div className="w-24 h-24 rounded-full flex items-center justify-center text-white text-3xl font-bold flex-shrink-0 select-none shadow-lg"
@@ -375,22 +392,28 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
 
         {/* ブロック・申請ボタン */}
         <div>
-          {remainingToday !== null && (
+          {/* いいね・ブロックはお見合い申請受付(omiaiOpen)と同時に開放する運用のため、
+              プレリリース期間中(omiaiOpen=false)は非表示にする(2026/7/14、ユーザーと合意) */}
+          {omiaiOpen && remainingToday !== null && (
             <p className="text-xs text-zinc-500 text-center mb-2">
               本日のいいね残り <span className={remainingToday === 0 ? 'text-red-400 font-bold' : 'text-teal-400 font-bold'}>{remainingToday}件</span>
             </p>
           )}
           <div className="flex gap-3">
-            <button onClick={handleToggleBlock} disabled={blockLoading}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isBlocked ? 'bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
-              {blockLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TriangleAlert className="w-4 h-4" />}
-              {isBlocked ? 'ブロック解除' : 'ブロック'}
-            </button>
-            <button onClick={handleToggleLike} disabled={likeLoading}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isLiked ? 'bg-pink-900/40 text-pink-400 border border-pink-800 hover:bg-pink-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
-                {likeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
-                {isLiked ? 'いいね済み' : 'いいね'}
+            {omiaiOpen && (
+              <button onClick={handleToggleBlock} disabled={blockLoading}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isBlocked ? 'bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
+                {blockLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TriangleAlert className="w-4 h-4" />}
+                {isBlocked ? 'ブロック解除' : 'ブロック'}
               </button>
+            )}
+            {omiaiOpen && (
+              <button onClick={handleToggleLike} disabled={likeLoading}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isLiked ? 'bg-pink-900/40 text-pink-400 border border-pink-800 hover:bg-pink-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
+                  {likeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
+                  {isLiked ? 'いいね済み' : 'いいね'}
+                </button>
+            )}
             {!applied && omiaiOpen && (
               <button onClick={handleOpenApply}
                 className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors">
@@ -399,7 +422,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
             )}
             {!applied && !omiaiOpen && (
               <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-700 text-zinc-400 text-sm cursor-not-allowed">
-                <Heart className="w-4 h-4" />お見合い申請は8月開始予定
+                <Heart className="w-4 h-4" />お見合い申請は近日開始予定
               </div>
             )}
             {applied && (

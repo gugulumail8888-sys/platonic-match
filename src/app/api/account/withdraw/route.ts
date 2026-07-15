@@ -33,7 +33,9 @@ export async function POST() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // auth.users は削除しない（3ヶ月後に別途バッチ削除）
+  // auth.users・profilesは即座に削除しない。退会後3年経過時点で
+  // /api/cron/data-retention(type: delete_withdrawn_accounts)により自動削除される
+  // (本人確認書類画像は退会後1年でtype: delete_documentsにより先に削除される)
   await supabase.auth.signOut();
 
   return NextResponse.json({ success: true });

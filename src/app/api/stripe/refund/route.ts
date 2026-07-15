@@ -36,11 +36,21 @@ export async function POST(req: NextRequest) {
 
   const { data: matching } = await admin
     .from('matchings')
-    .select('amount')
+    .select('applicant_id, partner_id, amount, partner_amount')
     .eq('id', matching_id)
     .maybeSingle();
 
-  const refundAmount = matching?.amount;
+  if (!matching) {
+    return NextResponse.json({ error: 'マッチングが見つかりません' }, { status: 404 });
+  }
+
+  const isApplicant = refund_to_user_id === matching.applicant_id;
+  const isPartner = refund_to_user_id === matching.partner_id;
+  if (!isApplicant && !isPartner) {
+    return NextResponse.json({ error: '返金先が不正です' }, { status: 400 });
+  }
+
+  const refundAmount = isApplicant ? matching.amount : matching.partner_amount;
   if (!refundAmount) {
     return NextResponse.json({ error: '返金額が取得できませんでした' }, { status: 400 });
   }
@@ -69,7 +79,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'DB保存に失敗しました' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, refund_id: refund.id, status: refund.status });
+    await admin
+      .from('matchings')
+      .update(isApplicant ? { refunded: true } : { partner_refunded: true })
+      .eq('id', matching_id);
+
+    // 返金先の会員へ「1営業日以内に返金処理を行います」メールを送信
+    // (返金処理自体は既に完了・DB反映済みのため、メール送信の成否はemailSentとして
+    //  レスポンスに含め、失敗時は画面側で管理者に気づけるようにする)
+    let emailSent = false;
+    try {
+      const { data: refundedProfile } = await admin
+        .from('profiles')
+        .select('nickname')
+        .eq('id', refund_to_user_id)
+        .maybeSingle();
+      const { data: refundedAuth } = await admin.auth.admin.getUserById(refund_to_user_id);
+      const refundedEmail = refundedAuth?.user?.email;
+
+      if (refundedEmail) {
+        const notifyRes = await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+          },
+          body: JSON.stringify({
+            type: 'refund_completed',
+            user: { nickname: refundedProfile?.nickname ?? 'ユーザー', email: refundedEmail },
+            refundAmount,
+          }),
+        });
+        emailSent = notifyRes.ok;
+        if (!notifyRes.ok) {
+          console.error('refund_completed notify failed:', notifyRes.status, await notifyRes.text().catch(() => ''));
+        }
+      } else {
+        console.error('refund_completed notify skipped: メールアドレスが取得できませんでした', refund_to_user_id);
+      }
+    } catch (notifyError) {
+      console.error('refund_completed notify error:', notifyError);
+    }
+
+    return NextResponse.json({ success: true, refund_id: refund.id, status: refund.status, emailSent });
   } catch (err) {
     console.error('refund error:', err);
     return NextResponse.json({ error: '返金処理に失敗しました' }, { status: 502 });

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MapPin, Eye } from 'lucide-react';
+import { MapPin, Eye, HeartHandshake } from 'lucide-react';
 
 interface LikeMember {
   id: string;
@@ -61,13 +61,24 @@ export function LikeMemberCard({ member }: { member: LikeMember }) {
       </div>
 
       {/* リンク */}
-      <Link
-        href={`/members/${member.id}`}
-        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-teal-700 text-teal-400 text-xs font-medium hover:bg-teal-900/40 hover:border-teal-500 transition-colors flex-shrink-0"
-      >
-        <Eye className="w-3 h-3" />
-        プロフィールを見る
-      </Link>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <Link
+          href={`/members/${member.id}`}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-teal-700 text-teal-400 text-xs font-medium hover:bg-teal-900/40 hover:border-teal-500 transition-colors"
+        >
+          <Eye className="w-3 h-3" />
+          プロフィールを見る
+        </Link>
+        {member.isMutual && (
+          <Link
+            href={`/members/${member.id}?apply=1`}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-pink-700 text-pink-400 text-xs font-medium hover:bg-pink-900/40 hover:border-pink-500 transition-colors"
+          >
+            <HeartHandshake className="w-3 h-3" />
+            お見合いを申請する
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

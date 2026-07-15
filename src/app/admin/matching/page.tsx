@@ -19,7 +19,7 @@ export default async function AdminMatchingPage() {
 
   const { data: rows } = await supabase
     .from('matchings')
-    .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, partner_dating_wish, scheduled_at, meeting_ended_at, user1_joined_at, user2_joined_at')
+    .select('id, status, created_at, applicant_id, partner_id, applicant_dating_wish, partner_dating_wish, scheduled_at, meeting_ended_at, user1_joined_at, user2_joined_at, reject_reason, amount, partner_amount, payment_intent_id, partner_payment_intent_id, refunded, partner_refunded')
     .order('created_at', { ascending: false });
 
   if (!rows || rows.length === 0) {
@@ -58,6 +58,7 @@ export default async function AdminMatchingPage() {
   const matchings: MatchingRow[] = rows.map((r) => ({
     ...r,
     status: r.status as AppStatus,
+    reject_reason: r.reject_reason ?? null,
     applicant: profileMap.get(r.applicant_id) ?? null,
     partner: profileMap.get(r.partner_id) ?? null,
     applicant_consented: consentMap.get(r.id)?.has(r.applicant_id) ?? false,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { calculateAge } from '@/lib/utils';
 import { checkRealMeetingAttendance } from '@/lib/google-meet';
+import { refundOmiaiPayment } from '@/lib/refund';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -21,6 +22,9 @@ type Matching = {
   user2_joined_at: string | null;
   meeting_ended_at: string | null;
   zoom_url: string | null;
+  payment_intent_id: string | null;
+  partner_payment_intent_id: string | null;
+  partner_amount: number | null;
 };
 
 type Person = {
@@ -32,7 +36,7 @@ type Person = {
 };
 
 const MATCHING_COLUMNS =
-  'id, applicant_id, partner_id, amount, applied_at, scheduled_at, user1_joined_at, user2_joined_at, meeting_ended_at, zoom_url';
+  'id, applicant_id, partner_id, amount, applied_at, scheduled_at, user1_joined_at, user2_joined_at, meeting_ended_at, zoom_url, payment_intent_id, partner_payment_intent_id, partner_amount';
 
 // ============================================================
 // 認証チェック（Bearerトークン）
@@ -173,6 +177,14 @@ export async function POST(req: NextRequest) {
         if (updateError) {
           console.error('meeting_timeout_cancel update error:', updateError);
           continue;
+        }
+
+        // 遅刻しなかった側（実際に来場した側）が支払い済みなら自動返金する。
+        // 両者とも遅刻した場合はどちらにも返金しない。
+        if (lateBy === 'applicant') {
+          await refundOmiaiPayment(admin, matching.id, 'partner', 'お見合い開始15分超過（相手方遅刻）による自動返金');
+        } else if (lateBy === 'member') {
+          await refundOmiaiPayment(admin, matching.id, 'applicant', 'お見合い開始15分超過（相手方遅刻）による自動返金');
         }
 
         await notifyCancelTimeout(origin, matching, personCache, lateBy);

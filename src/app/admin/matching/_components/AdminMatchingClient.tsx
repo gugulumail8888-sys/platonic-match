@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { MapPin, X, ChevronRight, CheckCircle2, Circle, ArrowUp, ArrowDown } from 'lucide-react';
+import { MapPin, X, ChevronRight, ChevronLeft, CheckCircle2, Circle, ArrowUp, ArrowDown } from 'lucide-react';
 
 // ── 型定義 ────────────────────────────────────────────────────
 
@@ -33,6 +33,13 @@ export interface MatchingRow {
   user2_joined_at: string | null;
   applicant_consented: boolean;
   partner_consented: boolean;
+  reject_reason: string | null;
+  amount: number | null;
+  partner_amount: number | null;
+  payment_intent_id: string | null;
+  partner_payment_intent_id: string | null;
+  refunded: boolean;
+  partner_refunded: boolean;
 }
 
 // ── 定数 ──────────────────────────────────────────────────────
@@ -41,7 +48,7 @@ export const APP_STATUS_CONFIG: Record<AppStatus, { label: string; className: st
   pending:        { label: '申請中',     className: 'bg-amber-900/50 text-amber-300 border border-amber-800' },
   scheduling:     { label: '日程調整中', className: 'bg-blue-900/50  text-blue-300  border border-blue-800'  },
   completed:      { label: '完了',       className: 'bg-green-900/50 text-green-300 border border-green-800' },
-  zoom_completed: { label: 'Google Meet完了',   className: 'bg-blue-900    text-blue-300'                           },
+  zoom_completed: { label: 'Google Meet送信済',   className: 'bg-blue-900    text-blue-300'                           },
   cancelled:      { label: 'キャンセル', className: 'bg-red-900/50 text-red-300 border border-red-800' },
   rejected:       { label: '拒否',       className: 'bg-zinc-700 text-zinc-400 border border-zinc-600' },
   ended:          { label: '終了済み',   className: 'bg-zinc-800 text-zinc-400 border border-zinc-700' },
@@ -55,7 +62,7 @@ const NEXT_STATUS: Partial<Record<AppStatus, AppStatus>> = {
 
 const NEXT_LABEL: Partial<Record<AppStatus, string>> = {
   pending:        '日程調整中に進める →',
-  scheduling:     'Google Meet完了にする →',
+  scheduling:     'Google Meet送信済にする →',
   zoom_completed: '完了にする →',
 };
 
@@ -65,12 +72,14 @@ const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'all',            label: 'すべて' },
   { value: 'pending',        label: '申請中' },
   { value: 'scheduling',     label: '日程調整中' },
-  { value: 'zoom_completed', label: 'Google Meet完了' },
+  { value: 'zoom_completed', label: 'Google Meet送信済' },
   { value: 'completed',      label: '完了' },
   { value: 'cancelled',      label: 'キャンセル' },
   { value: 'rejected',       label: '拒否' },
   { value: 'ended',          label: '終了済み' },
 ];
+
+const PAGE_SIZE = 10;
 
 // ── ヘルパー ──────────────────────────────────────────────────
 
@@ -244,8 +253,18 @@ function DetailModal({
               <span className="text-zinc-200">{new Date(row.created_at).toLocaleDateString('ja-JP')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-500">料金</span>
-              <span className="text-zinc-200">無料プラン ¥3,500・AIおすすめプラン ¥3,000（税込）</span>
+              <span className="text-zinc-500">料金（申請者）</span>
+              <span className="text-zinc-200">
+                {row.amount != null ? `¥${row.amount.toLocaleString()}` : '未確定'}
+                {row.refunded ? '（返金済み）' : row.payment_intent_id ? '（支払い済み）' : '（未払い）'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-zinc-500">料金（お相手）</span>
+              <span className="text-zinc-200">
+                {row.partner_amount != null ? `¥${row.partner_amount.toLocaleString()}` : '未確定'}
+                {row.partner_refunded ? '（返金済み）' : row.partner_payment_intent_id ? '（支払い済み）' : '（未払い）'}
+              </span>
             </div>
           </div>
 
@@ -285,12 +304,18 @@ export default function AdminMatchingClient({
   const [selectedRow, setSelectedRow]   = useState<MatchingRow | null>(null);
   const [sortKey, setSortKey]           = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [page, setPage] = useState(1);
 
   const now = Date.now();
 
   const filtered = matchings.filter((r) =>
     statusFilter === 'all' ? true : r.status === statusFilter
   );
+
+  const handleFilterChange = (value: StatusFilter) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -312,6 +337,10 @@ export default function AdminMatchingClient({
       return 0;
     });
   }, [filtered, sortKey, sortDirection, now]);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const counts: Record<StatusFilter, number> = {
     all:            matchings.length,
@@ -340,7 +369,7 @@ export default function AdminMatchingClient({
           return (
             <button
               key={opt.value}
-              onClick={() => setStatusFilter(opt.value)}
+              onClick={() => handleFilterChange(opt.value)}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-teal-950 text-teal-400 border border-teal-900'
@@ -384,17 +413,20 @@ export default function AdminMatchingClient({
                 <th className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider">
                   操作
                 </th>
+                <th className="text-left px-4 py-3 text-xs text-zinc-400 font-medium uppercase tracking-wider">
+                  お断り理由
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              {sorted.length === 0 ? (
+              {paged.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-zinc-500">
+                  <td colSpan={10} className="px-4 py-12 text-center text-zinc-500">
                     該当する申請が見つかりませんでした
                   </td>
                 </tr>
               ) : (
-                sorted.map((row) => {
+                paged.map((row) => {
                   const hasDatingWish = row.applicant_dating_wish || row.partner_dating_wish;
                   const nextStatus = NEXT_STATUS[row.status] ?? null;
                   const nextLabel  = NEXT_LABEL[row.status]  ?? null;
@@ -532,6 +564,15 @@ export default function AdminMatchingClient({
                           )}
                         </div>
                       </td>
+
+                      {/* お断り理由 */}
+                      <td className="px-4 py-3 text-xs text-zinc-400 max-w-[200px]">
+                        {row.status === 'rejected' && row.reject_reason ? (
+                          <span className="text-zinc-300">{row.reject_reason}</span>
+                        ) : (
+                          <span className="text-zinc-600">-</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -539,8 +580,31 @@ export default function AdminMatchingClient({
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 border-t border-zinc-800 text-xs text-zinc-500">
-          {filtered.length} 件表示 / 全 {matchings.length} 件
+        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
+          <span className="text-xs text-zinc-500">
+            全{sorted.length}件中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, sorted.length)}件を表示
+          </span>
+          {sorted.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                前へ
+              </button>
+              <span className="text-xs text-zinc-400">{currentPage} / {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                次へ
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

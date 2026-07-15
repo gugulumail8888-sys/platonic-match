@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, Briefcase, Mail, ChevronRight } from 'lucide-react';
 import { MEMBER_STATUS_CONFIG, type MemberStatus } from './AdminMembersClient';
@@ -46,6 +45,13 @@ export interface ApplicationRow {
   status: AppStatus;
   created_at: string;
   partner: { id: string; nickname: string; avatar_url: string | null; avatar_color: string | null } | null;
+  isApplicant: boolean;
+  amount: number | null;
+  partnerAmount: number | null;
+  paymentIntentId: string | null;
+  partnerPaymentIntentId: string | null;
+  refunded: boolean;
+  partnerRefunded: boolean;
 }
 
 const STATUS_ORDER: MemberStatus[] = ['pending', 'approved', 'verified', 'rejected', 'withdrawn'];
@@ -131,16 +137,9 @@ export default function AdminMemberDetailClient({
   suspendMember: (formData: FormData) => Promise<void>;
   unsuspendMember: (formData: FormData) => Promise<void>;
 }) {
-  const [withdrawToast, setWithdrawToast] = useState('');
-
   const statusCfg = MEMBER_STATUS_CONFIG[member.status] ?? {
     label: member.status,
     className: 'bg-zinc-700 text-zinc-300 border border-zinc-600',
-  };
-
-  const showWithdrawToast = () => {
-    setWithdrawToast('この機能は未実装です');
-    setTimeout(() => setWithdrawToast(''), 2500);
   };
 
   return (
@@ -218,6 +217,11 @@ export default function AdminMemberDetailClient({
                 <input type="hidden" name="status" value={s} />
                 <button
                   type="submit"
+                  onClick={(e) => {
+                    if (!window.confirm(`${member.nickname} さんのステータスを「${cfg.label}」に変更しますか？`)) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="px-4 py-2 rounded-xl bg-zinc-700/50 border border-zinc-600 text-zinc-300 text-sm font-medium hover:bg-zinc-700 transition-colors"
                 >
                   {cfg.label}にする
@@ -247,13 +251,6 @@ export default function AdminMemberDetailClient({
               </button>
             </form>
           )}
-
-          <button
-            className="px-4 py-2 rounded-xl bg-zinc-700/50 border border-zinc-600 text-zinc-400 text-sm hover:bg-zinc-700 transition-colors"
-            onClick={showWithdrawToast}
-          >
-            退会させる（未実装）
-          </button>
         </div>
 
         {member.is_suspended && member.suspended_at && (
@@ -371,7 +368,13 @@ export default function AdminMemberDetailClient({
                       <AppStatusBadge status={app.status} />
                     </td>
                     <td className="py-2.5 px-2 text-zinc-400 text-xs">
-                      無料プラン¥3,500・AIおすすめプラン¥3,000
+                      {(() => {
+                        const myAmount = app.isApplicant ? app.amount : app.partnerAmount;
+                        const myPaid = app.isApplicant ? !!app.paymentIntentId : !!app.partnerPaymentIntentId;
+                        const myRefunded = app.isApplicant ? app.refunded : app.partnerRefunded;
+                        const status = myRefunded ? '返金済み' : myPaid ? '支払い済み' : '未払い';
+                        return `${myAmount != null ? `¥${myAmount.toLocaleString()}` : '未確定'}（${status}）`;
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -401,13 +404,6 @@ export default function AdminMemberDetailClient({
           </Link>
         </div>
       </SectionCard>
-
-      {/* トースト */}
-      {withdrawToast && (
-        <div className="fixed bottom-6 right-6 bg-zinc-800 border border-zinc-700 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl z-50">
-          {withdrawToast}
-        </div>
-      )}
     </div>
   );
 }

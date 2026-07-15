@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Clock, CheckCircle2, Video, RefreshCw, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle2, Video, RefreshCw, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ============================================================
 // Types
@@ -19,6 +18,10 @@ interface ScheduleItem {
   zoomSent: boolean;
   refunded: boolean;
   paymentIntentId: string | null;
+  amount: number | null;
+  partnerRefunded: boolean;
+  partnerPaymentIntentId: string | null;
+  partnerAmount: number | null;
   applicantUserId: string;
   partnerUserId: string;
 }
@@ -74,13 +77,15 @@ const FILTER_OPTIONS: { value: FilterTab; label: string }[] = [
   { value: 'zoom_sent',  label: 'Google Meet送信済' },
 ];
 
+const PAGE_SIZE = 10;
+
 export default function AdminSchedulePage() {
-  const router = useRouter();
   const [filter, setFilter] = useState<FilterTab>('all');
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refunding, setRefunding] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetchSchedules();
@@ -101,29 +106,38 @@ export default function AdminSchedulePage() {
     }
   }
 
-  async function handleRefund(item: ScheduleItem) {
-    if (!item.paymentIntentId) {
+  async function handleRefund(item: ScheduleItem, side: 'applicant' | 'partner') {
+    const paymentIntentId = side === 'applicant' ? item.paymentIntentId : item.partnerPaymentIntentId;
+    const refundToNickname = side === 'applicant' ? item.applicant.nickname : item.target.nickname;
+    const refundToUserId = side === 'applicant' ? item.applicantUserId : item.partnerUserId;
+    const cancelledByUserId = side === 'applicant' ? item.partnerUserId : item.applicantUserId;
+
+    if (!paymentIntentId) {
       alert('決済情報が見つかりません');
       return;
     }
-    if (!confirm(`${item.applicant.nickname} さんへ返金しますか？`)) return;
+    if (!confirm(`${refundToNickname} さんへ返金しますか？（返金完了メールが自動送信されます）`)) return;
 
-    setRefunding(item.id);
+    setRefunding(`${item.id}-${side}`);
     try {
       const res = await fetch('/api/stripe/refund', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           matching_id: item.id,
-          refund_to_user_id: item.applicantUserId,
-          cancelled_by_user_id: item.partnerUserId,
-          stripe_payment_intent_id: item.paymentIntentId,
+          refund_to_user_id: refundToUserId,
+          cancelled_by_user_id: cancelledByUserId,
+          stripe_payment_intent_id: paymentIntentId,
           reason: 'ドタキャンによる返金',
         }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error);
-      alert('返金が完了しました');
+      if (result.emailSent) {
+        alert('返金が完了しました（返金先の会員へ案内メールを送信しました）');
+      } else {
+        alert('返金処理自体は完了しましたが、案内メールの送信に失敗した可能性があります。会員へは別途手動でご連絡ください。');
+      }
       fetchSchedules();
     } catch (err) {
       alert(err instanceof Error ? err.message : '返金に失敗しました');
@@ -135,6 +149,15 @@ export default function AdminSchedulePage() {
   const filtered = schedules.filter((s) =>
     filter === 'all' ? true : s.status === filter
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const handleFilterChange = (value: FilterTab) => {
+    setFilter(value);
+    setPage(1);
+  };
 
   const counts = {
     all:        schedules.length,
@@ -171,7 +194,7 @@ export default function AdminSchedulePage() {
           return (
             <button
               key={opt.value}
-              onClick={() => setFilter(opt.value)}
+              onClick={() => handleFilterChange(opt.value)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-teal-950 text-teal-400 border border-teal-900'
@@ -208,7 +231,7 @@ export default function AdminSchedulePage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {paged.map((item) => (
                 <tr
                   key={item.id}
                   className="border-b border-zinc-800 hover:bg-zinc-800 transition-all"
@@ -228,34 +251,35 @@ export default function AdminSchedulePage() {
                   </td>
                   <td className="p-4">
                     <div className="flex flex-col gap-2 min-w-[160px]">
-                      {/* Google Meetリンク送信ボタン */}
-                      <button
-                        onClick={() => router.push(`/admin/schedule/${item.id}`)}
-                        disabled={item.status === 'scheduling'}
-                        className={`w-full py-2 rounded-xl text-sm font-medium transition-colors ${
-                          item.status === 'zoom_sent'
-                            ? 'border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-                            : item.status !== 'scheduling'
-                            ? 'bg-teal-700 text-white hover:bg-teal-600'
-                            : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                        }`}
-                      >
-                        {item.status === 'zoom_sent' ? '詳細を見る' : item.status !== 'scheduling' ? 'Google Meetリンクを送る' : '日程未確定'}
-                      </button>
-
-                      {/* 返金ボタン */}
+                      {/* 返金ボタン（申請者側） */}
                       {item.paymentIntentId && !item.refunded && (
                         <button
-                          onClick={() => handleRefund(item)}
-                          disabled={refunding === item.id}
+                          onClick={() => handleRefund(item, 'applicant')}
+                          disabled={refunding === `${item.id}-applicant`}
                           className="w-full py-2 rounded-xl text-sm font-medium border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {refunding === item.id ? '返金処理中...' : '⚠ 返金する'}
+                          {refunding === `${item.id}-applicant` ? '返金処理中...' : '⚠ 申請者へ返金する'}
                         </button>
                       )}
-                      {item.refunded && (
+                      {item.paymentIntentId && item.refunded && (
                         <div className="w-full py-2 rounded-xl text-sm font-medium text-center bg-zinc-800 text-zinc-500">
-                          返金済み
+                          申請者へ返金済み
+                        </div>
+                      )}
+
+                      {/* 返金ボタン（お相手側） */}
+                      {item.partnerPaymentIntentId && !item.partnerRefunded && (
+                        <button
+                          onClick={() => handleRefund(item, 'partner')}
+                          disabled={refunding === `${item.id}-partner`}
+                          className="w-full py-2 rounded-xl text-sm font-medium border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {refunding === `${item.id}-partner` ? '返金処理中...' : '⚠ お相手へ返金する'}
+                        </button>
+                      )}
+                      {item.partnerPaymentIntentId && item.partnerRefunded && (
+                        <div className="w-full py-2 rounded-xl text-sm font-medium text-center bg-zinc-800 text-zinc-500">
+                          お相手へ返金済み
                         </div>
                       )}
                     </div>
@@ -264,6 +288,30 @@ export default function AdminSchedulePage() {
               ))}
             </tbody>
           </table>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
+            <span className="text-xs text-zinc-500">
+              全{filtered.length}件中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, filtered.length)}件を表示
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                前へ
+              </button>
+              <span className="text-xs text-zinc-400">{currentPage} / {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                次へ
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

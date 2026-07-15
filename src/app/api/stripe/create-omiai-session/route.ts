@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { getStripe } from '@/lib/stripe';
@@ -16,13 +16,33 @@ export async function POST(req: NextRequest) {
   // マッチング情報を取得
   const { data: matching } = await adminSupabase
     .from('matchings')
-    .select('id, applicant_id, amount, status, scheduled_at')
+    .select('id, applicant_id, partner_id, payment_intent_id, partner_payment_intent_id, status, scheduled_at')
     .eq('id', matchingId)
     .single();
 
   if (!matching) return NextResponse.json({ error: 'マッチングが見つかりません' }, { status: 404 });
-  if (matching.applicant_id !== user.id) return NextResponse.json({ error: '権限がありません' }, { status: 403 });
+
+  let role: 'applicant' | 'partner';
+  if (matching.applicant_id === user.id) {
+    role = 'applicant';
+  } else if (matching.partner_id === user.id) {
+    role = 'partner';
+  } else {
+    return NextResponse.json({ error: '権限がありません' }, { status: 403 });
+  }
+
   if (!matching.scheduled_at) return NextResponse.json({ error: '日程が確定していません' }, { status: 400 });
+
+  const alreadyPaid = role === 'applicant' ? !!matching.payment_intent_id : !!matching.partner_payment_intent_id;
+  if (alreadyPaid) return NextResponse.json({ error: 'すでにお支払い済みです' }, { status: 400 });
+
+  // 支払う本人自身のプランに応じた金額を計算
+  const { data: myProfile } = await adminSupabase
+    .from('profiles')
+    .select('is_premium')
+    .eq('id', user.id)
+    .single();
+  const amount = myProfile?.is_premium ? 3000 : 3500;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -37,7 +57,7 @@ export async function POST(req: NextRequest) {
             name: 'お見合い料',
             description: `お見合い日程：${new Date(matching.scheduled_at).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}`,
           },
-          unit_amount: matching.amount,
+          unit_amount: amount,
         },
         quantity: 1,
       },
@@ -48,6 +68,7 @@ export async function POST(req: NextRequest) {
       matchingId,
       userId: user.id,
       type: 'omiai_fee',
+      role,
     },
   });
 

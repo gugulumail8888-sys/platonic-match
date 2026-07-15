@@ -30,15 +30,23 @@ function ReportContent() {
   const handleSubmit = async () => {
     if (!selected || isSubmitting) return;
     setSubmitting(true);
-    const payload = {
-      applicationId, nickname, category: selected,
-      categoryLabel: CATEGORIES.find((c) => c.id === selected)?.label,
-      detail, reportedAt: new Date().toISOString(),
-    };
-    console.log('=== 通報送信 ===');
-    console.log(JSON.stringify(payload, null, 2));
-    await new Promise((r) => setTimeout(r, 800));
+    const res = await fetch('/api/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        applicationId,
+        nickname,
+        category: selected,
+        categoryLabel: CATEGORIES.find((c) => c.id === selected)?.label,
+        detail,
+      }),
+    });
     setSubmitting(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? '通報の送信に失敗しました');
+      return;
+    }
     setSubmitted(true);
   };
 

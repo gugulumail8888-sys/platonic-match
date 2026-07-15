@@ -1,5 +1,8 @@
+import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
+
+const PAGE_SIZE = 10
 
 const CATEGORY_LABELS: Record<string, string> = {
   contact_demand: '連絡先の強要',
@@ -18,12 +21,21 @@ async function confirmReport(formData: FormData) {
   revalidatePath('/admin/reports')
 }
 
-export default async function AdminReportsPage() {
+export default async function AdminReportsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string }
+}) {
   const supabase = createAdminClient()
-  const { data: reports, error } = await supabase
+  const page = Math.max(1, parseInt(searchParams.page ?? '1', 10) || 1)
+
+  const { data: reports, error, count } = await supabase
     .from('reports')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
+
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE))
 
   const reporterIds = [...new Set((reports ?? []).map((r) => r.reporter_id).filter(Boolean))]
   const { data: profiles } = reporterIds.length > 0
@@ -35,7 +47,7 @@ export default async function AdminReportsPage() {
     <div className="p-6 md:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white">通報一覧</h1>
-        <p className="text-sm text-zinc-400 mt-0.5">amista 管理者パネル</p>
+        <p className="text-sm text-zinc-400 mt-0.5">amista 管理者パネル（全{count ?? 0}件）</p>
       </div>
 
       {error && (
@@ -93,6 +105,32 @@ export default async function AdminReportsPage() {
           </tbody>
         </table>
       </div>
+
+      {(count ?? 0) > 0 && (
+        <div className="flex items-center justify-end gap-2">
+          {page > 1 ? (
+            <Link
+              href={`/admin/reports?page=${page - 1}`}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+            >
+              前へ
+            </Link>
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">前へ</span>
+          )}
+          <span className="text-xs text-zinc-400">{page} / {totalPages}</span>
+          {page < totalPages ? (
+            <Link
+              href={`/admin/reports?page=${page + 1}`}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all"
+            >
+              次へ
+            </Link>
+          ) : (
+            <span className="px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-800 text-zinc-600">次へ</span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

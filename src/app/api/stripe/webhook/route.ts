@@ -6,8 +6,9 @@ import type Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
 
+// AIおすすめオプションは1プランのみ(ライト/スタンダードの2階層は存在せず、
+// 唯一の申込画面はSTRIPE_PRICE_STANDARDのみを使用する、2026/7/14確認)。
 const PLAN_BY_PRICE_ID: Record<string, string> = {
-  [process.env.STRIPE_PRICE_LIGHT ?? '']: 'light',
   [process.env.STRIPE_PRICE_STANDARD ?? '']: 'standard',
 };
 
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
 
     const matchingId = session.metadata?.matchingId;
     const type = session.metadata?.type;
+    const payerRole = session.metadata?.role;
 
     if (type === 'omiai_fee' && matchingId && userId) {
       const paymentIntentId = typeof session.payment_intent === 'string'
@@ -75,16 +77,20 @@ export async function POST(req: NextRequest) {
         : session.payment_intent?.id;
 
       const supabase = createAdminClient();
+      const updateData = payerRole === 'partner'
+        ? { partner_payment_intent_id: paymentIntentId, partner_amount: session.amount_total, partner_paid_at: new Date().toISOString() }
+        : { payment_intent_id: paymentIntentId, paid_at: new Date().toISOString() };
+
       const { data: matching, error: matchingUpdateError } = await supabase
         .from('matchings')
-        .update({ payment_intent_id: paymentIntentId })
+        .update(updateData)
         .eq('id', matchingId)
-        .select('applicant_id, partner_id, applied_at, amount, scheduled_at')
+        .select('applicant_id, partner_id, applied_at, amount, scheduled_at, payment_intent_id, partner_payment_intent_id')
         .single();
 
       if (matchingUpdateError) {
         console.error('omiai_fee matching update error:', matchingUpdateError);
-      } else if (matching) {
+      } else if (matching && matching.payment_intent_id && matching.partner_payment_intent_id) {
         try {
           const { data: profiles } = await supabase
             .from('profiles')

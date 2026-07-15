@@ -2,7 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/supabase/server';
-import { User } from 'lucide-react';
+import { User, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const PAGE_SIZE = 10;
 
 type Profile = {
   id: string;
@@ -30,7 +32,7 @@ function calcAge(birthDate: string) {
 export default async function ReviewPage({
   searchParams,
 }: {
-  searchParams: { tab?: string };
+  searchParams: { tab?: string; page?: string };
 }) {
   const adminSupabase = createAdminClient();
 
@@ -38,7 +40,8 @@ export default async function ReviewPage({
     .from('profiles')
     .select(
       'id, nickname, birth_date, gender, prefecture, occupation, avatar_url, status, created_at, admin_notes, profile_reviewed_at'
-    );
+    )
+    .order('created_at', { ascending: false });
 
   const profiles = (allProfiles ?? []) as Profile[];
 
@@ -46,7 +49,11 @@ export default async function ReviewPage({
   const reviewed = profiles.filter((p) => p.profile_reviewed_at !== null);
 
   const tab = searchParams.tab === 'reviewed' ? 'reviewed' : 'unreviewed';
-  const displayed = tab === 'reviewed' ? reviewed : unreviewed;
+  const allDisplayed = tab === 'reviewed' ? reviewed : unreviewed;
+
+  const totalPages = Math.max(1, Math.ceil(allDisplayed.length / PAGE_SIZE));
+  const currentPage = Math.min(Math.max(1, Number(searchParams.page) || 1), totalPages);
+  const displayed = allDisplayed.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div className="p-6 md:p-8 space-y-6">
@@ -55,29 +62,38 @@ export default async function ReviewPage({
         <p className="text-sm text-zinc-400 mt-0.5">
           未確認 {unreviewed.length} 件 ／ 確認済み {reviewed.length} 件
         </p>
+        <p className="text-xs text-zinc-600 mt-1">
+          ※この画面は会員が入力したプロフィール内容の目視確認を行います。本人確認書類の審査は「本人確認審査」画面（/admin/verify）で行ってください。
+        </p>
       </div>
 
       {/* タブ */}
-      <div className="flex gap-2 border-b border-zinc-800">
+      <div className="flex flex-wrap gap-2">
         <Link
           href="/admin/review?tab=unreviewed"
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
             tab === 'unreviewed'
-              ? 'border-teal-500 text-white'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              ? 'bg-teal-950 text-teal-400 border border-teal-900'
+              : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200'
           }`}
         >
-          未確認 ({unreviewed.length})
+          未確認
+          <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === 'unreviewed' ? 'bg-teal-900 text-teal-300' : 'bg-zinc-700 text-zinc-400'}`}>
+            {unreviewed.length}
+          </span>
         </Link>
         <Link
           href="/admin/review?tab=reviewed"
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
             tab === 'reviewed'
-              ? 'border-teal-500 text-white'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              ? 'bg-teal-950 text-teal-400 border border-teal-900'
+              : 'bg-zinc-800 text-zinc-400 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200'
           }`}
         >
-          確認済み ({reviewed.length})
+          確認済み
+          <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === 'reviewed' ? 'bg-teal-900 text-teal-300' : 'bg-zinc-700 text-zinc-400'}`}>
+            {reviewed.length}
+          </span>
         </Link>
       </div>
 
@@ -177,6 +193,36 @@ export default async function ReviewPage({
             </tbody>
           </table>
         </div>
+        {allDisplayed.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
+            <span className="text-xs text-zinc-500">
+              全{allDisplayed.length}件中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, allDisplayed.length)}件を表示
+            </span>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/admin/review?tab=${tab}&page=${Math.max(1, currentPage - 1)}`}
+                aria-disabled={currentPage <= 1}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all ${
+                  currentPage <= 1 ? 'opacity-40 pointer-events-none' : ''
+                }`}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                前へ
+              </Link>
+              <span className="text-xs text-zinc-400">{currentPage} / {totalPages}</span>
+              <Link
+                href={`/admin/review?tab=${tab}&page=${Math.min(totalPages, currentPage + 1)}`}
+                aria-disabled={currentPage >= totalPages}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all ${
+                  currentPage >= totalPages ? 'opacity-40 pointer-events-none' : ''
+                }`}
+              >
+                次へ
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

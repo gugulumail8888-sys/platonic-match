@@ -1,7 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Moon, Mail, AlertTriangle } from 'lucide-react';
+import { Moon, Mail, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAvatarColor } from '@/lib/utils';
+
+const PAGE_SIZE = 10;
+
+// 会員管理画面(AdminMembersClient.tsx)のMEMBER_STATUS_CONFIGと同じ日本語訳に統一
+const STATUS_LABELS: Record<string, string> = {
+  pending: '審査中',
+  approved: '承認済み',
+  verified: '手動チェック済み',
+  rejected: '拒否',
+  withdrawn: '退会済み',
+};
 
 interface DormantMember {
   id: string;
@@ -14,6 +25,7 @@ interface DormantMember {
   created_at: string;
   last_sign_in_at: string | null;
   avatar_color: string | null;
+  dormant_notice_sent_at: string | null;
 }
 
 function daysSince(dateStr: string | null): number {
@@ -25,6 +37,8 @@ export default function DormantPage() {
   const [members, setMembers] = useState<DormantMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [months, setMonths] = useState(6);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setLoading(true);
@@ -33,6 +47,39 @@ export default function DormantPage() {
       .then(d => setMembers(d.members ?? []))
       .finally(() => setLoading(false));
   }, [months]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [months]);
+
+  const totalPages = Math.max(1, Math.ceil(members.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = members.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const handleNotify = async (id: string, nickname: string, alreadySentAt: string | null) => {
+    const confirmMessage = alreadySentAt
+      ? `${nickname} さんには ${new Date(alreadySentAt).toLocaleDateString('ja-JP')} に通知メールを送信済みです。再度送信しますか？(自動送信バッチと重複する可能性があります)`
+      : `${nickname} さんに通知メールを送信しますか？(自動送信バッチの対象になっている場合、後日重複して届く可能性は低くなります)`;
+    if (!window.confirm(confirmMessage)) return;
+    setSendingId(id);
+    try {
+      const res = await fetch('/api/admin/dormant/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? '送信に失敗しました');
+        return;
+      }
+      alert('通知メールを送信しました');
+    } catch {
+      alert('送信に失敗しました');
+    } finally {
+      setSendingId(null);
+    }
+  };
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
@@ -60,6 +107,9 @@ export default function DormantPage() {
           </button>
         ))}
       </div>
+      <p className="text-xs text-zinc-500 mb-6 -mt-4">
+        ※自動通知バッチは335日(約11ヶ月)以上未ログインの会員のみを対象に送信されます。3・6ヶ月のフィルタは早期の状況把握用で、自動通知の対象ではありません。
+      </p>
 
       {/* 件数 */}
       <div className="mb-4 flex items-center gap-2">
@@ -89,7 +139,7 @@ export default function DormantPage() {
               <tr><td colSpan={7} className="text-center p-8 text-zinc-500">読み込み中...</td></tr>
             ) : members.length === 0 ? (
               <tr><td colSpan={7} className="text-center p-8 text-zinc-500">該当する会員はいません</td></tr>
-            ) : members.map(m => {
+            ) : paged.map(m => {
               const days = daysSince(m.last_sign_in_at);
               const color = getAvatarColor(m.id, m.avatar_color);
               const initial = m.nickname?.charAt(0) ?? '?';
@@ -125,20 +175,57 @@ export default function DormantPage() {
                   </td>
                   <td className="p-4">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-700 text-zinc-300">
-                      {m.status}
+                      {STATUS_LABELS[m.status] ?? m.status}
                     </span>
                   </td>
                   <td className="p-4">
-                    <button className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-zinc-700 text-zinc-300 hover:bg-zinc-600 transition-colors">
-                      <Mail className="w-3 h-3" />
-                      通知メール
-                    </button>
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => handleNotify(m.id, m.nickname, m.dormant_notice_sent_at)}
+                        disabled={sendingId === m.id}
+                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-zinc-700 text-zinc-300 hover:bg-zinc-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Mail className="w-3 h-3" />
+                        {sendingId === m.id ? '送信中...' : m.dormant_notice_sent_at ? '再送信' : '通知メール'}
+                      </button>
+                      {m.dormant_notice_sent_at && (
+                        <span className="text-[10px] text-zinc-500">
+                          送信済み：{new Date(m.dormant_notice_sent_at).toLocaleDateString('ja-JP')}
+                        </span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {!loading && members.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-800">
+            <span className="text-xs text-zinc-500">
+              全{members.length}名中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, members.length)}名を表示
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                前へ
+              </button>
+              <span className="text-xs text-zinc-400">{currentPage} / {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-700 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+              >
+                次へ
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -29,3 +29,10 @@
 3. 5分おきのpg_cronジョブ(meeting-timeout-cancel)が、scheduled_atから15分経過かつステータスzoom_completed・meeting_ended_at未設定のお見合いを抽出
 4. 抽出された候補のうち、ボタンクリック記録が欠けているものについて、checkRealMeetingAttendance()でGoogle Meet REST APIから実際の入室人数を取得
 5. 実際の入室が2名以上確認できればキャンセルをスキップ(実際は入室していたと判断)、確認できなければ従来通り強制キャンセルしてnotifyCancelTimeout()を実行
+
+## AIおすすめオプション1.5ヶ月未ログイン通知フロー(2026/7/13追加・タスク#72)
+1. pg_cronジョブ(ai-option-inactivity-notice、毎日4時UTC)が/api/cron/reminder(type: ai_option_inactivity_notice)を呼び出す
+2. Supabase Authの全ユーザーからlast_sign_in_atが45日以上前の会員を抽出する一方、直近45日以内にログインがある会員は「非アクティブ」から除外
+3. 非アクティブ会員のうち、is_premium=true・status≠withdrawn・ai_inactivity_notice_count(送信回数)が3未満の会員を対象に絞り込む
+4. 対象者ごとに、前回送信(ai_inactivity_notice_sent_at)から45日以上経過していれば通知メールを送信し、送信回数をインクリメント・送信日時を更新(1回目は無条件、2・3回目は間隔をあけて送信、3回で打ち止め・それ以降は自動解約せず送信も終了)
+5. 直近45日以内にログインがあり、かつ過去に送信履歴が残っている会員は、次の非アクティブ期間に備えて送信回数・送信日時をリセット

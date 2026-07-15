@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, LogOut, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare, Video, HelpCircle } from 'lucide-react';
+import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, LogOut, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare, Video, HelpCircle, Flag, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -11,11 +11,13 @@ const NAV_ITEMS = [
   { href: '/admin/verify',   label: '本人確認審査',   icon: ShieldCheck,   exact: false },
   { href: '/admin/matching', label: '申請管理',       icon: HeartHandshake, exact: false },
   { href: '/admin/schedule', label: '日程管理',       icon: Calendar,      exact: false },
+  { href: '/admin/cancellations', label: 'キャンセル・返金管理', icon: RefreshCw, exact: false },
   { href: '/admin/review',   label: 'プロフィール管理', icon: ClipboardList, exact: false },
   { href: '/admin/dormant',  label: '休眠会員',       icon: Moon,          exact: false },
-  { href: '/admin/export',   label: 'データ出力',     icon: Download,      exact: false },
   { href: '/admin/surveys',  label: 'アンケート',     icon: ClipboardCheck, exact: false },
   { href: '/admin/feedback', label: 'ご意見・ご要望', icon: MessageSquare,  exact: false },
+  { href: '/admin/reports',  label: '通報一覧',       icon: Flag,          exact: false },
+  { href: '/admin/export',   label: 'データ出力',     icon: Download,      exact: false },
   { href: '/admin/settings', label: '設定',           icon: Settings,      exact: false },
 ];
 

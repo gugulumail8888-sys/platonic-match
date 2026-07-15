@@ -153,7 +153,9 @@ export default function AdminSettingsPage() {
   const [maintenanceScheduledEnd, setMaintenanceScheduledEnd] = useState('');
 
   // 2. 料金設定
-  const [lightPlanPrice, setLightPlanPrice] = useState(1078);
+  // 変数名は旧仕様(ライト/スタンダード2プラン)の名残だったが、実際には
+  // AIおすすめオプションは1プランのみのため名称を実態に合わせて変更(2026/7/14)
+  const [aiOptionPrice, setAiOptionPrice] = useState(1078);
   const [matchingFeeNormal, setMatchingFeeNormal] = useState(3500);
   const [matchingFeePremium, setMatchingFeePremium] = useState(3000);
 
@@ -169,6 +171,9 @@ export default function AdminSettingsPage() {
 
   // 6. ベータ版設定
   const [aiOptionEnabled, setAiOptionEnabled] = useState(true);
+  // AIおすすめオプションOFF中はStripe請求を一時停止する(2026/7/14対応)。
+  // 一時停止中かどうかの表示用(空文字なら停止していない)
+  const [aiOptionPausedAt, setAiOptionPausedAt] = useState('');
 
   // 7. キャンペーン設定
   const [campaignBannerEnabled, setCampaignBannerEnabled] = useState(false);
@@ -188,10 +193,11 @@ export default function AdminSettingsPage() {
         if (data.maintenance_notice_enabled !== undefined) setMaintenanceNoticeEnabled(data.maintenance_notice_enabled === 'true');
         if (data.maintenance_scheduled_start !== undefined) setMaintenanceScheduledStart(data.maintenance_scheduled_start);
         if (data.maintenance_scheduled_end !== undefined) setMaintenanceScheduledEnd(data.maintenance_scheduled_end);
-        if (data.light_plan_price !== undefined) setLightPlanPrice(Number(data.light_plan_price));
+        if (data.light_plan_price !== undefined) setAiOptionPrice(Number(data.light_plan_price));
         if (data.matching_fee_normal !== undefined) setMatchingFeeNormal(Number(data.matching_fee_normal));
         if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
         if (data.ai_option_enabled !== undefined) setAiOptionEnabled(data.ai_option_enabled !== 'false');
+        if (data.ai_option_paused_at !== undefined) setAiOptionPausedAt(data.ai_option_paused_at);
         if (data.review_mode !== undefined) setReviewMode(data.review_mode === 'auto' ? 'auto' : 'manual');
         if (data.omiai_open !== undefined) setOmiaiOpen(data.omiai_open === 'true');
         if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
@@ -210,7 +216,17 @@ export default function AdminSettingsPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('failed');
-      showToast('保存しました');
+      const data = await res.json().catch(() => null) as { billingResult?: { paused?: number; resumed?: number; failed?: number } } | null;
+      const br = data?.billingResult;
+      if (br?.paused !== undefined) {
+        showToast(`保存しました(契約者${br.paused}名の請求を一時停止${br.failed ? `・${br.failed}件失敗` : ''})`);
+        setAiOptionPausedAt(new Date().toISOString());
+      } else if (br?.resumed !== undefined) {
+        showToast(`保存しました(契約者${br.resumed}名の請求を再開${br.failed ? `・${br.failed}件失敗` : ''})`);
+        setAiOptionPausedAt('');
+      } else {
+        showToast('保存しました');
+      }
     } catch {
       showToast('保存に失敗しました');
     }
@@ -227,10 +243,17 @@ export default function AdminSettingsPage() {
     maintenance_scheduled_end: maintenanceScheduledEnd,
   });
 
-  const handleSaveBeta = () => saveSettings({
-    ai_option_enabled: String(aiOptionEnabled),
-    campaign_banner_enabled: String(campaignBannerEnabled),
-  });
+  const handleSaveBeta = () => {
+    if (!aiOptionEnabled && !window.confirm(
+      'AIおすすめオプションをOFFにします。契約中の会員全員のStripe請求を自動的に一時停止します(現金返金ではなく、再開時に停止していた日数分は課金されません)。よろしいですか？'
+    )) {
+      return;
+    }
+    saveSettings({
+      ai_option_enabled: String(aiOptionEnabled),
+      campaign_banner_enabled: String(campaignBannerEnabled),
+    });
+  };
 
   const handleSaveMembers = () => saveSettings({
     review_mode: reviewMode,
@@ -302,7 +325,7 @@ export default function AdminSettingsPage() {
           note="以下はいずれも現在の設定値の確認用の表示です。ここを変更しても実際の動作には反映されません。料金はStripeダッシュボード、期限はコード側の固定値がそれぞれの正となっています。"
         >
           <p className="text-xs text-teal-400 font-medium">料金(Stripe Price IDが正)</p>
-          <ReadOnlyRow label="AIおすすめプラン月額（税込）" value={lightPlanPrice.toLocaleString()} unit="円" />
+          <ReadOnlyRow label="AIおすすめプラン月額（税込）" value={aiOptionPrice.toLocaleString()} unit="円" />
           <ReadOnlyRow label="お見合い申請料金（無料プラン・税込）" value={matchingFeeNormal.toLocaleString()} unit="円" />
           <ReadOnlyRow label="お見合い申請料金（AIプラン・税込）" value={matchingFeePremium.toLocaleString()} unit="円" />
           <p className="text-xs text-teal-400 font-medium pt-2 border-t border-zinc-800">マッチング期限(コード側の固定値が正)</p>
@@ -316,8 +339,13 @@ export default function AdminSettingsPage() {
             checked={aiOptionEnabled}
             onChange={setAiOptionEnabled}
             label="AIおすすめオプション"
-            description="AIによるマッチングおすすめ機能を有効にします(OFF時は契約者含め全員が利用不可になります)"
+            description="AIによるマッチングおすすめ機能を有効にします(OFF時は契約者含め全員が利用不可になります。OFFにするとStripe請求も自動的に一時停止されます)"
           />
+          {aiOptionPausedAt && (
+            <p className="text-[10px] text-amber-500 -mt-2">
+              ⚠ 現在、契約者全員の請求を一時停止中です({new Date(aiOptionPausedAt).toLocaleString('ja-JP')}〜)
+            </p>
+          )}
           <ToggleSwitch
             checked={campaignBannerEnabled}
             onChange={setCampaignBannerEnabled}
@@ -332,7 +360,7 @@ export default function AdminSettingsPage() {
             checked={omiaiOpen}
             onChange={setOmiaiOpen}
             label="お見合い申請受付"
-            description="無効にすると「8月開始予定」と表示されます"
+            description="無効にすると「お見合い申請は近日開始予定」と表示されます"
           />
           <FieldRow label="審査モード">
             <select

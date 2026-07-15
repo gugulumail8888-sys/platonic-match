@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: '未認証' }, { status: 401 });
 
-    const { matchingId } = await req.json() as { matchingId?: string };
+    const { matchingId, reason } = await req.json() as { matchingId?: string; reason?: string };
     if (!matchingId) return NextResponse.json({ error: 'matchingIdが必要です' }, { status: 400 });
 
     const admin = createAdminClient();
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // ステータスをrejectedに更新
     const { error: updateError } = await admin
       .from('matchings')
-      .update({ status: 'rejected', responded_at: new Date().toISOString() })
+      .update({ status: 'rejected', responded_at: new Date().toISOString(), reject_reason: reason ?? null })
       .eq('id', matchingId);
 
     if (updateError) {
