@@ -346,6 +346,28 @@ function AIOptionSection() {
   const [cancelled, setCancelled] = useState(false);
   const [remainingDays, setRemainingDays] = useState<number | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  const handleSubscribe = async () => {
+    setIsSubscribing(true);
+    try {
+      const res = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        alert(data.error ?? '決済セッションの作成に失敗しました');
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      alert('決済処理に失敗しました');
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
 
   useEffect(() => {
     router.refresh();
@@ -444,12 +466,13 @@ function AIOptionSection() {
             </span>
             <span className="text-sm text-zinc-400">AIおすすめプランに加入していません</span>
           </div>
-          <Link
-            href="/option-apply"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium transition-colors"
+          <button
+            onClick={handleSubscribe}
+            disabled={isSubscribing}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-700 hover:bg-teal-600 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            AIおすすめプランに申し込む
-          </Link>
+            {isSubscribing ? '処理中...' : 'AIおすすめプランに申し込む'}
+          </button>
         </div>
       )}
     </div>

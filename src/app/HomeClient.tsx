@@ -122,7 +122,7 @@ export default function HomePage() {
                 {getCampaignPeriodLabel()}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）
               </p>
             </div>
-            <Link href="/option-apply" className="flex-shrink-0">
+            <Link href="/recommend" className="flex-shrink-0">
               <button className="bg-white text-orange-600 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-colors whitespace-nowrap">
                 AIおすすめ機能を見る
               </button>

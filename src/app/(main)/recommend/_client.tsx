@@ -17,11 +17,25 @@ const MUST_CONDITION_OPTIONS = [
 const PRIORITY_POINT_OPTIONS = [
   '価値観', '生活習慣', '居住地の近さ', '年齢', '収入', '趣味', '外見',
 ];
+const NG_CONDITION_OPTIONS = [
+  '喫煙者NG', '転勤ありNG', '子供不要NG', 'ペットNG', '夜型生活NG', '遠距離NG',
+];
+const PREFECTURE_OPTIONS = [
+  '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+  '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+  '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+  '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+  '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+  '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+  '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
+];
 
 interface AiPreferences {
   preferred_age_min: number | null;
   preferred_age_max: number | null;
   preferred_prefecture: string | null;
+  preferred_prefectures: string[] | null;
+  ng_conditions: string[] | null;
   must_conditions: string[] | null;
   priority_points: string[] | null;
   free_message: string | null;
@@ -171,7 +185,8 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
 
   const [ageMin, setAgeMin] = useState('');
   const [ageMax, setAgeMax] = useState('');
-  const [prefecturePref, setPrefecturePref] = useState<'near' | 'anywhere' | ''>('');
+  const [prefectures, setPrefectures] = useState<string[]>([]);
+  const [ngConditions, setNgConditions] = useState<string[]>([]);
   const [mustConditions, setMustConditions] = useState<string[]>([]);
   const [priorityPoints, setPriorityPoints] = useState<string[]>([]);
   const [freeMessage, setFreeMessage] = useState('');
@@ -246,11 +261,8 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
         }
         setAgeMin(prefs.preferred_age_min != null ? String(prefs.preferred_age_min) : '');
         setAgeMax(prefs.preferred_age_max != null ? String(prefs.preferred_age_max) : '');
-        setPrefecturePref(
-          prefs.preferred_prefecture === 'near' || prefs.preferred_prefecture === 'anywhere'
-            ? prefs.preferred_prefecture
-            : ''
-        );
+        setPrefectures(prefs.preferred_prefectures ?? []);
+        setNgConditions(prefs.ng_conditions ?? []);
         setMustConditions(prefs.must_conditions ?? []);
         setPriorityPoints(prefs.priority_points ?? []);
         setFreeMessage(prefs.free_message ?? '');
@@ -271,7 +283,8 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
         body: JSON.stringify({
           preferred_age_min: ageMin ? Number(ageMin) : null,
           preferred_age_max: ageMax ? Number(ageMax) : null,
-          preferred_prefecture: prefecturePref || null,
+          preferred_prefectures: prefectures,
+          ng_conditions: ngConditions,
           must_conditions: mustConditions,
           priority_points: priorityPoints,
           free_message: freeMessage || null,
@@ -482,23 +495,32 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
             </div>
           </div>
 
-          {/* 居住地の希望 */}
+          {/* 希望居住エリア */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-            <p className="text-white font-medium text-sm mb-3">居住地の希望</p>
-            <div className="flex gap-5 flex-wrap">
-              {[{ value: 'near', label: '近い人がいい' }, { value: 'anywhere', label: 'どこでもOK' }].map((o) => (
-                <label key={o.value} className="flex items-center gap-2 cursor-pointer text-sm text-zinc-300">
-                  <input
-                    type="radio"
-                    name="prefecturePref"
-                    value={o.value}
-                    checked={prefecturePref === o.value}
-                    onChange={() => setPrefecturePref(o.value as 'near' | 'anywhere')}
-                    className="w-4 h-4 accent-teal-500"
-                  />
-                  {o.label}
-                </label>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-white font-medium text-sm">希望居住エリア（複数選択可）</p>
+              <span className="text-teal-400 text-xs bg-teal-900/40 px-2 py-0.5 rounded-full border border-teal-800">
+                {prefectures.length}件選択中
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {PREFECTURE_OPTIONS.map((pref) => {
+                const selected = prefectures.includes(pref);
+                return (
+                  <button
+                    key={pref}
+                    type="button"
+                    onClick={() => toggleValue(prefectures, pref, setPrefectures)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      selected
+                        ? 'bg-teal-700 border border-teal-500 text-teal-100'
+                        : 'bg-zinc-800 border border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    {pref}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -512,6 +534,21 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
                   label={o}
                   checked={mustConditions.includes(o)}
                   onChange={() => toggleValue(mustConditions, o, setMustConditions)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* NG条件 */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            <p className="text-white font-medium text-sm mb-3">NG条件</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-3">
+              {NG_CONDITION_OPTIONS.map((o) => (
+                <CheckboxOption
+                  key={o}
+                  label={o}
+                  checked={ngConditions.includes(o)}
+                  onChange={() => toggleValue(ngConditions, o, setNgConditions)}
                 />
               ))}
             </div>
