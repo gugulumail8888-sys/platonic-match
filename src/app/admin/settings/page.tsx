@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Settings, Wallet, Users, Bot,
 } from 'lucide-react';
@@ -174,11 +174,21 @@ export default function AdminSettingsPage() {
   // AIおすすめオプションOFF中はStripe請求を一時停止する(2026/7/14対応)。
   // 一時停止中かどうかの表示用(空文字なら停止していない)
   const [aiOptionPausedAt, setAiOptionPausedAt] = useState('');
+  // 保存ボタンが「ベータ版・キャンペーン設定」セクション内の3トグル共通のため、
+  // 「今回のセーブで実際にAIオプションをON→OFFに切り替えたか」を判定するための
+  // 直近保存済み値の記録(2026/7/17対応。従来はAIオプションが既にOFFの状態で
+  // 他のトグル(ベータ版バナー等)だけを保存しようとしても、無関係な確認モーダルが
+  // 毎回出てしまう不具合があった)
+  const aiOptionEnabledSavedRef = useRef(true);
 
   // OFF確認モーダル(2026/7/15対応。テスト等の一時的なOFFで契約者の請求期間が
   // 意図せず延長されないよう、請求停止の要否を都度選べるようにする)
   const [showOffConfirmModal, setShowOffConfirmModal] = useState(false);
   const [pauseBillingOnOff, setPauseBillingOnOff] = useState(true);
+
+  // ベータ版バナー設定(2026/7/17対応。従来は管理画面UIがなくDB直接操作でしか
+  // ON/OFFできなかった問題を解消。表示期限機能は今回のスコープ外)
+  const [betaBannerEnabled, setBetaBannerEnabled] = useState(false);
 
   // 7. キャンペーン設定
   const [campaignBannerEnabled, setCampaignBannerEnabled] = useState(false);
@@ -201,11 +211,16 @@ export default function AdminSettingsPage() {
         if (data.light_plan_price !== undefined) setAiOptionPrice(Number(data.light_plan_price));
         if (data.matching_fee_normal !== undefined) setMatchingFeeNormal(Number(data.matching_fee_normal));
         if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
-        if (data.ai_option_enabled !== undefined) setAiOptionEnabled(data.ai_option_enabled !== 'false');
+        if (data.ai_option_enabled !== undefined) {
+          const enabled = data.ai_option_enabled !== 'false';
+          setAiOptionEnabled(enabled);
+          aiOptionEnabledSavedRef.current = enabled;
+        }
         if (data.ai_option_paused_at !== undefined) setAiOptionPausedAt(data.ai_option_paused_at);
         if (data.review_mode !== undefined) setReviewMode(data.review_mode === 'auto' ? 'auto' : 'manual');
         if (data.omiai_open !== undefined) setOmiaiOpen(data.omiai_open === 'true');
         if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
+        if (data.beta_banner_enabled !== undefined) setBetaBannerEnabled(data.beta_banner_enabled === 'true');
         if (data.campaign_banner_enabled !== undefined) setCampaignBannerEnabled(data.campaign_banner_enabled === 'true');
         if (data.zoom_expiry_days !== undefined) setZoomExpiryDays(Number(data.zoom_expiry_days));
         if (data.matching_auto_cancel_days !== undefined) setMatchingAutoCancelDays(Number(data.matching_auto_cancel_days));
@@ -249,7 +264,7 @@ export default function AdminSettingsPage() {
   });
 
   const handleSaveBeta = () => {
-    if (!aiOptionEnabled) {
+    if (aiOptionEnabledSavedRef.current && !aiOptionEnabled) {
       setPauseBillingOnOff(true);
       setShowOffConfirmModal(true);
       return;
@@ -257,7 +272,9 @@ export default function AdminSettingsPage() {
     saveSettings({
       ai_option_enabled: String(aiOptionEnabled),
       campaign_banner_enabled: String(campaignBannerEnabled),
+      beta_banner_enabled: String(betaBannerEnabled),
     });
+    aiOptionEnabledSavedRef.current = aiOptionEnabled;
   };
 
   const handleConfirmOff = () => {
@@ -265,8 +282,10 @@ export default function AdminSettingsPage() {
     saveSettings({
       ai_option_enabled: 'false',
       campaign_banner_enabled: String(campaignBannerEnabled),
+      beta_banner_enabled: String(betaBannerEnabled),
       pause_billing: String(pauseBillingOnOff),
     });
+    aiOptionEnabledSavedRef.current = false;
   };
 
   const handleSaveMembers = () => saveSettings({
@@ -349,6 +368,12 @@ export default function AdminSettingsPage() {
 
         {/* ベータ版・キャンペーン設定 */}
         <SettingsSection icon={Bot} title="ベータ版・キャンペーン設定" onSave={handleSaveBeta}>
+          <ToggleSwitch
+            checked={betaBannerEnabled}
+            onChange={setBetaBannerEnabled}
+            label="ベータ版バナーを表示"
+            description="有効にするとサイト全体の上部に「amistaはただいまベータ版です」というオレンジ色のバナーを表示します"
+          />
           <ToggleSwitch
             checked={aiOptionEnabled}
             onChange={setAiOptionEnabled}
