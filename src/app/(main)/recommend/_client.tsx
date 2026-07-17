@@ -10,15 +10,10 @@ import {
 import { Button } from '@/components/ui/Button';
 
 const MUST_CONDITION_OPTIONS = [
-  '子供ほしい', '子供ほしくない', '喫煙者NG', '飲酒者NG',
-  '同居希望', '別居希望', 'すぐに結婚したい', '外部パートナーあり', '外部パートナーなし',
-  '家計完全折半希望', '家計は相談次第希望',
+  '子供ほしい', '子供ほしくない', '喫煙者NG', '飲酒者NG', '家族と同居NG', '将来的に家族と同居を検討NG', '別居希望', 'すぐに結婚したい', '外部パートナーなし', '家計完全折半希望',
 ];
 const PRIORITY_POINT_OPTIONS = [
   '価値観', '生活習慣', '居住地の近さ', '年齢', '収入', '趣味', '外見',
-];
-const NG_CONDITION_OPTIONS = [
-  '喫煙者NG', '転勤ありNG', '子供不要NG', 'ペットNG', '夜型生活NG', '遠距離NG',
 ];
 const PREFECTURE_OPTIONS = [
   '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
@@ -186,7 +181,6 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
   const [ageMin, setAgeMin] = useState('');
   const [ageMax, setAgeMax] = useState('');
   const [prefectures, setPrefectures] = useState<string[]>([]);
-  const [ngConditions, setNgConditions] = useState<string[]>([]);
   const [mustConditions, setMustConditions] = useState<string[]>([]);
   const [priorityPoints, setPriorityPoints] = useState<string[]>([]);
   const [freeMessage, setFreeMessage] = useState('');
@@ -262,8 +256,7 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
         setAgeMin(prefs.preferred_age_min != null ? String(prefs.preferred_age_min) : '');
         setAgeMax(prefs.preferred_age_max != null ? String(prefs.preferred_age_max) : '');
         setPrefectures(prefs.preferred_prefectures ?? []);
-        setNgConditions(prefs.ng_conditions ?? []);
-        setMustConditions(prefs.must_conditions ?? []);
+        setMustConditions([...new Set([...(prefs.must_conditions ?? []), ...(prefs.ng_conditions ?? [])])]);
         setPriorityPoints(prefs.priority_points ?? []);
         setFreeMessage(prefs.free_message ?? '');
         setIncomeMin(prefs.preferred_income_min != null ? String(prefs.preferred_income_min) : '');
@@ -284,7 +277,6 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
           preferred_age_min: ageMin ? Number(ageMin) : null,
           preferred_age_max: ageMax ? Number(ageMax) : null,
           preferred_prefectures: prefectures,
-          ng_conditions: ngConditions,
           must_conditions: mustConditions,
           priority_points: priorityPoints,
           free_message: freeMessage || null,
@@ -534,21 +526,6 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
                   label={o}
                   checked={mustConditions.includes(o)}
                   onChange={() => toggleValue(mustConditions, o, setMustConditions)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* NG条件 */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-            <p className="text-white font-medium text-sm mb-3">NG条件</p>
-            <div className="flex flex-wrap gap-x-5 gap-y-3">
-              {NG_CONDITION_OPTIONS.map((o) => (
-                <CheckboxOption
-                  key={o}
-                  label={o}
-                  checked={ngConditions.includes(o)}
-                  onChange={() => toggleValue(ngConditions, o, setNgConditions)}
                 />
               ))}
             </div>

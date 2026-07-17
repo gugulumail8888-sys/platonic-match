@@ -250,7 +250,7 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
           )}
           {detail.status === 'pending' && (
             <button
-              onClick={() => handleDecision('approved')}
+              onClick={() => handleDecision('verified')}
               disabled={isSaving}
               className="px-4 py-2 rounded-xl bg-green-900/40 border border-green-800 text-green-300 text-sm font-medium hover:bg-green-900/70 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
