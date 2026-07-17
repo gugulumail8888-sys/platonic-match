@@ -3,6 +3,7 @@ import { BetaBanner } from "@/components/layout/BetaBanner";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 import { getBannerOffset } from "@/lib/bannerOffset";
 import { MaintenanceNoticeBanner } from "@/components/layout/MaintenanceNoticeBanner";
+import { IncidentBanner } from "@/components/layout/IncidentBanner";
 import { AiOptionPausedBanner } from "@/components/layout/AiOptionPausedBanner";
 import "./globals.css";
 
@@ -51,6 +52,7 @@ export default async function RootLayout({
     <html lang="ja">
       <body className="min-h-screen" style={{ '--banner-offset': `${offset}px` } as React.CSSProperties}>
         <div className="fixed top-0 left-0 right-0 z-50 flex flex-col">
+          <IncidentBanner />
           <MaintenanceNoticeBanner />
           <AiOptionPausedBanner />
           <BetaBanner />

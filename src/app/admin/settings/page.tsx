@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Settings, Wallet, Users, Bot,
+  Settings, Wallet, Users, Bot, AlertTriangle,
 } from 'lucide-react';
 
 // ============================================================
@@ -192,6 +192,10 @@ export default function AdminSettingsPage() {
 
   // 7. キャンペーン設定
   const [campaignBannerEnabled, setCampaignBannerEnabled] = useState(false);
+  // 汎用お知らせバナー設定(2026/7/17対応。「メンテナンス中」でも「AIオプション停止中」
+  // でもない、システム全体や決済処理のトラブル等を任意の文言で告知するための機能)
+  const [incidentBannerEnabled, setIncidentBannerEnabled] = useState(false);
+  const [incidentBannerMessage, setIncidentBannerMessage] = useState('');
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -222,6 +226,8 @@ export default function AdminSettingsPage() {
         if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
         if (data.beta_banner_enabled !== undefined) setBetaBannerEnabled(data.beta_banner_enabled === 'true');
         if (data.campaign_banner_enabled !== undefined) setCampaignBannerEnabled(data.campaign_banner_enabled === 'true');
+        if (data.incident_banner_enabled !== undefined) setIncidentBannerEnabled(data.incident_banner_enabled === 'true');
+        if (data.incident_banner_message !== undefined) setIncidentBannerMessage(data.incident_banner_message);
         if (data.zoom_expiry_days !== undefined) setZoomExpiryDays(Number(data.zoom_expiry_days));
         if (data.matching_auto_cancel_days !== undefined) setMatchingAutoCancelDays(Number(data.matching_auto_cancel_days));
       })
@@ -261,6 +267,11 @@ export default function AdminSettingsPage() {
     maintenance_notice_enabled: String(maintenanceNoticeEnabled),
     maintenance_scheduled_start: maintenanceScheduledStart,
     maintenance_scheduled_end: maintenanceScheduledEnd,
+  });
+
+  const handleSaveIncident = () => saveSettings({
+    incident_banner_enabled: String(incidentBannerEnabled),
+    incident_banner_message: incidentBannerMessage,
   });
 
   const handleSaveBeta = () => {
@@ -347,6 +358,25 @@ export default function AdminSettingsPage() {
               value={maintenanceScheduledEnd}
               onChange={(e) => setMaintenanceScheduledEnd(e.target.value)}
               className={inputCls}
+            />
+          </FieldRow>
+        </SettingsSection>
+
+        {/* 障害・緊急のお知らせ設定 */}
+        <SettingsSection icon={AlertTriangle} title="障害・緊急のお知らせ" onSave={handleSaveIncident}>
+          <ToggleSwitch
+            checked={incidentBannerEnabled}
+            onChange={setIncidentBannerEnabled}
+            label="お知らせバナーを表示"
+            description="「メンテナンス中」「AIオプション停止中」以外の、システム全体・決済処理等のトラブル発生時に、下記の文言でトップに常時バナーを表示します"
+          />
+          <FieldRow label="お知らせ文言">
+            <input
+              type="text"
+              value={incidentBannerMessage}
+              onChange={(e) => setIncidentBannerMessage(e.target.value)}
+              className={inputCls}
+              placeholder="例：現在、一部決済処理に不具合が発生しております。復旧までしばらくお待ちください。"
             />
           </FieldRow>
         </SettingsSection>
