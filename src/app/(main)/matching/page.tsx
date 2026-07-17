@@ -325,22 +325,31 @@ function MatchingCard({ matching, currentUserId, myIsPremium }: { matching: Matc
           </div>
         )}
 
-        {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && matching.scheduled_at !== null && now >= new Date(matching.scheduled_at).getTime() - 2 * 60 * 60 * 1000 && (
-          <button
-            onClick={() => {
-              router.push(`/zoom-check?matchingId=${matching.id}`);
-            }}
-            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 transition-colors shadow-sm w-full mb-2"
-          >
-            🎥 Google Meetに参加する
-          </button>
-        )}
-
-        {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && matching.scheduled_at !== null && now < new Date(matching.scheduled_at).getTime() - 2 * 60 * 60 * 1000 && (
-          <div className="mb-2 p-2.5 rounded-xl bg-amber-900/20 border border-amber-800 text-center">
-            <p className="text-amber-400 text-sm font-semibold">⏳ お見合い開始2時間前からGoogle Meetに参加できます</p>
-          </div>
-        )}
+        {status === 'zoom_completed' && matching.meeting_ended_at === null && matching.zoom_url && matching.scheduled_at !== null && (() => {
+          const isBeforeWindow = now < new Date(matching.scheduled_at).getTime() - 10 * 60 * 1000;
+          return (
+            <>
+              <button
+                onClick={() => {
+                  router.push(`/zoom-check?matchingId=${matching.id}`);
+                }}
+                disabled={isBeforeWindow}
+                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm w-full mb-2 ${
+                  isBeforeWindow
+                    ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+                    : 'text-white bg-teal-600 hover:bg-teal-500'
+                }`}
+              >
+                🎥 Google Meetに参加する
+              </button>
+              {isBeforeWindow && (
+                <div className="mb-2 p-2.5 rounded-xl bg-amber-900/20 border border-amber-800 text-center">
+                  <p className="text-amber-400 text-sm font-semibold">⏳ お見合い開始10分前からGoogle Meetに参加できます。参加後はマイク・カメラの映りを確認しておきましょう。</p>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* 交際希望ボタン（Google Meet完了時のみ） */}
         {status === 'zoom_completed' && matching.meeting_ended_at !== null && (

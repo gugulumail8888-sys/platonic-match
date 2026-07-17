@@ -196,11 +196,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, count: matchings.length });
     }
 
-    // ── ③ day_reminder: 2時間後にお見合い → 当日リマインド ──
+    // ── ③ day_reminder: 10分後にお見合い → 当日リマインド ──
     if (type === 'day_reminder') {
       const nowMs = Date.now();
-      const start = new Date(nowMs + 2 * 60 * 60 * 1000).toISOString();
-      const end = new Date(nowMs + 3 * 60 * 60 * 1000).toISOString();
+      const start = new Date(nowMs + 10 * 60 * 1000).toISOString();
+      const end = new Date(nowMs + 15 * 60 * 1000).toISOString();
 
       const { data, error } = await admin
         .from('matchings')

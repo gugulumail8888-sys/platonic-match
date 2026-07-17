@@ -272,7 +272,7 @@ export async function POST(req: NextRequest) {
       });
 
     } else if (type === 'day_reminder') {
-      // 当日リマインド（お見合い2時間前）
+      // 当日リマインド（お見合い10分前）
       const meetSection = meetUrl
         ? `<p>Google Meet URL：<a href="${meetUrl}">${meetUrl}</a></p>`
         : '';
@@ -284,7 +284,7 @@ export async function POST(req: NextRequest) {
         subject: '【amista】本日のGoogle Meetお見合いのご案内',
         html: wrap(`
           <h2 style="color: #0d9488;">本日、お見合いが予定されています</h2>
-          <p>${applicant.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
+          <p>${applicant.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。まもなく開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
           <p>お見合いの前にお相手のプロフィールをご確認いただき、必要であればメモをご用意いただくとスムーズです。</p>
@@ -301,7 +301,7 @@ export async function POST(req: NextRequest) {
         subject: '【amista】本日のGoogle Meetお見合いのご案内',
         html: wrap(`
           <h2 style="color: #0d9488;">本日、お見合いが予定されています</h2>
-          <p>${member.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。2時間後に開始予定です。</p>
+          <p>${member.nickname} さん、${whenStr}よりGoogle Meetでのお見合いが予定されています。まもなく開始予定です。</p>
           ${meetSection}
           <p>明るく静かな環境でのご参加をお願いいたします。</p>
           <p>お見合いの前にお相手のプロフィールをご確認いただき、必要であればメモをご用意いただくとスムーズです。</p>
