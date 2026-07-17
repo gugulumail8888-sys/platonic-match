@@ -151,6 +151,9 @@ export default function AdminSettingsPage() {
   const [maintenanceNoticeEnabled, setMaintenanceNoticeEnabled] = useState(false);
   const [maintenanceScheduledStart, setMaintenanceScheduledStart] = useState('');
   const [maintenanceScheduledEnd, setMaintenanceScheduledEnd] = useState('');
+  // 予定と確定済みお見合いの重複チェック(2026/7/17対応)
+  const [maintenanceConflicts, setMaintenanceConflicts] = useState<{ id: string; scheduledAt: string; applicantNickname: string; applicantEmail: string; partnerNickname: string; partnerEmail: string }[] | null>(null);
+  const [checkingConflicts, setCheckingConflicts] = useState(false);
 
   // 2. 料金設定
   // 変数名は旧仕様(ライト/スタンダード2プラン)の名残だったが、実際には
@@ -266,6 +269,23 @@ export default function AdminSettingsPage() {
     maintenance_mode: String(maintenanceMode),
   });
 
+  const handleCheckMaintenanceConflicts = async () => {
+    if (!maintenanceScheduledStart || !maintenanceScheduledEnd) {
+      showToast('開始・終了日時を入力してください');
+      return;
+    }
+    setCheckingConflicts(true);
+    try {
+      const res = await fetch(`/api/admin/maintenance-conflicts?start=${encodeURIComponent(maintenanceScheduledStart)}&end=${encodeURIComponent(maintenanceScheduledEnd)}`);
+      const data = await res.json() as { conflicts?: typeof maintenanceConflicts };
+      setMaintenanceConflicts(data.conflicts ?? []);
+    } catch {
+      showToast('確認に失敗しました');
+    } finally {
+      setCheckingConflicts(false);
+    }
+  };
+
   const handleSaveBanners = () => saveSettings({
     beta_banner_enabled: String(betaBannerEnabled),
     maintenance_notice_enabled: String(maintenanceNoticeEnabled),
@@ -376,6 +396,32 @@ export default function AdminSettingsPage() {
               className={inputCls}
             />
           </FieldRow>
+          <div>
+            <button
+              type="button"
+              onClick={handleCheckMaintenanceConflicts}
+              disabled={checkingConflicts}
+              className="text-xs px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 transition-colors disabled:opacity-50"
+            >
+              {checkingConflicts ? '確認中...' : 'この期間と確定済みのお見合い予定が重複していないか確認'}
+            </button>
+            {maintenanceConflicts !== null && (
+              maintenanceConflicts.length === 0 ? (
+                <p className="text-xs text-teal-400 mt-2">この期間に重複するお見合い予定はありません</p>
+              ) : (
+                <div className="mt-2 bg-red-950/40 border border-red-900 rounded-lg p-3">
+                  <p className="text-xs text-red-400 font-medium mb-1.5">⚠ この期間に{maintenanceConflicts.length}件のお見合い予定が重複しています</p>
+                  <ul className="text-xs text-zinc-300 space-y-1">
+                    {maintenanceConflicts.map((c) => (
+                      <li key={c.id}>
+                        {new Date(c.scheduledAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}　{c.applicantNickname}（{c.applicantEmail}） ⇄ {c.partnerNickname}（{c.partnerEmail}）
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            )}
+          </div>
           <ToggleSwitch
             checked={incidentBannerEnabled}
             onChange={setIncidentBannerEnabled}
