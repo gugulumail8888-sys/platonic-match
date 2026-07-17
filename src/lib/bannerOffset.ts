@@ -6,6 +6,7 @@ export async function getBannerOffset(): Promise<{
   showMaintenanceNotice: boolean;
   showAiOptionPaused: boolean;
   showIncident: boolean;
+  showPrerelease: boolean;
 }> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -19,6 +20,7 @@ export async function getBannerOffset(): Promise<{
       "ai_option_paused_at",
       "incident_banner_enabled",
       "incident_banner_message",
+      "omiai_open",
     ]);
 
   const map = Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
@@ -42,7 +44,9 @@ export async function getBannerOffset(): Promise<{
   const incidentMessage = map.incident_banner_message ?? '';
   const showIncident = map.incident_banner_enabled === "true" && incidentMessage.trim() !== '';
 
-  const offset = (showBeta ? 40 : 0) + (showMaintenanceNotice ? 40 : 0) + (showAiOptionPaused ? 40 : 0) + (showIncident ? 40 : 0);
+  const showPrerelease = map.omiai_open !== "true";
 
-  return { offset, showBeta, showMaintenanceNotice, showAiOptionPaused, showIncident };
+  const offset = (showBeta ? 40 : 0) + (showMaintenanceNotice ? 40 : 0) + (showAiOptionPaused ? 40 : 0) + (showIncident ? 40 : 0) + (showPrerelease ? 40 : 0);
+
+  return { offset, showBeta, showMaintenanceNotice, showAiOptionPaused, showIncident, showPrerelease };
 }

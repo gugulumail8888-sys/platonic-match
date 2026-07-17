@@ -10,20 +10,12 @@ import { getCampaignPeriodLabel, CAMPAIGN_SLOT_LIMIT } from "@/lib/campaign";
 
 export default function HomePage() {
   const [showCampaignBanner, setShowCampaignBanner] = useState(false);
-  const [omiaiOpen, setOmiaiOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/campaign-banner")
       .then((res) => res.json())
       .then((data) => setShowCampaignBanner(!!data.active))
       .catch(() => setShowCampaignBanner(false));
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/settings/omiai")
-      .then((res) => res.json())
-      .then((data) => setOmiaiOpen(!!data.omiai_open))
-      .catch(() => setOmiaiOpen(false));
   }, []);
 
   useEffect(() => {
@@ -99,11 +91,6 @@ export default function HomePage() {
 
       {/* プレリリース告知・キャンペーンバナー(スクロールなしで見えるようヒーローセクションより前に表示。ヘッダー分の余白はこのdivでまとめて確保) */}
       <div style={{ paddingTop: 'calc(var(--banner-offset) + 4.5rem)' }}>
-      {!omiaiOpen && (
-        <section className="px-4 pb-3 text-center text-sm text-white/85" style={{ background: 'rgba(13,148,136,.16)', borderBottom: '1px solid rgba(13,148,136,.35)' }}>
-          現在プレリリース期間中です。今は新規登録・プロフィール閲覧のみご利用いただけます。お見合い申請などの機能は近日公開予定です。
-        </section>
-      )}
       {showCampaignBanner && (
         <section className="px-4 pb-4">
           <div

@@ -8,14 +8,6 @@ export default function LpPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const [omiaiOpen, setOmiaiOpen] = useState(false);
-  useEffect(() => {
-    fetch('/api/settings/omiai')
-      .then((res) => res.json())
-      .then((data) => setOmiaiOpen(!!data.omiai_open))
-      .catch(() => setOmiaiOpen(false));
-  }, []);
-
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [showCampaignBanner, setShowCampaignBanner] = useState(false);
@@ -351,11 +343,6 @@ export default function LpPage() {
       )}
 
       <div className="top-notice-wrap" style={{ paddingTop: 'calc(var(--banner-offset) + 4.5rem)' }}>
-        {!omiaiOpen && (
-          <div className="prerelease-notice">
-            現在プレリリース期間中です。今は新規登録・プロフィール閲覧のみご利用いただけます。お見合い申請などの機能は近日公開予定です。
-          </div>
-        )}
         {showCampaignBanner && (
           <div className="lp-campaign-wrap">
             <div className="lp-campaign-banner">

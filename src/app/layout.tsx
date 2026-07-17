@@ -4,6 +4,7 @@ import FeedbackWidget from "@/components/feedback/FeedbackWidget";
 import { getBannerOffset } from "@/lib/bannerOffset";
 import { MaintenanceNoticeBanner } from "@/components/layout/MaintenanceNoticeBanner";
 import { IncidentBanner } from "@/components/layout/IncidentBanner";
+import { PrereleaseNoticeBanner } from "@/components/layout/PrereleaseNoticeBanner";
 import { AiOptionPausedBanner } from "@/components/layout/AiOptionPausedBanner";
 import "./globals.css";
 
@@ -55,6 +56,7 @@ export default async function RootLayout({
           <IncidentBanner />
           <MaintenanceNoticeBanner />
           <AiOptionPausedBanner />
+          <PrereleaseNoticeBanner />
           <BetaBanner />
         </div>
         {children}

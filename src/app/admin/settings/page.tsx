@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Settings, Wallet, Users, Bot, AlertTriangle,
+  Settings, Wallet, Bot, AlertTriangle,
 } from 'lucide-react';
 
 // ============================================================
@@ -159,9 +159,9 @@ export default function AdminSettingsPage() {
   const [matchingFeeNormal, setMatchingFeeNormal] = useState(3500);
   const [matchingFeePremium, setMatchingFeePremium] = useState(3000);
 
-  // 3. 会員設定
+  // 機能ON/OFF設定で使用
   const [omiaiOpen, setOmiaiOpen] = useState(false);
-  const [reviewMode, setReviewMode] = useState<'auto' | 'manual'>('manual');
+  // 基本設定で使用
   const [likeLimit, setLikeLimit] = useState(0);
 
   // 5. マッチング設定(zoom_expiry_days・matching_auto_cancel_daysは確認専用。
@@ -221,7 +221,6 @@ export default function AdminSettingsPage() {
           aiOptionEnabledSavedRef.current = enabled;
         }
         if (data.ai_option_paused_at !== undefined) setAiOptionPausedAt(data.ai_option_paused_at);
-        if (data.review_mode !== undefined) setReviewMode(data.review_mode === 'auto' ? 'auto' : 'manual');
         if (data.omiai_open !== undefined) setOmiaiOpen(data.omiai_open === 'true');
         if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
         if (data.beta_banner_enabled !== undefined) setBetaBannerEnabled(data.beta_banner_enabled === 'true');
@@ -260,21 +259,24 @@ export default function AdminSettingsPage() {
 
   const handleSaveBasic = () => saveSettings({
     contact_email: contactEmail,
+    daily_like_limit: String(likeLimit),
   });
 
-  const handleSaveMaintenance = () => saveSettings({
+  const handleSaveMaintenanceMode = () => saveSettings({
     maintenance_mode: String(maintenanceMode),
+  });
+
+  const handleSaveBanners = () => saveSettings({
+    beta_banner_enabled: String(betaBannerEnabled),
     maintenance_notice_enabled: String(maintenanceNoticeEnabled),
     maintenance_scheduled_start: maintenanceScheduledStart,
     maintenance_scheduled_end: maintenanceScheduledEnd,
-  });
-
-  const handleSaveIncident = () => saveSettings({
     incident_banner_enabled: String(incidentBannerEnabled),
     incident_banner_message: incidentBannerMessage,
+    campaign_banner_enabled: String(campaignBannerEnabled),
   });
 
-  const handleSaveBeta = () => {
+  const handleSaveFeatures = () => {
     if (aiOptionEnabledSavedRef.current && !aiOptionEnabled) {
       setPauseBillingOnOff(true);
       setShowOffConfirmModal(true);
@@ -282,8 +284,7 @@ export default function AdminSettingsPage() {
     }
     saveSettings({
       ai_option_enabled: String(aiOptionEnabled),
-      campaign_banner_enabled: String(campaignBannerEnabled),
-      beta_banner_enabled: String(betaBannerEnabled),
+      omiai_open: String(omiaiOpen),
     });
     aiOptionEnabledSavedRef.current = aiOptionEnabled;
   };
@@ -292,18 +293,12 @@ export default function AdminSettingsPage() {
     setShowOffConfirmModal(false);
     saveSettings({
       ai_option_enabled: 'false',
-      campaign_banner_enabled: String(campaignBannerEnabled),
-      beta_banner_enabled: String(betaBannerEnabled),
+      omiai_open: String(omiaiOpen),
       pause_billing: String(pauseBillingOnOff),
     });
     aiOptionEnabledSavedRef.current = false;
   };
 
-  const handleSaveMembers = () => saveSettings({
-    review_mode: reviewMode,
-    omiai_open: String(omiaiOpen),
-    daily_like_limit: String(likeLimit),
-  });
 
   return (
     <div className="p-6 md:p-8 space-y-6">
@@ -328,21 +323,42 @@ export default function AdminSettingsPage() {
           <p className="text-xs text-zinc-500 -mt-2">
             お見合いの新規申請・キャンセル・支払いリマインドなどの管理者通知は、このアドレス宛に送信されます。未入力の場合は既定のアドレスが使われます。
           </p>
+          <FieldRow label="いいね上限数" unit="件/日">
+            <input
+              type="number"
+              value={likeLimit}
+              onChange={(e) => setLikeLimit(Number(e.target.value))}
+              className={inputCls}
+            />
+          </FieldRow>
         </SettingsSection>
 
-        {/* メンテナンス設定 */}
-        <SettingsSection icon={Settings} title="メンテナンス設定" onSave={handleSaveMaintenance}>
+        {/* メンテナンスモード */}
+        <SettingsSection icon={Settings} title="メンテナンスモード" onSave={handleSaveMaintenanceMode}>
           <ToggleSwitch
             checked={maintenanceMode}
             onChange={setMaintenanceMode}
             label="メンテナンスモード"
-            description="有効にするとサイトをメンテナンス画面に切り替えます"
+            description="有効にするとサイト全体をメンテナンス画面に切り替えます(下記の「お知らせバナー設定」とは別の機能です)"
+          />
+        </SettingsSection>
+
+        {/* お知らせバナー設定(2026/7/17整理。すべてON=表示・OFF=非表示で統一) */}
+        <SettingsSection icon={AlertTriangle} title="お知らせバナー設定" onSave={handleSaveBanners}>
+          <p className="text-[11px] text-zinc-500 -mt-1">
+            以下はすべて「ONにすると該当のバナーがサイト上部に表示される」で統一されています。
+          </p>
+          <ToggleSwitch
+            checked={betaBannerEnabled}
+            onChange={setBetaBannerEnabled}
+            label="ベータ版バナーを表示"
+            description="「amistaはただいまベータ版です」というオレンジ色のバナーを表示します"
           />
           <ToggleSwitch
             checked={maintenanceNoticeEnabled}
             onChange={setMaintenanceNoticeEnabled}
-            label="メンテナンス予告表示"
-            description="有効にすると下記の予定日時をバナーで告知します"
+            label="メンテナンス予告バナーを表示"
+            description="下記の予定日時をバナーで告知します"
           />
           <FieldRow label="メンテナンス開始予定日時">
             <input
@@ -360,15 +376,11 @@ export default function AdminSettingsPage() {
               className={inputCls}
             />
           </FieldRow>
-        </SettingsSection>
-
-        {/* 障害・緊急のお知らせ設定 */}
-        <SettingsSection icon={AlertTriangle} title="障害・緊急のお知らせ" onSave={handleSaveIncident}>
           <ToggleSwitch
             checked={incidentBannerEnabled}
             onChange={setIncidentBannerEnabled}
-            label="お知らせバナーを表示"
-            description="「メンテナンス中」「AIオプション停止中」以外の、システム全体・決済処理等のトラブル発生時に、下記の文言でトップに常時バナーを表示します"
+            label="障害・緊急のお知らせバナーを表示"
+            description="「メンテナンス中」「AIオプション停止中」以外の、システム全体・決済処理等のトラブル発生時に、下記の文言でバナーを表示します"
           />
           <FieldRow label="お知らせ文言">
             <input
@@ -379,6 +391,23 @@ export default function AdminSettingsPage() {
               placeholder="例：現在、一部決済処理に不具合が発生しております。復旧までしばらくお待ちください。"
             />
           </FieldRow>
+          <ToggleSwitch
+            checked={campaignBannerEnabled}
+            onChange={setCampaignBannerEnabled}
+            label="オープン記念・初期限定キャンペーンバナーを表示"
+            description="7月〜9月限定｜AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーをトップページに表示します"
+          />
+          <div className="pt-2 border-t border-zinc-800">
+            <p className="text-xs text-zinc-400">
+              AIオプション停止中のお知らせバナー：
+              <span className={aiOptionPausedAt ? 'text-amber-500 font-medium' : 'text-zinc-500'}>
+                {aiOptionPausedAt ? `現在表示中(${new Date(aiOptionPausedAt).toLocaleString('ja-JP')}〜)` : '現在は表示されていません'}
+              </span>
+            </p>
+            <p className="text-[11px] text-zinc-500 mt-1">
+              このバナーはここでは手動ON/OFFできません。右下「機能ON/OFF設定」の「AIおすすめオプション」と自動連動しています。
+            </p>
+          </div>
         </SettingsSection>
 
         {/* 2. 確認専用設定(実際の値は別の場所で管理されており、ここでは変更できません) */}
@@ -396,19 +425,13 @@ export default function AdminSettingsPage() {
           <ReadOnlyRow label="お見合い申請の自動キャンセル期限" value={matchingAutoCancelDays} unit="日" />
         </InfoSection>
 
-        {/* ベータ版・キャンペーン設定 */}
-        <SettingsSection icon={Bot} title="ベータ版・キャンペーン設定" onSave={handleSaveBeta}>
-          <ToggleSwitch
-            checked={betaBannerEnabled}
-            onChange={setBetaBannerEnabled}
-            label="ベータ版バナーを表示"
-            description="有効にするとサイト全体の上部に「amistaはただいまベータ版です」というオレンジ色のバナーを表示します"
-          />
+        {/* 機能ON/OFF設定(2026/7/17整理。バナー表示専用トグルとは別枠。ONが「機能が使える状態」を意味し、OFFにした結果として関連のお知らせが表示される場合があります) */}
+        <SettingsSection icon={Bot} title="機能ON/OFF設定" onSave={handleSaveFeatures}>
           <ToggleSwitch
             checked={aiOptionEnabled}
             onChange={setAiOptionEnabled}
             label="AIおすすめオプション"
-            description="AIによるマッチングおすすめ機能を有効にします(OFF時は契約者含め全員が利用不可になります。OFFにするとStripe請求も自動的に一時停止されます)"
+            description="ONの間、AIによるマッチングおすすめ機能が利用できます。OFFにすると契約者含め全員が利用不可になり、Stripe請求も自動的に一時停止され「AIオプション停止中」のお知らせバナーが自動表示されます"
           />
           {aiOptionPausedAt && (
             <p className="text-[10px] text-amber-500 -mt-2">
@@ -416,39 +439,11 @@ export default function AdminSettingsPage() {
             </p>
           )}
           <ToggleSwitch
-            checked={campaignBannerEnabled}
-            onChange={setCampaignBannerEnabled}
-            label="オープン記念・初期限定キャンペーンバナーを表示"
-            description="7月〜9月限定｜AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーをトップページに表示します"
-          />
-        </SettingsSection>
-
-        {/* 3. 会員設定 */}
-        <SettingsSection icon={Users} title="会員設定" onSave={handleSaveMembers}>
-          <ToggleSwitch
             checked={omiaiOpen}
             onChange={setOmiaiOpen}
             label="お見合い申請受付"
-            description="無効にすると「お見合い申請は近日開始予定」と表示されます"
+            description="ONの間、お見合い申請を受け付けます。OFFにすると会員には「お見合い申請は近日開始予定」と案内表示されます"
           />
-          <FieldRow label="審査モード">
-            <select
-              value={reviewMode}
-              onChange={(e) => setReviewMode(e.target.value as 'auto' | 'manual')}
-              className={selectCls}
-            >
-              <option value="auto">自動</option>
-              <option value="manual">手動</option>
-            </select>
-          </FieldRow>
-          <FieldRow label="いいね上限数" unit="件/日">
-            <input
-              type="number"
-              value={likeLimit}
-              onChange={(e) => setLikeLimit(Number(e.target.value))}
-              className={inputCls}
-            />
-          </FieldRow>
         </SettingsSection>
       </div>
 
