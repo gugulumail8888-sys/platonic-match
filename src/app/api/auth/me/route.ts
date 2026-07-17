@@ -51,7 +51,7 @@ export async function GET() {
 
   response.cookies.set(
     'auth',
-    JSON.stringify({ role: isAdmin ? 'admin' : 'user', email: user.email, hasAiOption }),
+    JSON.stringify({ role: isAdmin ? 'admin' : 'user', email: user.email, hasAiOption, nickname: profile?.nickname ?? '' }),
     {
       httpOnly: true,
       path: '/',

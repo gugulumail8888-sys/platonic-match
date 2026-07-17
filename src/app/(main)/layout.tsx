@@ -22,11 +22,13 @@ export default async function MainLayout({
   const authCookie = cookies().get("auth")?.value;
   let role: string | undefined;
   let hasAiOption = false;
+  let nickname: string | undefined;
   if (authCookie) {
     try {
-      const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string; hasAiOption?: boolean };
+      const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string; hasAiOption?: boolean; nickname?: string };
       role = auth.role;
       hasAiOption = auth.hasAiOption === true;
+      nickname = auth.nickname;
       if (auth.role === "admin") {
         redirect("/admin");
       }
@@ -37,7 +39,7 @@ export default async function MainLayout({
 
   return (
     <div className="min-h-screen bg-zinc-950 pt-[var(--banner-offset)]">
-      <Navbar role={role} hasAiOption={hasAiOption} />
+      <Navbar role={role} hasAiOption={hasAiOption} nickname={nickname} />
       {/* デスクトップ：サイドバー分のmargin（role が無い場合は適用しない） */}
       <main className={role ? "lg:ml-64 pb-24 lg:pb-0 min-h-screen" : "min-h-screen"}>
         {children}

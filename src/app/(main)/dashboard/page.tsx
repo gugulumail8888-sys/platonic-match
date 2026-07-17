@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import DashboardTabs from "../_components/DashboardTabs";
 
 export const metadata: Metadata = {
@@ -50,6 +50,26 @@ export default async function DashboardPage() {
     (l) => sentIds.has(l.liker_id) && !blockedIds.includes(l.liker_id)
   ).length;
 
+  // 本日のいいね残り件数(2026/7/17対応。/members/[id]と同じロジック)
+  const adminSupabase = createAdminClient();
+  const { data: settingsRows } = await adminSupabase
+    .from('settings')
+    .select('key, value')
+    .in('key', ['daily_like_limit', 'omiai_open']);
+  const settingsMap = Object.fromEntries((settingsRows ?? []).map((r) => [r.key, r.value]));
+  const dailyLikeLimit = Number(settingsMap.daily_like_limit) > 0 ? Number(settingsMap.daily_like_limit) : 10;
+  const omiaiOpen = settingsMap.omiai_open === 'true';
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { count: todaySentCount } = await supabase
+    .from('likes')
+    .select('id', { count: 'exact', head: true })
+    .eq('liker_id', user.id)
+    .gte('created_at', todayStart.toISOString());
+
+  const remainingToday = Math.max(0, dailyLikeLimit - (todaySentCount ?? 0));
+
   // 新着会員取得（異性・最新6件）
   let newMembersQuery = supabase
     .from('profiles')
@@ -80,6 +100,11 @@ export default async function DashboardPage() {
             >
               💑 相互いいねがあります！「いいね受信」を確認
             </Link>
+          )}
+          {omiaiOpen && (
+            <p className="w-full text-xs text-zinc-500">
+              本日のいいね残り <span className={remainingToday === 0 ? 'text-red-400 font-bold' : 'text-teal-400 font-bold'}>{remainingToday}件</span>
+            </p>
           )}
         </div>
         <Link href="/members">

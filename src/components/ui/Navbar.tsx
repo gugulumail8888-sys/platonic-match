@@ -34,7 +34,7 @@ const supportNavItems = [
   { href: "/contact", label: "お問い合わせ", icon: Mail },
 ];
 
-export function Navbar({ role, hasAiOption = false }: { role?: string; hasAiOption?: boolean }) {
+export function Navbar({ role, hasAiOption = false, nickname }: { role?: string; hasAiOption?: boolean; nickname?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [omiaiOpen, setOmiaiOpen] = useState(false);
@@ -130,6 +130,9 @@ export function Navbar({ role, hasAiOption = false }: { role?: string; hasAiOpti
                 ami<span className="text-primary-400">sta</span>
               </span>
             </Link>
+            {nickname && (
+              <p className="text-xs text-zinc-400 mt-2 truncate">{nickname} さん</p>
+            )}
           </div>
 
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
