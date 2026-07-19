@@ -11,7 +11,7 @@ type Person = {
 };
 
 type NotifyBody = {
-  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'schedule_postponed' | 'user_reported' | 'approval_document' | 'deficiency_document' | 'ai_option_renewal_reminder' | 'dormant_notice' | 'ai_option_inactivity_notice' | 'refund_completed';
+  type: 'new_application' | 'cancel_timeout' | 'cancel_unpaid' | 'cancel_request' | 'payment_reminder' | 'day_reminder' | 'survey_reminder' | 'matching_request' | 'matching_approved' | 'matching_rejected' | 'matching_expired' | 'schedule_proposed_request' | 'schedule_proposed' | 'schedule_confirmed' | 're_request_schedule' | 'schedule_postponed' | 'user_reported' | 'approval_document' | 'deficiency_document' | 'ai_option_renewal_reminder' | 'dormant_notice' | 'ai_option_inactivity_notice' | 'refund_completed' | 'incident_notice';
   applicationId: string;
   appliedAt: string;
   applicant: Person;
@@ -44,6 +44,8 @@ type NotifyBody = {
   refundAmount?: number;
   // ai_option_renewal_reminder用
   renewalDate?: string;
+  // incident_notice用
+  incidentMessage?: string;
 };
 
 const FROM_EMAIL = 'amista <noreply@amista.net>';
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '未認証' }, { status: 401 });
     }
 
-    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl, requestedBy, reporterNickname, reportedNickname, reportCategory, reportDetail, renewalDate } = body;
+    const { type, applicationId, appliedAt, applicant, member, amount, aiCompatibilityComment, lateBy, scheduledAt, meetUrl, surveyUrl, requestedBy, reporterNickname, reportedNickname, reportCategory, reportDetail, renewalDate, incidentMessage } = body;
     const resend = new Resend(process.env.RESEND_API_KEY);
     const adminEmail = await getAdminEmail();
 
@@ -626,6 +628,18 @@ export async function POST(req: NextRequest) {
               ログインする
             </a>
           </div>
+        `),
+      });
+    }
+
+    if (type === 'incident_notice' && body.user) {
+      emails.push({
+        to: body.user.email,
+        subject: '【amista】重要なお知らせ',
+        html: wrap(`
+          <h2 style="color:#dc2626;">重要なお知らせ</h2>
+          <p>${incidentMessage}</p>
+          <p style="font-size:13px;color:#666;">ご不便をおかけし申し訳ございません。復旧次第、あらためてご案内いたします。</p>
         `),
       });
     }

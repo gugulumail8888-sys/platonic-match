@@ -139,6 +139,7 @@ function ReadOnlyRow({ label, value, unit }: { label: string; value: string | nu
 
 export default function AdminSettingsPage() {
   const [toast, setToast] = useState('');
+  const [resultModal, setResultModal] = useState<{ title: string; message: string; rows: { id: string; nickname: string; email: string; subscriptionStartedAt?: string; result?: string }[] } | null>(null);
 
   // 1. 基本設定
   // 連絡先メールアドレスは、お見合い新規申請・キャンセル・支払いリマインド等の
@@ -184,6 +185,9 @@ export default function AdminSettingsPage() {
   // 毎回出てしまう不具合があった)
   const aiOptionEnabledSavedRef = useRef(true);
 
+  // incidentBannerEnabledの直近保存済み値の記録(バナーOFF→ONへの切り替え検知用)
+  const incidentBannerEnabledSavedRef = useRef(false);
+
   // OFF確認モーダル(2026/7/15対応。テスト等の一時的なOFFで契約者の請求期間が
   // 意図せず延長されないよう、請求停止の要否を都度選べるようにする)
   const [showOffConfirmModal, setShowOffConfirmModal] = useState(false);
@@ -199,10 +203,34 @@ export default function AdminSettingsPage() {
   // でもない、システム全体や決済処理のトラブル等を任意の文言で告知するための機能)
   const [incidentBannerEnabled, setIncidentBannerEnabled] = useState(false);
   const [incidentBannerMessage, setIncidentBannerMessage] = useState('');
+  const [incidentEmailAlsoSend, setIncidentEmailAlsoSend] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(''), 2500);
+  };
+
+  const downloadResultCsv = () => {
+    if (!resultModal) return;
+    const hasResult = resultModal.rows.some((r) => r.result !== undefined);
+    const hasSubDate = resultModal.rows.some((r) => r.subscriptionStartedAt !== undefined);
+    const headers = ['ID', 'ニックネーム', 'メールアドレス', ...(hasSubDate ? ['AIオプション契約日'] : []), ...(hasResult ? ['結果'] : [])];
+    const escape = (v: string) => (/[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+    const formatDate = (v?: string) => (v ? v.slice(0, 10) : '');
+    const lines = [headers, ...resultModal.rows.map((r) => [
+      r.id, r.nickname, r.email,
+      ...(hasSubDate ? [formatDate(r.subscriptionStartedAt)] : []),
+      ...(hasResult ? [r.result ?? ''] : []),
+    ])]
+      .map((cols) => cols.map(escape).join(','))
+      .join('\r\n');
+    const blob = new Blob(['\uFEFF' + lines], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${resultModal.title}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // 現在の設定値を取得してstateに反映
@@ -228,7 +256,10 @@ export default function AdminSettingsPage() {
         if (data.daily_like_limit !== undefined) setLikeLimit(Number(data.daily_like_limit));
         if (data.beta_banner_enabled !== undefined) setBetaBannerEnabled(data.beta_banner_enabled === 'true');
         if (data.campaign_banner_enabled !== undefined) setCampaignBannerEnabled(data.campaign_banner_enabled === 'true');
-        if (data.incident_banner_enabled !== undefined) setIncidentBannerEnabled(data.incident_banner_enabled === 'true');
+        if (data.incident_banner_enabled !== undefined) {
+          setIncidentBannerEnabled(data.incident_banner_enabled === 'true');
+          incidentBannerEnabledSavedRef.current = data.incident_banner_enabled === 'true';
+        }
         if (data.incident_banner_message !== undefined) setIncidentBannerMessage(data.incident_banner_message);
         if (data.zoom_expiry_days !== undefined) setZoomExpiryDays(Number(data.zoom_expiry_days));
         if (data.matching_auto_cancel_days !== undefined) setMatchingAutoCancelDays(Number(data.matching_auto_cancel_days));
@@ -236,7 +267,7 @@ export default function AdminSettingsPage() {
       .catch((err) => console.error('settings fetch error:', err));
   }, []);
 
-  const saveSettings = async (payload: Record<string, string>) => {
+  const saveSettings = async (payload: Record<string, string>): Promise<boolean> => {
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'PATCH',
@@ -244,19 +275,21 @@ export default function AdminSettingsPage() {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('failed');
-      const data = await res.json().catch(() => null) as { billingResult?: { paused?: number; resumed?: number; failed?: number } } | null;
+      const data = await res.json().catch(() => null) as { billingResult?: { paused?: number; resumed?: number; failed?: number; targets?: { id: string; nickname: string; email: string; subscriptionStartedAt?: string; result: string }[] } } | null;
       const br = data?.billingResult;
       if (br?.paused !== undefined) {
-        showToast(`保存しました(契約者${br.paused}名の請求を一時停止${br.failed ? `・${br.failed}件失敗` : ''})`);
         setAiOptionPausedAt(new Date().toISOString());
+        setResultModal({ title: '請求一時停止結果', message: `契約者${br.paused}名の請求を一時停止しました${br.failed ? `(${br.failed}件失敗)` : ''}`, rows: br.targets ?? [] });
       } else if (br?.resumed !== undefined) {
-        showToast(`保存しました(契約者${br.resumed}名の請求を再開${br.failed ? `・${br.failed}件失敗` : ''})`);
         setAiOptionPausedAt('');
+        setResultModal({ title: '請求再開結果', message: `契約者${br.resumed}名の請求を再開しました${br.failed ? `(${br.failed}件失敗)` : ''}`, rows: br.targets ?? [] });
       } else {
         showToast('保存しました');
       }
+      return true;
     } catch {
       showToast('保存に失敗しました');
+      return false;
     }
   };
 
@@ -286,15 +319,38 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleSaveBanners = () => saveSettings({
-    beta_banner_enabled: String(betaBannerEnabled),
-    maintenance_notice_enabled: String(maintenanceNoticeEnabled),
-    maintenance_scheduled_start: maintenanceScheduledStart,
-    maintenance_scheduled_end: maintenanceScheduledEnd,
-    incident_banner_enabled: String(incidentBannerEnabled),
-    incident_banner_message: incidentBannerMessage,
-    campaign_banner_enabled: String(campaignBannerEnabled),
-  });
+  const handleSaveBanners = async () => {
+    const wasOff = !incidentBannerEnabledSavedRef.current;
+    const success = await saveSettings({
+      beta_banner_enabled: String(betaBannerEnabled),
+      maintenance_notice_enabled: String(maintenanceNoticeEnabled),
+      maintenance_scheduled_start: maintenanceScheduledStart,
+      maintenance_scheduled_end: maintenanceScheduledEnd,
+      incident_banner_enabled: String(incidentBannerEnabled),
+      incident_banner_message: incidentBannerMessage,
+      campaign_banner_enabled: String(campaignBannerEnabled),
+    });
+    if (success && wasOff && incidentBannerEnabled && incidentBannerMessage.trim() !== '') {
+      try {
+        const res = await fetch('/api/admin/incident-notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: incidentBannerMessage, sendEmail: incidentEmailAlsoSend }),
+        });
+        const data = await res.json().catch(() => null) as { sentCount?: number; sentTo?: { id: string; nickname: string; email: string; subscriptionStartedAt: string }[] } | null;
+        setResultModal({
+          title: incidentEmailAlsoSend ? '障害お知らせメール送信結果' : '障害バナー表示・対象会員一覧',
+          message: incidentEmailAlsoSend
+            ? `${data?.sentCount ?? 0}名へメールを送信しました`
+            : `バナーを表示しました(対象会員:${(data?.sentTo ?? []).length}名。メールは送信していません)`,
+          rows: (data?.sentTo ?? []).map((u) => ({ id: u.id, nickname: u.nickname, email: u.email, subscriptionStartedAt: u.subscriptionStartedAt })),
+        });
+      } catch {
+        showToast('バナーは保存しましたが、対象会員一覧の取得に失敗しました');
+      }
+    }
+    incidentBannerEnabledSavedRef.current = incidentBannerEnabled;
+  };
 
   const handleSaveFeatures = () => {
     if (aiOptionEnabledSavedRef.current && !aiOptionEnabled) {
@@ -437,6 +493,14 @@ export default function AdminSettingsPage() {
               placeholder="例：現在、一部決済処理に不具合が発生しております。復旧までしばらくお待ちください。"
             />
           </FieldRow>
+          <label className="flex items-center gap-2 text-xs text-zinc-400">
+            <input
+              type="checkbox"
+              checked={incidentEmailAlsoSend}
+              onChange={() => setIncidentEmailAlsoSend(!incidentEmailAlsoSend)}
+            />
+            このお知らせ内容をメールでも送信する(バナーをONにした時のみ、退会済みを除く全会員へ送信されます)
+          </label>
           <ToggleSwitch
             checked={campaignBannerEnabled}
             onChange={setCampaignBannerEnabled}
@@ -535,6 +599,31 @@ export default function AdminSettingsPage() {
       {toast && (
         <div className="fixed bottom-6 right-6 bg-zinc-800 border border-zinc-700 text-white text-sm px-4 py-2.5 rounded-xl shadow-xl z-50">
           ✓ {toast}
+        </div>
+      )}
+
+      {resultModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-6 w-full max-w-md mx-4">
+            <h3 className="text-base font-bold text-zinc-200 mb-3">{resultModal.title}</h3>
+            <p className="text-sm text-zinc-300 mb-4">{resultModal.message}</p>
+            <div className="flex gap-2">
+              {resultModal.rows.length > 0 && (
+                <button
+                  onClick={downloadResultCsv}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-zinc-700 hover:bg-zinc-600 text-zinc-200 transition-colors"
+                >
+                  CSVダウンロード
+                </button>
+              )}
+              <button
+                onClick={() => setResultModal(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -97,7 +97,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: '設定の更新に失敗しました' }, { status: 500 });
   }
 
-  let billingResult: { paused?: number; resumed?: number; failed?: number } = {};
+  let billingResult: { paused?: number; resumed?: number; failed?: number; targets?: { id: string; nickname: string; email: string; result: string }[] } = {};
   if (aiOptionEnabledChangedTo === false && pauseBillingRequested) {
     const r = await pauseAllAiOptionBilling(admin);
     billingResult = r;

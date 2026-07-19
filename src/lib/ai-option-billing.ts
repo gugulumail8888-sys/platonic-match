@@ -14,10 +14,12 @@ import type { createAdminClient } from '@/lib/supabase/server';
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
+type BillingTarget = { id: string; nickname: string; email: string; subscriptionStartedAt: string; result: '成功' | '失敗' };
+
 async function getActiveAiOptionSubscriptions(admin: AdminClient) {
   const { data, error } = await admin
     .from('profiles')
-    .select('id, stripe_subscription_id')
+    .select('id, nickname, subscription_started_at, stripe_subscription_id')
     .eq('is_premium', true)
     .not('stripe_subscription_id', 'is', null);
 
@@ -26,14 +28,26 @@ async function getActiveAiOptionSubscriptions(admin: AdminClient) {
     return [];
   }
   return (data ?? []).filter(
-    (p): p is { id: string; stripe_subscription_id: string } => !!p.stripe_subscription_id
+    (p): p is { id: string; nickname: string | null; subscription_started_at: string | null; stripe_subscription_id: string } => !!p.stripe_subscription_id
   );
 }
 
-export async function pauseAllAiOptionBilling(admin: AdminClient): Promise<{ paused: number; failed: number }> {
+async function buildEmailMap(admin: AdminClient, ids: string[]): Promise<Map<string, string>> {
+  const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  const map = new Map<string, string>();
+  for (const id of ids) {
+    const u = data?.users.find((u) => u.id === id);
+    map.set(id, u?.email ?? '');
+  }
+  return map;
+}
+
+export async function pauseAllAiOptionBilling(admin: AdminClient): Promise<{ paused: number; failed: number; targets: BillingTarget[] }> {
   const targets = await getActiveAiOptionSubscriptions(admin);
+  const emailMap = await buildEmailMap(admin, targets.map((t) => t.id));
   let paused = 0;
   let failed = 0;
+  const resultTargets: BillingTarget[] = [];
 
   for (const t of targets) {
     try {
@@ -41,8 +55,10 @@ export async function pauseAllAiOptionBilling(admin: AdminClient): Promise<{ pau
         pause_collection: { behavior: 'void' },
       });
       paused++;
+      resultTargets.push({ id: t.id, nickname: t.nickname ?? '', email: emailMap.get(t.id) ?? '', subscriptionStartedAt: t.subscription_started_at ?? '', result: '成功' });
     } catch (e) {
       failed++;
+      resultTargets.push({ id: t.id, nickname: t.nickname ?? '', email: emailMap.get(t.id) ?? '', subscriptionStartedAt: t.subscription_started_at ?? '', result: '失敗' });
       console.error(`AIオプション請求一時停止エラー(user=${t.id}, sub=${t.stripe_subscription_id}):`, e);
     }
   }
@@ -51,13 +67,15 @@ export async function pauseAllAiOptionBilling(admin: AdminClient): Promise<{ pau
     .from('settings')
     .upsert({ key: 'ai_option_paused_at', value: new Date().toISOString() }, { onConflict: 'key' });
 
-  return { paused, failed };
+  return { paused, failed, targets: resultTargets };
 }
 
-export async function resumeAllAiOptionBilling(admin: AdminClient): Promise<{ resumed: number; failed: number }> {
+export async function resumeAllAiOptionBilling(admin: AdminClient): Promise<{ resumed: number; failed: number; targets: BillingTarget[] }> {
   const targets = await getActiveAiOptionSubscriptions(admin);
+  const emailMap = await buildEmailMap(admin, targets.map((t) => t.id));
   let resumed = 0;
   let failed = 0;
+  const resultTargets: BillingTarget[] = [];
 
   for (const t of targets) {
     try {
@@ -65,8 +83,10 @@ export async function resumeAllAiOptionBilling(admin: AdminClient): Promise<{ re
         pause_collection: '',
       });
       resumed++;
+      resultTargets.push({ id: t.id, nickname: t.nickname ?? '', email: emailMap.get(t.id) ?? '', subscriptionStartedAt: t.subscription_started_at ?? '', result: '成功' });
     } catch (e) {
       failed++;
+      resultTargets.push({ id: t.id, nickname: t.nickname ?? '', email: emailMap.get(t.id) ?? '', subscriptionStartedAt: t.subscription_started_at ?? '', result: '失敗' });
       console.error(`AIオプション請求再開エラー(user=${t.id}, sub=${t.stripe_subscription_id}):`, e);
     }
   }
@@ -75,5 +95,5 @@ export async function resumeAllAiOptionBilling(admin: AdminClient): Promise<{ re
     .from('settings')
     .upsert({ key: 'ai_option_paused_at', value: '' }, { onConflict: 'key' });
 
-  return { resumed, failed };
+  return { resumed, failed, targets: resultTargets };
 }
