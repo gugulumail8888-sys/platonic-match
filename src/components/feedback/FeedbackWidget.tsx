@@ -35,7 +35,7 @@ export default function FeedbackWidget() {
   }
 
   return (
-    <div className="fixed bottom-20 right-6 z-50 flex flex-col items-end gap-2">
+    <div className="fixed bottom-20 left-4 z-50 flex flex-col items-start gap-2">
       {/* ポップアップ */}
       {isOpen && (
         <div className="bg-white rounded-2xl shadow-2xl w-80 p-4 border border-gray-200">
@@ -82,9 +82,10 @@ export default function FeedbackWidget() {
       {/* フローティングボタン */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-orange-400 hover:bg-orange-500 text-white rounded-full px-4 py-3 shadow-lg text-sm font-medium flex items-center gap-2 transition-colors"
+        className="bg-orange-400 hover:bg-orange-500 text-white rounded-full shadow-lg text-sm font-medium flex items-center gap-2 transition-colors p-3 sm:px-4 sm:py-3"
       >
-        💬 <span>ご意見・ご要望（一言でもOK）</span>
+        <span className="text-lg sm:text-base">💬</span>
+        <span className="hidden sm:inline">ご意見・ご要望（一言でもOK）</span>
       </button>
     </div>
   )

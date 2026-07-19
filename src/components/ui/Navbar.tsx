@@ -16,6 +16,8 @@ import {
   Mail,
   Lock,
   Video,
+  Menu,
+  X,
 } from "lucide-react";
 
 // requireOmiaiOpen: プレリリース中(お見合い申請受付=omiai_open設定がOFF)は
@@ -38,6 +40,7 @@ export function Navbar({ role, hasAiOption = false, nickname }: { role?: string;
   const pathname = usePathname();
   const router = useRouter();
   const [omiaiOpen, setOmiaiOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/settings/omiai')
@@ -184,6 +187,44 @@ export function Navbar({ role, hasAiOption = false, nickname }: { role?: string;
             {navItems.map((item) => renderNavItem(item, true))}
           </div>
         </nav>
+      )}
+
+      {/* モバイル ハンバーガーメニュー（ヘルプ・お問い合わせ・ガイド・ログアウト、ログイン時のみ表示） */}
+      {role && (
+        <div className="lg:hidden fixed top-[calc(var(--banner-offset)+12px)] right-4 z-40">
+          <button
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300"
+            aria-label="メニュー"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+          {mobileMenuOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden">
+              {supportNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800"
+                  >
+                    <Icon className="w-4 h-4 text-zinc-500" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+                className="flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-950 w-full text-left border-t border-zinc-800"
+              >
+                <LogOut className="w-4 h-4" />
+                ログアウト
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </>
   );

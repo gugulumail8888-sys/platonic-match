@@ -390,43 +390,40 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
           </div>
         </div>
 
-        {/* ブロック・申請ボタン */}
         <div>
-          {/* いいね・ブロックはお見合い申請受付(omiaiOpen)と同時に開放する運用のため、
-              プレリリース期間中(omiaiOpen=false)は非表示にする(2026/7/14、ユーザーと合意) */}
           {omiaiOpen && remainingToday !== null && (
             <p className="text-xs text-zinc-500 text-center mb-2">
               本日のいいね残り <span className={remainingToday === 0 ? 'text-red-400 font-bold' : 'text-teal-400 font-bold'}>{remainingToday}件</span>
             </p>
           )}
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3">
             {omiaiOpen && (
-              <button onClick={handleToggleBlock} disabled={blockLoading}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isBlocked ? 'bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
-                {blockLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TriangleAlert className="w-4 h-4" />}
-                {isBlocked ? 'ブロック解除' : 'ブロック'}
-              </button>
-            )}
-            {omiaiOpen && (
-              <button onClick={handleToggleLike} disabled={likeLoading}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isLiked ? 'bg-pink-900/40 text-pink-400 border border-pink-800 hover:bg-pink-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
-                  {likeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
-                  {isLiked ? 'いいね済み' : 'いいね'}
+              <div className="flex gap-3">
+                <button onClick={handleToggleBlock} disabled={blockLoading}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isBlocked ? 'bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
+                  {blockLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <TriangleAlert className="w-4 h-4" />}
+                  {isBlocked ? 'ブロック解除' : 'ブロック'}
                 </button>
+                <button onClick={handleToggleLike} disabled={likeLoading}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${isLiked ? 'bg-pink-900/40 text-pink-400 border border-pink-800 hover:bg-pink-900/60' : 'bg-zinc-700 text-zinc-300 border border-zinc-600 hover:bg-zinc-600'}`}>
+                    {likeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className="w-4 h-4" />}
+                    {isLiked ? 'いいね済み' : 'いいね'}
+                  </button>
+              </div>
             )}
             {!applied && omiaiOpen && (
               <button onClick={handleOpenApply}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors">
+                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-500 transition-colors">
                 <Heart className="w-4 h-4" />お見合いを申請する
               </button>
             )}
             {!applied && !omiaiOpen && (
-              <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-700 text-zinc-400 text-sm cursor-not-allowed">
+              <div className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-700 text-zinc-400 text-sm cursor-not-allowed">
                 <Heart className="w-4 h-4" />お見合い申請は近日開始予定
               </div>
             )}
             {applied && (
-              <div className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-700 text-zinc-400 text-sm">
+              <div className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-zinc-700 text-zinc-400 text-sm">
                 <Heart className="w-4 h-4" />申請済み
               </div>
             )}
