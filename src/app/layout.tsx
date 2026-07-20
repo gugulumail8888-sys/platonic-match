@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { BetaBanner } from "@/components/layout/BetaBanner";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
+import { BannerOffsetSync } from "@/components/layout/BannerOffsetSync";
 import { getBannerOffset } from "@/lib/bannerOffset";
 import { MaintenanceNoticeBanner } from "@/components/layout/MaintenanceNoticeBanner";
 import { IncidentBanner } from "@/components/layout/IncidentBanner";
@@ -52,13 +53,13 @@ export default async function RootLayout({
   return (
     <html lang="ja">
       <body className="min-h-screen" style={{ '--banner-offset': `${offset}px` } as React.CSSProperties}>
-        <div className="fixed top-0 left-0 right-0 z-50 flex flex-col">
+        <BannerOffsetSync>
           <IncidentBanner />
           <MaintenanceNoticeBanner />
           <AiOptionPausedBanner />
           <PrereleaseNoticeBanner />
           <BetaBanner />
-        </div>
+        </BannerOffsetSync>
         {children}
         <FeedbackWidget />
       </body>

@@ -18,7 +18,7 @@ export async function IncidentBanner() {
   if (!show) return null;
 
   return (
-    <div className="h-10 flex items-center justify-center bg-red-900 text-white text-sm font-medium px-4 text-center">
+    <div className="min-h-10 py-2 flex items-center justify-center bg-red-900 text-white text-sm font-medium px-4 text-center">
       {message}
     </div>
   );

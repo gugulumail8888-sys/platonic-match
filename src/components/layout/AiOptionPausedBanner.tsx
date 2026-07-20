@@ -16,7 +16,7 @@ export async function AiOptionPausedBanner() {
   if (!show) return null;
 
   return (
-    <div className="h-10 flex items-center justify-center bg-red-600 text-white text-sm font-medium px-4 text-center">
+    <div className="min-h-10 py-2 flex items-center justify-center bg-red-600 text-white text-sm font-medium px-4 text-center">
       現在、システム障害によりAIおすすめオプションをご利用いただけません。利用できなかった期間分は自動的に無償延長されますので、特別なお手続きは不要です。
     </div>
   );

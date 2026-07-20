@@ -16,7 +16,7 @@ export async function PrereleaseNoticeBanner() {
   if (!show) return null;
 
   return (
-    <div className="h-10 flex items-center justify-center bg-blue-600 text-white text-sm font-medium px-4 text-center">
+    <div className="min-h-10 py-2 flex items-center justify-center bg-blue-600 text-white text-sm font-medium px-4 text-center">
       現在プレリリース期間中です。今は新規登録・プロフィール閲覧のみご利用いただけます。お見合い申請などの機能は近日公開予定です。
     </div>
   );

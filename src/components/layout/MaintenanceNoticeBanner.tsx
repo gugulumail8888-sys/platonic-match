@@ -43,7 +43,7 @@ export async function MaintenanceNoticeBanner() {
   if (!show) return null;
 
   return (
-    <div className="h-10 flex items-center justify-center bg-yellow-500 text-zinc-900 text-sm font-medium">
+    <div className="min-h-10 py-2 flex items-center justify-center bg-yellow-500 text-zinc-900 text-sm font-medium px-4 text-center">
       {formatDateTime(start)} 〜 {formatDateTime(end)} メンテナンスを予定しています
     </div>
   );
