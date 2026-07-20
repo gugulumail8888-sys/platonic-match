@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 export function ScrollHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [showMeetInfo, setShowMeetInfo] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,8 +62,49 @@ export function ScrollHeader() {
           </button>
         </nav>
 
+            {/* ハンバーガーメニュー(モバイルのみ) */}
+            <div className="relative md:hidden">
+              <button
+                onClick={() => setMobileNavOpen((v) => !v)}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 text-white"
+                aria-label="メニュー"
+              >
+                {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              {mobileNavOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden text-sm">
+                  <Link href="#about" onClick={() => setMobileNavOpen(false)} className="block px-4 py-3 text-white hover:bg-zinc-800">
+                    友情婚活とは
+                  </Link>
+                  <Link href="#features" onClick={() => setMobileNavOpen(false)} className="block px-4 py-3 text-white hover:bg-zinc-800">
+                    特徴
+                  </Link>
+                  <Link href="#voice" onClick={() => setMobileNavOpen(false)} className="block px-4 py-3 text-white hover:bg-zinc-800">
+                    コンセプト
+                  </Link>
+                  <Link href="/how-it-works" onClick={() => setMobileNavOpen(false)} className="block px-4 py-3 text-white hover:bg-zinc-800">
+                    申請の流れ／AIおすすめプラン
+                  </Link>
+                  <button
+                    onClick={() => { setMobileNavOpen(false); setShowMeetInfo(true); }}
+                    className="block w-full text-left px-4 py-3 text-white hover:bg-zinc-800 border-t border-zinc-800"
+                  >
+                    Google Meetとは
+                  </button>
+                  <div className="border-t border-zinc-800 mt-1 pt-1">
+                    <Link href="/login" onClick={() => setMobileNavOpen(false)} className="block px-4 py-3 text-white hover:bg-zinc-800">
+                      ログイン
+                    </Link>
+                    <Link href="/signup" onClick={() => setMobileNavOpen(false)} className="block px-4 py-3 text-primary-400 font-medium hover:bg-zinc-800">
+                      無料登録
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
         {/* ボタン */}
-        <div className="flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3">
           <Link href="/login">
             <Button variant="ghost" size="sm">
               ログイン
