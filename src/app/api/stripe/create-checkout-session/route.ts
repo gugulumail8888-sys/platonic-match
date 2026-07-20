@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe';
+import { isCampaignActive } from '@/lib/campaign';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '決済プランが未設定です。しばらくしてから再度お試しください' }, { status: 503 });
   }
 
+  const couponId = process.env.STRIPE_CAMPAIGN_COUPON_ID;
+  // キャンペーンが終了している場合はクーポンを適用せず、通常価格で申込みを進める(申込み自体は拒否しない)
+  const campaignActive = !!couponId && await isCampaignActive(supabase, createAdminClient());
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -28,8 +33,8 @@ export async function POST(req: NextRequest) {
       cancel_url: `${SITE_URL}/payment/cancel`,
       metadata: { userId: user.id },
       subscription_data: { metadata: { userId: user.id } },
-      ...(process.env.STRIPE_CAMPAIGN_COUPON_ID ? {
-        discounts: [{ coupon: process.env.STRIPE_CAMPAIGN_COUPON_ID }],
+      ...(campaignActive && couponId ? {
+        discounts: [{ coupon: couponId }],
       } : {}),
     });
 
