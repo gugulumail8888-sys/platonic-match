@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { Users, UserPlus, HeartHandshake, TrendingUp, MapPin, Sparkles } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/server';
-import { CAMPAIGN_START, CAMPAIGN_END, CAMPAIGN_SLOT_LIMIT } from '@/lib/campaign';
+import { CAMPAIGN_SLOT_LIMIT, getCampaignPeriod } from '@/lib/campaign';
 
 // ============================================================
 // ステータスラベル設定（/admin/matching, /admin/members と同じ値）
@@ -108,6 +108,7 @@ export default async function AdminDashboardPage({
   searchParams: { premiumPage?: string };
 }) {
   const supabase = createAdminClient();
+  const { start: campaignStart, end: campaignEnd } = await getCampaignPeriod(supabase);
 
   const premiumPage = Math.max(1, parseInt(searchParams.premiumPage ?? '1', 10) || 1);
 
@@ -168,8 +169,8 @@ export default async function AdminDashboardPage({
       .limit(5),
     // キャンペーン期間中にAIおすすめオプションを契約開始した人数(先着200名の消化状況確認用)
     supabase.from('profiles').select('id', { count: 'exact', head: true })
-      .gte('subscription_started_at', CAMPAIGN_START.toISOString())
-      .lte('subscription_started_at', CAMPAIGN_END.toISOString()),
+      .gte('subscription_started_at', campaignStart.toISOString())
+      .lte('subscription_started_at', campaignEnd.toISOString()),
     // AIオプション契約者一覧（ダッシュボード新セクション用）
     supabase.from('profiles')
       .select('id, nickname, subscription_plan, subscription_started_at, current_period_end', { count: 'exact' })

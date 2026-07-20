@@ -6,15 +6,19 @@ import { Users, Shield, MessageCircle, Star, Heart } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ScrollHeader } from "@/components/ui/ScrollHeader";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
-import { getCampaignPeriodLabel, CAMPAIGN_SLOT_LIMIT } from "@/lib/campaign";
+import { CAMPAIGN_SLOT_LIMIT } from "@/lib/campaign";
 
 export default function HomePage() {
   const [showCampaignBanner, setShowCampaignBanner] = useState(false);
+  const [campaignPeriodLabel, setCampaignPeriodLabel] = useState('');
 
   useEffect(() => {
     fetch("/api/campaign-banner")
       .then((res) => res.json())
-      .then((data) => setShowCampaignBanner(!!data.active))
+      .then((data) => {
+        setShowCampaignBanner(!!data.active);
+        if (data.periodLabel) setCampaignPeriodLabel(data.periodLabel);
+      })
       .catch(() => setShowCampaignBanner(false));
   }, []);
 
@@ -106,7 +110,7 @@ export default function HomePage() {
                 </span>
               </div>
               <p className="text-white/90 text-sm md:text-base leading-relaxed">
-                {getCampaignPeriodLabel()}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）
+                {campaignPeriodLabel}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）
               </p>
             </div>
             <Link href="/recommend" className="flex-shrink-0">

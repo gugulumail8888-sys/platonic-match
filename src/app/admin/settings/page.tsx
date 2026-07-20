@@ -152,6 +152,8 @@ export default function AdminSettingsPage() {
   const [maintenanceNoticeEnabled, setMaintenanceNoticeEnabled] = useState(false);
   const [maintenanceScheduledStart, setMaintenanceScheduledStart] = useState('');
   const [maintenanceScheduledEnd, setMaintenanceScheduledEnd] = useState('');
+  const [campaignStart, setCampaignStart] = useState('');
+  const [campaignEnd, setCampaignEnd] = useState('');
   // 予定と確定済みお見合いの重複チェック(2026/7/17対応)
   const [maintenanceConflicts, setMaintenanceConflicts] = useState<{ id: string; scheduledAt: string; applicantNickname: string; applicantEmail: string; partnerNickname: string; partnerEmail: string }[] | null>(null);
   const [checkingConflicts, setCheckingConflicts] = useState(false);
@@ -243,6 +245,8 @@ export default function AdminSettingsPage() {
         if (data.maintenance_notice_enabled !== undefined) setMaintenanceNoticeEnabled(data.maintenance_notice_enabled === 'true');
         if (data.maintenance_scheduled_start !== undefined) setMaintenanceScheduledStart(data.maintenance_scheduled_start);
         if (data.maintenance_scheduled_end !== undefined) setMaintenanceScheduledEnd(data.maintenance_scheduled_end);
+        if (data.campaign_start !== undefined) setCampaignStart(data.campaign_start);
+        if (data.campaign_end !== undefined) setCampaignEnd(data.campaign_end);
         if (data.light_plan_price !== undefined) setAiOptionPrice(Number(data.light_plan_price));
         if (data.matching_fee_normal !== undefined) setMatchingFeeNormal(Number(data.matching_fee_normal));
         if (data.matching_fee_premium !== undefined) setMatchingFeePremium(Number(data.matching_fee_premium));
@@ -329,6 +333,8 @@ export default function AdminSettingsPage() {
       incident_banner_enabled: String(incidentBannerEnabled),
       incident_banner_message: incidentBannerMessage,
       campaign_banner_enabled: String(campaignBannerEnabled),
+      campaign_start: campaignStart,
+      campaign_end: campaignEnd,
     });
     if (success && wasOff && incidentBannerEnabled && incidentBannerMessage.trim() !== '') {
       try {
@@ -505,8 +511,24 @@ export default function AdminSettingsPage() {
             checked={campaignBannerEnabled}
             onChange={setCampaignBannerEnabled}
             label="オープン記念・初期限定キャンペーンバナーを表示"
-            description="7月〜9月限定｜AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーをトップページに表示します"
+            description="AIおすすめ機能 申込日から3ヶ月無料キャンペーンのバナーを、下記の期間中トップページに表示します(先着200名)"
           />
+          <FieldRow label="キャンペーン開始日時">
+            <input
+              type="datetime-local"
+              value={campaignStart}
+              onChange={(e) => setCampaignStart(e.target.value)}
+              className={inputCls}
+            />
+          </FieldRow>
+          <FieldRow label="キャンペーン終了日時">
+            <input
+              type="datetime-local"
+              value={campaignEnd}
+              onChange={(e) => setCampaignEnd(e.target.value)}
+              className={inputCls}
+            />
+          </FieldRow>
           <div className="pt-2 border-t border-zinc-800">
             <p className="text-xs text-zinc-400">
               AIオプション停止中のお知らせバナー：

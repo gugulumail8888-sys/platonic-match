@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
-import { getCampaignPeriodLabel, CAMPAIGN_SLOT_LIMIT } from "@/lib/campaign";
+import { CAMPAIGN_SLOT_LIMIT } from "@/lib/campaign";
 
 export default function LpPage() {
   const [mounted, setMounted] = useState(false);
@@ -11,10 +11,14 @@ export default function LpPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [showCampaignBanner, setShowCampaignBanner] = useState(false);
+  const [campaignPeriodLabel, setCampaignPeriodLabel] = useState('');
   useEffect(() => {
     fetch('/api/campaign-banner')
       .then((res) => res.json())
-      .then((data) => setShowCampaignBanner(!!data.active))
+      .then((data) => {
+        setShowCampaignBanner(!!data.active);
+        if (data.periodLabel) setCampaignPeriodLabel(data.periodLabel);
+      })
       .catch(() => setShowCampaignBanner(false));
   }, []);
 
@@ -350,7 +354,7 @@ export default function LpPage() {
               <div style={{flex:1}}>
                 <span className="lp-campaign-title">オープン記念！初期限定キャンペーン</span>
                 <span className="lp-campaign-badge">期間限定</span>
-                <p className="lp-campaign-text">{getCampaignPeriodLabel()}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）</p>
+                <p className="lp-campaign-text">{campaignPeriodLabel}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）</p>
               </div>
               <a href="#pricing" className="lp-campaign-cta">料金を見る</a>
             </div>
