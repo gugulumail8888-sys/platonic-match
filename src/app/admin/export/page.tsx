@@ -407,13 +407,13 @@ export default function AdminExportPage() {
               {searchResults.length > 0 ? (
                 <>
                   <div className="overflow-x-auto rounded-lg border border-zinc-800">
-                    <table className="w-full text-sm">
+                    <table className="w-full min-w-[640px] text-sm">
                       <thead>
                         <tr className="bg-zinc-800/60 text-zinc-400 text-xs">
-                          <th className="text-left font-medium px-3 py-2">氏名</th>
-                          <th className="text-left font-medium px-3 py-2">メールアドレス</th>
-                          <th className="text-left font-medium px-3 py-2">ステータス</th>
-                          <th className="text-left font-medium px-3 py-2">登録日</th>
+                          <th className="text-left font-medium px-3 py-2 whitespace-nowrap">氏名</th>
+                          <th className="text-left font-medium px-3 py-2 whitespace-nowrap">メールアドレス</th>
+                          <th className="text-left font-medium px-3 py-2 whitespace-nowrap">ステータス</th>
+                          <th className="text-left font-medium px-3 py-2 whitespace-nowrap">登録日</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-800">

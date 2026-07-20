@@ -325,11 +325,12 @@ export default async function AdminDashboardPage({
 
         {/* 直近7日間の申請数 */}
         <SectionCard title="直近7日間の申請数">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[400px] text-sm">
             <thead>
               <tr className="border-b border-zinc-800">
-                <th className="text-left py-2 text-xs text-zinc-500 font-medium">日付</th>
-                <th className="text-right py-2 text-xs text-zinc-500 font-medium">申請数</th>
+                <th className="text-left py-2 text-xs text-zinc-500 font-medium whitespace-nowrap">日付</th>
+                <th className="text-right py-2 text-xs text-zinc-500 font-medium whitespace-nowrap">申請数</th>
                 <th className="py-2" />
               </tr>
             </thead>
@@ -352,6 +353,7 @@ export default async function AdminDashboardPage({
               ))}
             </tbody>
           </table>
+          </div>
         </SectionCard>
 
         {/* ステータス別内訳 */}

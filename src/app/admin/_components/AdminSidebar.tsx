@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, LogOut, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare, Video, HelpCircle, Flag, RefreshCw } from 'lucide-react';
+import { Home, Users, HeartHandshake, Settings, Shield, ShieldCheck, Calendar, LogOut, ClipboardList, ClipboardCheck, Download, Moon, MessageSquare, Video, HelpCircle, Flag, RefreshCw, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
@@ -28,6 +29,7 @@ const EXTERNAL_LINKS = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const handleSignOut = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -118,53 +120,71 @@ export function AdminSidebar() {
       </aside>
 
       {/* ========== モバイル トップバー ========== */}
-      <header className="lg:hidden sticky top-0 z-30 bg-zinc-900 border-b border-zinc-800">
-        {/* ブランド */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
-          <Shield className="w-4 h-4 text-teal-400" />
-          <span className="text-sm font-bold text-white">amista 管理者パネル</span>
+      <header className="lg:hidden sticky top-[var(--banner-offset)] z-30 bg-zinc-900 border-b border-zinc-800">
+        {/* ブランド + ハンバーガー */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-teal-400" />
+            <span className="text-sm font-bold text-white">amista 管理者パネル</span>
+          </div>
+          <button
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 flex-shrink-0"
+            aria-label="メニュー"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
-        {/* モバイルナビ */}
-        <div className="flex overflow-x-auto gap-1 px-3 py-2">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = item.exact
-              ? pathname === item.href
-              : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all',
-                  isActive
-                    ? 'bg-teal-950 text-teal-400 border border-teal-900'
-                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-                )}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {item.label}
-              </Link>
-            );
-          })}
-
-          {/* 外部リンク */}
-          <div className="flex items-center gap-1 pl-2 ml-1 border-l border-zinc-800">
-            {EXTERNAL_LINKS.map((item) => {
+        {/* モバイルナビ（開閉式） */}
+        {mobileMenuOpen && (
+          <div className="max-h-[calc(100vh-56px)] overflow-y-auto px-3 py-2 space-y-0.5">
+            {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
+              const isActive = item.exact
+                ? pathname === item.href
+                : pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all',
+                    isActive
+                      ? 'bg-teal-950 text-teal-400 font-medium border border-teal-900'
+                      : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                  )}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4 flex-shrink-0" />
                   {item.label}
                 </Link>
               );
             })}
+            <div className="mt-2 pt-2 border-t border-zinc-800 space-y-0.5">
+              {EXTERNAL_LINKS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-950 transition-all text-sm w-full"
+              >
+                <LogOut className="w-4 h-4 flex-shrink-0" />
+                ログアウト
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </header>
     </>
   );

@@ -43,7 +43,7 @@ export default async function AdminFeedbackPage({
       )}
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-zinc-300 border border-zinc-700 table-fixed">
+        <table className="w-full min-w-[660px] text-sm text-zinc-300 border border-zinc-700 table-fixed">
           <thead className="bg-zinc-800">
             <tr>
               <th className="p-3 text-left whitespace-nowrap w-36">日時</th>

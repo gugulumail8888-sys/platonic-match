@@ -84,8 +84,8 @@ export default function FeedbackWidget() {
         onClick={() => setIsOpen(!isOpen)}
         className="bg-orange-400 hover:bg-orange-500 text-white rounded-full shadow-lg text-sm font-medium flex items-center gap-2 transition-colors p-3 sm:px-4 sm:py-3"
       >
-        <span className="text-lg sm:text-base">💬</span>
-        <span className="hidden sm:inline">ご意見・ご要望（一言でもOK）</span>
+        <span className="text-lg md:text-base">💬</span>
+        <span className="hidden md:inline">ご意見・ご要望（一言でもOK）</span>
       </button>
     </div>
   )
