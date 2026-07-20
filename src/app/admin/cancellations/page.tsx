@@ -362,7 +362,7 @@ export default function AdminCancellationsPage() {
             <span className="text-xs text-zinc-500">
               全{sortedItems.length}件中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, sortedItems.length)}件を表示
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}

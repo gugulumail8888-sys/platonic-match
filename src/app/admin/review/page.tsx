@@ -198,7 +198,7 @@ export default async function ReviewPage({
             <span className="text-xs text-zinc-500">
               全{allDisplayed.length}件中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, allDisplayed.length)}件を表示
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Link
                 href={`/admin/review?tab=${tab}&page=${Math.max(1, currentPage - 1)}`}
                 aria-disabled={currentPage <= 1}

@@ -91,16 +91,16 @@ export default async function AdminSurveysPage({
       <section>
         <h2 className="text-xl font-semibold text-teal-400 mb-4">お見合い後アンケート（全{omiaiCount ?? 0}件）</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-zinc-300 border border-zinc-700">
+          <table className="w-full min-w-[900px] text-sm text-zinc-300 border border-zinc-700">
             <thead className="bg-zinc-800">
               <tr>
-                <th className="p-3 text-left">日時</th>
-                <th className="p-3 text-left">ユーザー</th>
-                <th className="p-3 text-left">満足度</th>
-                <th className="p-3 text-left">お相手印象</th>
-                <th className="p-3 text-left">再会希望</th>
-                <th className="p-3 text-left">サービス満足度</th>
-                <th className="p-3 text-left">コメント</th>
+                <th className="p-3 text-left whitespace-nowrap">日時</th>
+                <th className="p-3 text-left whitespace-nowrap">ユーザー</th>
+                <th className="p-3 text-left whitespace-nowrap">満足度</th>
+                <th className="p-3 text-left whitespace-nowrap">お相手印象</th>
+                <th className="p-3 text-left whitespace-nowrap">再会希望</th>
+                <th className="p-3 text-left whitespace-nowrap">サービス満足度</th>
+                <th className="p-3 text-left whitespace-nowrap">コメント</th>
                 <th className="p-3 text-left whitespace-nowrap w-24">状態</th>
               </tr>
             </thead>
@@ -150,15 +150,15 @@ export default async function AdminSurveysPage({
       <section>
         <h2 className="text-xl font-semibold text-teal-400 mb-4">成婚報告アンケート（全{reportCount ?? 0}件）</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-zinc-300 border border-zinc-700">
+          <table className="w-full min-w-[820px] text-sm text-zinc-300 border border-zinc-700">
             <thead className="bg-zinc-800">
               <tr>
-                <th className="p-3 text-left">日時</th>
-                <th className="p-3 text-left">ユーザー</th>
-                <th className="p-3 text-left">出会い時期</th>
-                <th className="p-3 text-left">きっかけ</th>
-                <th className="p-3 text-left">満足度</th>
-                <th className="p-3 text-left">メッセージ</th>
+                <th className="p-3 text-left whitespace-nowrap">日時</th>
+                <th className="p-3 text-left whitespace-nowrap">ユーザー</th>
+                <th className="p-3 text-left whitespace-nowrap">出会い時期</th>
+                <th className="p-3 text-left whitespace-nowrap">きっかけ</th>
+                <th className="p-3 text-left whitespace-nowrap">満足度</th>
+                <th className="p-3 text-left whitespace-nowrap">メッセージ</th>
                 <th className="p-3 text-left whitespace-nowrap w-24">状態</th>
               </tr>
             </thead>

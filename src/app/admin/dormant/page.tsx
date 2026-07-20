@@ -121,17 +121,17 @@ export default function DormantPage() {
       </div>
 
       {/* テーブル */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-x-auto">
+        <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-zinc-800 text-zinc-400 text-xs">
-              <th className="text-left p-4">会員</th>
-              <th className="text-left p-4">メール</th>
-              <th className="text-left p-4">最終ログイン</th>
-              <th className="text-left p-4">未ログイン日数</th>
-              <th className="text-left p-4">登録日</th>
-              <th className="text-left p-4">ステータス</th>
-              <th className="text-left p-4">操作</th>
+              <th className="text-left p-4 whitespace-nowrap">会員</th>
+              <th className="text-left p-4 whitespace-nowrap">メール</th>
+              <th className="text-left p-4 whitespace-nowrap">最終ログイン</th>
+              <th className="text-left p-4 whitespace-nowrap">未ログイン日数</th>
+              <th className="text-left p-4 whitespace-nowrap">登録日</th>
+              <th className="text-left p-4 whitespace-nowrap">ステータス</th>
+              <th className="text-left p-4 whitespace-nowrap">操作</th>
             </tr>
           </thead>
           <tbody>

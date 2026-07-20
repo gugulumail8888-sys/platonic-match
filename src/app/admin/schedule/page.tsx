@@ -218,16 +218,16 @@ export default function AdminSchedulePage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-zinc-500">該当する日程がありません</div>
       ) : (
-        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-500 text-xs">
-                <th className="text-left p-4">申請者</th>
-                <th className="text-left p-4">お相手</th>
-                <th className="text-left p-4">ステータス</th>
-                <th className="text-left p-4">確定日時</th>
-                <th className="text-left p-4">Google Meet</th>
-                <th className="text-left p-4">操作</th>
+                <th className="text-left p-4 whitespace-nowrap">申請者</th>
+                <th className="text-left p-4 whitespace-nowrap">お相手</th>
+                <th className="text-left p-4 whitespace-nowrap">ステータス</th>
+                <th className="text-left p-4 whitespace-nowrap">確定日時</th>
+                <th className="text-left p-4 whitespace-nowrap">Google Meet</th>
+                <th className="text-left p-4 whitespace-nowrap">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -292,7 +292,7 @@ export default function AdminSchedulePage() {
             <span className="text-xs text-zinc-500">
               全{filtered.length}件中 {(currentPage - 1) * PAGE_SIZE + 1}〜{Math.min(currentPage * PAGE_SIZE, filtered.length)}件を表示
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
