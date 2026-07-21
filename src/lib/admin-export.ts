@@ -30,11 +30,12 @@ export interface ExportProfileRow {
   status: string;
   created_at: string;
   withdrawn_at: string | null;
+  subscription_started_at: string | null;
 }
 
 const CSV_HEADERS = [
   'ユーザーID', '姓', '名', 'メールアドレス', '電話番号', '生年月日', '性別',
-  'ステータス', '登録日時', '退会日時', '本人確認書類削除予定日時', '登録情報削除予定日時', 'いいね履歴', 'ブロック履歴',
+  'ステータス', '登録日時', 'AIおすすめオプション契約日', '退会日時', '本人確認書類削除予定日時', '登録情報削除予定日時', 'いいね履歴', 'ブロック履歴',
   '申請してお見合いをした回数', '申請を受けてお見合いをした回数',
   '申請してキャンセルされた回数', '申請を受けてキャンセルされた回数',
   '返金回数（申請者側）', '返金金額合計（申請者側）', '返金回数（お相手側）', '返金金額合計（お相手側）',
@@ -265,6 +266,7 @@ export async function buildUsersCsv(admin: SupabaseClient, profiles: ExportProfi
       GENDER_LABELS[p.gender ?? ''] ?? (p.gender ?? ''),
       STATUS_LABELS[p.status] ?? p.status,
       formatDateTime(p.created_at),
+      formatDateTime(p.subscription_started_at),
       isWithdrawn ? formatDateTime(p.withdrawn_at) : '-',
       isWithdrawn ? formatInTimeZone(addDays(new Date(p.withdrawn_at!), 365), TZ, 'yyyy-MM-dd HH:mm:ss') : '-',
       isWithdrawn ? formatInTimeZone(addDays(new Date(p.withdrawn_at!), 1095), TZ, 'yyyy-MM-dd HH:mm:ss') : '-',
@@ -289,7 +291,7 @@ export function csvFilename(prefix: string): string {
 }
 
 export const EXPORT_PROFILE_COLUMNS =
-  'id, last_name, first_name, nickname, phone, birth_date, gender, status, created_at, withdrawn_at';
+  'id, last_name, first_name, nickname, phone, birth_date, gender, status, created_at, withdrawn_at, subscription_started_at';
 
 // ── ユーザー検索 ──
 export interface SearchExportParams {
