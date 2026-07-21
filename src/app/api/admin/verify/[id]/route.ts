@@ -43,14 +43,15 @@ function calcAge(birthDate: string | null): number {
   return age;
 }
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { error, admin } = await requireAdmin();
   if (error) return error;
 
   const { data: row, error: fetchError } = await admin
     .from('profiles')
     .select('id, nickname, birth_date, gender, prefecture, created_at, id_document_url, id_document_back_url, status')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (fetchError) {
@@ -77,12 +78,12 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     backUrl = signed?.signedUrl ?? null;
   }
 
-  const { data: authUser } = await admin.auth.admin.getUserById(params.id);
+  const { data: authUser } = await admin.auth.admin.getUserById(id);
 
   const { data: deficiencyLogs } = await admin
     .from('verification_deficiency_notices')
     .select('reason, sent_at')
-    .eq('profile_id', params.id)
+    .eq('profile_id', id)
     .order('sent_at', { ascending: false });
 
   return NextResponse.json({
@@ -100,7 +101,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { error, admin } = await requireAdmin();
   if (error) return error;
 
@@ -117,7 +119,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { error: updateError } = await admin
     .from('profiles')
     .update(updatePayload)
-    .eq('id', params.id);
+    .eq('id', id);
 
   if (updateError) {
     console.error('admin verify status update error:', updateError);
@@ -127,7 +129,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return NextResponse.json({ ok: true });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const { error, admin, userId } = await requireAdmin();
   if (error) return error;
 
@@ -136,10 +139,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { data: row } = await admin
     .from('profiles')
     .select('nickname')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
-  const { data: authUser } = await admin.auth.admin.getUserById(params.id);
+  const { data: authUser } = await admin.auth.admin.getUserById(id);
   const email = authUser?.user?.email;
 
   if (!email) {
@@ -166,7 +169,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { error: logError } = await admin
     .from('verification_deficiency_notices')
     .insert({
-      profile_id: params.id,
+      profile_id: id,
       reason: body.reason ?? null,
       sent_by: userId,
     });

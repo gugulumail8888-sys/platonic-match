@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { use, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -173,7 +173,8 @@ function ConfirmApplyModal({ member, onClose, onConfirm, aiLoading, aiScore, aiR
   );
 }
 
-export default function MemberProfilePage({ params }: { params: { id: string } }) {
+export default function MemberProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const autoApplyTriggered = useRef(false);
@@ -196,7 +197,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
   const [omiaiOpen, setOmiaiOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/members/${params.id}`)
+    fetch(`/api/members/${id}`)
       .then((r) => r.json())
       .then((data: { member: Member }) => setMember(data.member ?? null))
       .catch(() => {})
@@ -213,7 +214,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
     fetch('/api/likes')
       .then((r) => r.json())
       .then((data: { liked: string[]; remainingToday?: number }) => {
-        setIsLiked((data.liked ?? []).includes(params.id));
+        setIsLiked((data.liked ?? []).includes(id));
         setRemainingToday(data.remainingToday ?? null);
       })
       .catch(() => {});
@@ -221,14 +222,14 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
     fetch('/api/blocks')
       .then((r) => r.json())
       .then((data: { blocked: string[] }) => {
-        setIsBlocked((data.blocked ?? []).includes(params.id));
+        setIsBlocked((data.blocked ?? []).includes(id));
       })
       .catch(() => {});
 
     fetch('/api/settings/omiai')
       .then(res => res.json())
       .then(data => setOmiaiOpen(data.omiai_open));
-  }, [params.id]);
+  }, [id]);
 
   const handleToggleLike = async () => {
     if (!member) return;

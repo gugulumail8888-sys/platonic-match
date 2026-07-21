@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import RecommendClient from "./_client";
 
-export default function RecommendPage() {
-  const authCookie = cookies().get("auth")?.value;
+export default async function RecommendPage() {
+  const authCookie = (await cookies()).get("auth")?.value;
   let hasAiOption = false;
   if (authCookie) {
     try {

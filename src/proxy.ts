@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { parseJstDateTime } from "@/lib/datetime";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // ── メンテナンスモードチェック（既存の認証チェックより前に実行） ──

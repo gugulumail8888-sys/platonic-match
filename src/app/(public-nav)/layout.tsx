@@ -3,12 +3,12 @@ import { Navbar } from "@/components/ui/Navbar";
 import { AdminSidebar } from "@/app/admin/_components/AdminSidebar";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 
-export default function PublicNavLayout({
+export default async function PublicNavLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const authCookie = cookies().get("auth")?.value;
+  const authCookie = (await cookies()).get("auth")?.value;
   let role: string | undefined;
   let hasAiOption = false;
   if (authCookie) {

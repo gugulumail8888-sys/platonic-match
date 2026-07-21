@@ -96,14 +96,15 @@ async function markReviewed(formData: FormData) {
 export default async function ProfileReviewDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const adminSupabase = createAdminClient();
 
   const { data: profile } = await adminSupabase
     .from('profiles')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .maybeSingle();
 
   if (!profile) {

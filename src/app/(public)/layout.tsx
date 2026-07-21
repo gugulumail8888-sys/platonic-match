@@ -14,7 +14,7 @@ export default async function PublicLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const authCookie = cookies().get('auth')?.value;
+  const authCookie = (await cookies()).get('auth')?.value;
   let role: string | undefined;
   let hasAiOption = false;
   if (authCookie) {

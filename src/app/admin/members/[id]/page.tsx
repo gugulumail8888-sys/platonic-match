@@ -56,9 +56,9 @@ const PROFILE_COLUMNS =
 export default async function AdminMemberDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
   const supabase = createAdminClient();
 
   const { data: profile } = await supabase

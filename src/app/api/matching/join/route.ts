@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'matchingIdが必要です' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: '未認証です' }, { status: 401 });
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '入力内容を確認してください' }, { status: 400 });
     }
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: '未認証です' }, { status: 401 });

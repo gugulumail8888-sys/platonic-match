@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function LoginPage() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const authCookie = cookieStore.get("auth");
 
   if (authCookie) {

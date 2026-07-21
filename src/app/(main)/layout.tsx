@@ -9,7 +9,7 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -19,7 +19,7 @@ export default async function MainLayout({
   }
 
   // admin ロールは管理画面へ
-  const authCookie = cookies().get("auth")?.value;
+  const authCookie = (await cookies()).get("auth")?.value;
   let role: string | undefined;
   let hasAiOption = false;
   let nickname: string | undefined;

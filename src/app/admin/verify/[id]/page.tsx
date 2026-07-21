@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, ShieldCheck, ShieldX, Clock, CheckSquare, X, ZoomIn } from 'lucide-react';
@@ -69,7 +69,8 @@ function ImageModal({ url, alt, onClose }: { url: string; alt: string; onClose: 
   );
 }
 
-export default function AdminVerifyDetailPage({ params }: { params: { id: string } }) {
+export default function AdminVerifyDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [detail, setDetail] = useState<VerifyDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,7 +84,7 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
   const [isSendingDeficiency, setIsSendingDeficiency] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/admin/verify/${params.id}`)
+    fetch(`/api/admin/verify/${id}`)
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => null) as { error?: string } | null;
@@ -94,13 +95,13 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
       .then(setDetail)
       .catch((err) => setLoadError(err instanceof Error ? err.message : '取得に失敗しました'))
       .finally(() => setIsLoading(false));
-  }, [params.id]);
+  }, [id]);
 
   const handleDecision = async (status: VerifyStatus) => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      const res = await fetch(`/api/admin/verify/${params.id}`, {
+      const res = await fetch(`/api/admin/verify/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -121,7 +122,7 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
     if (!detail) return;
     setIsSendingDeficiency(true);
     try {
-      const res = await fetch(`/api/admin/verify/${params.id}`, {
+      const res = await fetch(`/api/admin/verify/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: deficiencyReason }),
@@ -130,7 +131,7 @@ export default function AdminVerifyDetailPage({ params }: { params: { id: string
       setShowDeficiencyModal(false);
       setDeficiencyReason('');
       alert('不備メールを送信しました');
-      const refreshed = await fetch(`/api/admin/verify/${params.id}`).then((r) => r.json()) as VerifyDetail;
+      const refreshed = await fetch(`/api/admin/verify/${id}`).then((r) => r.json()) as VerifyDetail;
       setDetail(refreshed);
     } catch (err) {
       alert(err instanceof Error ? err.message : '送信に失敗しました');
