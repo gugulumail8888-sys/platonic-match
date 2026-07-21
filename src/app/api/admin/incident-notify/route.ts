@@ -43,13 +43,19 @@ export async function POST(req: NextRequest) {
   const emailMap = new Map(authUsers.users.map((u) => [u.id, u.email]));
 
   let sentCount = 0;
+  let failedCount = 0;
   const sentTo: { id: string; nickname: string; email: string; subscriptionStartedAt: string }[] = [];
   for (const p of profiles ?? []) {
     const email = emailMap.get(p.id);
     if (!email) continue;
 
+    // sendEmail=falseの場合(バナー表示のみ)は送信自体を行わないため常に対象者として計上する。
+    // sendEmail=trueの場合は、実際にメール送信APIが成功した場合のみsentCountに含める
+    // (以前は送信結果を確認せず常に成功として計上していたため、実際には失敗していても
+    //  管理画面には「n名へメールを送信しました」と表示されてしまっていた)。
+    let sendOk = true;
     if (sendEmail) {
-      await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
+      const notifyRes = await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,11 +67,16 @@ export async function POST(req: NextRequest) {
           incidentMessage: message,
         }),
       });
+      sendOk = notifyRes.ok;
+      if (!sendOk) {
+        console.error('incident notify email send error:', p.id, notifyRes.status, await notifyRes.text().catch(() => ''));
+        failedCount++;
+      }
     }
 
     sentTo.push({ id: p.id, nickname: p.nickname ?? 'ユーザー', email, subscriptionStartedAt: p.subscription_started_at ?? '' });
-    sentCount++;
+    if (sendOk) sentCount++;
   }
 
-  return NextResponse.json({ ok: true, sentCount, sentTo });
+  return NextResponse.json({ ok: true, sentCount, failedCount, sentTo });
 }

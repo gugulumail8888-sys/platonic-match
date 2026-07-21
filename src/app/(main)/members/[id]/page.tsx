@@ -324,8 +324,12 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
           amount: 3000,
         }),
       });
-      const data = await res.json() as { success: boolean; applicationId: string; notifyMessage: string; isDemo: boolean };
-      if (!data.success) throw new Error('apply failed');
+      const data = await res.json() as { success: boolean; applicationId: string; notifyMessage: string; isDemo: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        alert(data.error ?? 'お見合い申請に失敗しました。もう一度お試しください。');
+        setApplying(false);
+        return;
+      }
       setApplied(true);
       setShowApplyModal(false);
       const query = new URLSearchParams({
@@ -339,6 +343,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
       router.push(`/matching/complete?${query.toString()}`);
     } catch (err) {
       console.error(err);
+      alert('お見合い申請に失敗しました。もう一度お試しください。');
       setApplying(false);
     }
   };

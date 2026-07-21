@@ -343,11 +343,12 @@ export default function AdminSettingsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: incidentBannerMessage, sendEmail: incidentEmailAlsoSend }),
         });
-        const data = await res.json().catch(() => null) as { sentCount?: number; sentTo?: { id: string; nickname: string; email: string; subscriptionStartedAt: string }[] } | null;
+        const data = await res.json().catch(() => null) as { sentCount?: number; failedCount?: number; sentTo?: { id: string; nickname: string; email: string; subscriptionStartedAt: string }[] } | null;
+        const failedCount = data?.failedCount ?? 0;
         setResultModal({
           title: incidentEmailAlsoSend ? '障害お知らせメール送信結果' : '障害バナー表示・対象会員一覧',
           message: incidentEmailAlsoSend
-            ? `${data?.sentCount ?? 0}名へメールを送信しました`
+            ? `${data?.sentCount ?? 0}名へメールを送信しました` + (failedCount > 0 ? `(送信に失敗:${failedCount}名)` : '')
             : `バナーを表示しました(対象会員:${(data?.sentTo ?? []).length}名。メールは送信していません)`,
           rows: (data?.sentTo ?? []).map((u) => ({ id: u.id, nickname: u.nickname, email: u.email, subscriptionStartedAt: u.subscriptionStartedAt })),
         });

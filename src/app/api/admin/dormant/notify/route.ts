@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'ユーザーが見つかりません' }, { status: 404 });
   }
 
-  await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
+  const notifyRes = await fetch(`${req.nextUrl.origin}/api/admin/notify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -50,6 +50,11 @@ export async function POST(req: NextRequest) {
       user: { nickname: targetProfile.nickname ?? 'ユーザー', email },
     }),
   });
+
+  if (!notifyRes.ok) {
+    console.error('dormant notify email send error:', notifyRes.status, await notifyRes.text().catch(() => ''));
+    return NextResponse.json({ error: 'メール送信に失敗しました' }, { status: 500 });
+  }
 
   // 自動バッチ(dormant_notice_batch)による重複送信を防ぐため、手動送信時も送信日時を記録する
   await adminSupabase

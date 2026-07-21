@@ -29,6 +29,7 @@ export default function FeedbackWidget() {
       }, 2000)
     } catch (e) {
       console.error(e)
+      alert('送信に失敗しました。もう一度お試しください。')
     } finally {
       setSending(false)
     }

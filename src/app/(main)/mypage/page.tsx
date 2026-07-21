@@ -682,6 +682,24 @@ function SettingsTab() {
       {/* AIおすすめオプション */}
       <AIOptionSection />
 
+        {/* 成婚報告 */}
+        <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5">
+          <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <span className="w-1 h-4 bg-teal-500 rounded-full inline-block" />
+            成婚報告
+          </h3>
+          <p className="text-xs text-zinc-400 mb-3">
+            お相手とのパートナーシップが成立しましたら、ぜひ事務局へご報告ください。
+          </p>
+          <Link
+            href="/marriage-report"
+            className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-teal-800/40 hover:bg-teal-800/60 border border-teal-700 text-teal-300 text-sm font-medium rounded-xl transition-colors"
+          >
+            <HeartHandshake className="w-4 h-4" />
+            成婚を報告する
+          </Link>
+        </div>
+
         {/* アカウント設定 */}
         <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5">
           <h3 className="text-sm font-bold text-teal-400 uppercase tracking-wider mb-5 flex items-center gap-2">
