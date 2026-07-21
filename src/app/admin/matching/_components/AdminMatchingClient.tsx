@@ -250,7 +250,7 @@ function DetailModal({
           <div className="text-sm space-y-1.5">
             <div className="flex justify-between">
               <span className="text-zinc-500">申請日</span>
-              <span className="text-zinc-200">{new Date(row.created_at).toLocaleDateString('ja-JP')}</span>
+              <span className="text-zinc-200">{new Date(row.created_at).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-500">料金（申請者）</span>
@@ -455,7 +455,7 @@ export default function AdminMatchingClient({
 
                       {/* 申請日 */}
                       <td className="px-4 py-3 text-zinc-400 text-xs">
-                        {new Date(row.created_at).toLocaleDateString('ja-JP')}
+                        {new Date(row.created_at).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}
                       </td>
 
                       {/* ステータス */}

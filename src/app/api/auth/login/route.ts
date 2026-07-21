@@ -38,7 +38,26 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error, data: signInData } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (!error && signInData.user) {
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('is_suspended, suspended_reason')
+      .eq('id', signInData.user.id)
+      .maybeSingle();
+
+    if (profile?.is_suspended) {
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        {
+          error:
+            'このアカウントは現在停止されています。詳しくは事務局までお問い合わせください。',
+        },
+        { status: 403 }
+      );
+    }
+  }
 
   if (error) {
     const nextFailCount = (attempt?.fail_count ?? 0) + 1;

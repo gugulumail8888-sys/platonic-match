@@ -1,4 +1,4 @@
-﻿# 依存関係
+# 依存関係
 node_modules/
 .pnpm-store/
 
@@ -51,3 +51,12 @@ fix-*.sh
 # バックアップファイル
 *.backup-*
 *.bak*
+
+# 管理画面スクリーンショット(一時確認用)
+docs/admin-screenshots/
+
+# PowerPoint作成時の一時QA画像フォルダ(削除できない場合の残存分も含め除外)
+docs/_qa_tmp/
+docs/_qa2/
+docs/_qa5/
+docs/_qafont/

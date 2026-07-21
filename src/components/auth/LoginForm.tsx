@@ -15,6 +15,8 @@ function LoginFormInner() {
   const [serverError, setServerError] = useState<string | null>(
     searchParams.get("error") === "auth_callback_failed"
       ? "ログインに失敗しました。時間を置いて再度お試しください。"
+      : searchParams.get("suspended") === "1"
+      ? "このアカウントは現在停止されています。詳しくは事務局までお問い合わせください。"
       : null
   );
   const [isSubmitting, setIsSubmitting] = useState(false);

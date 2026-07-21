@@ -77,17 +77,36 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const authCookie = request.cookies.get('auth')?.value;
 
   // トップページ・API・静的アセットは常に通過
-  if (
+  const isExemptPath =
     pathname === '/' ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/login') ||
-    pathname.startsWith('/register')
-  ) {
+    pathname.startsWith('/register');
+
+  // 停止済み会員（is_suspended）は、ログイン済みセッションが残っていても
+  // トップ・ログイン・API以外の全ページアクセス時にセッションを強制的に切断する
+  if (user && !isExemptPath) {
+    const admin = createAdminClient();
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('is_suspended')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profile?.is_suspended) {
+      await supabase.auth.signOut();
+      const redirectResponse = NextResponse.redirect(new URL('/login?suspended=1', request.url));
+      redirectResponse.cookies.delete('auth');
+      return redirectResponse;
+    }
+  }
+
+  if (isExemptPath) {
     return supabaseResponse;
   }
 
