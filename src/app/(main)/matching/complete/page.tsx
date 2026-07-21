@@ -16,7 +16,10 @@ import { Button } from '@/components/ui/Button';
 function CompleteContent() {
   const params = useSearchParams();
 
-  const applicationId  = params.get('applicationId') ?? 'APP-000';
+  const applicationId  = params.get('applicationId') ?? '';
+  // 表示用の申請番号は実UUID(applicationId)の先頭8桁(申請履歴画面と同じ表記)。
+  // 通報リンク等には短縮せず実UUIDのapplicationIdをそのまま使う。
+  const applicationIdLabel = applicationId ? applicationId.slice(0, 8).toUpperCase() : '—';
   const nickname       = params.get('nickname') ?? '';
   const age            = params.get('age') ?? '';
   const prefecture     = params.get('prefecture') ?? '';
@@ -76,7 +79,7 @@ function CompleteContent() {
               <ClipboardList className="w-3.5 h-3.5" />
               申請番号
             </span>
-            <span className="text-white font-mono font-medium">{applicationId}</span>
+            <span className="text-white font-mono font-medium">{applicationIdLabel}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-zinc-400">

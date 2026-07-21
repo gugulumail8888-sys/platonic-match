@@ -26,6 +26,7 @@ interface Matching {
   applicant_id: string;
   partner_id: string;
   applicant_dating_wish: boolean;
+  partner_dating_wish: boolean;
   partner: PartnerProfile;
   hasSlots: boolean;
   scheduled_at: string | null;
@@ -109,7 +110,13 @@ function StatusBadge({ status }: { status: ApplicationStatus }) {
 
 function MatchingCard({ matching, currentUserId, myIsPremium }: { matching: Matching; currentUserId: string; myIsPremium: boolean }) {
   const router = useRouter();
-  const [wished, setWished] = useState(matching.applicant_dating_wish);
+  // 自分が申請者(applicant)かお相手(partner)かで、交際希望の読み書き先カラムを分ける。
+  // 以前は常にapplicant_dating_wishのみを読み書きしており、partner側が押しても
+  // 申請者の意思表示として記録される・お相手自身の希望状態が画面に反映されない不具合があった(タスク#123)。
+  const isApplicant = matching.applicant_id === currentUserId;
+  const [wished, setWished] = useState(
+    isApplicant ? matching.applicant_dating_wish : matching.partner_dating_wish
+  );
   const [responding, setResponding] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [postponing, setPostponing] = useState(false);
@@ -124,9 +131,12 @@ function MatchingCard({ matching, currentUserId, myIsPremium }: { matching: Matc
 
   async function handleDatingWish() {
     const supabase = createClient();
+    const updatePayload = isApplicant
+      ? { applicant_dating_wish: true, dating_wish_at: new Date().toISOString() }
+      : { partner_dating_wish: true, dating_wish_at: new Date().toISOString() };
     const { error } = await supabase
       .from('matchings')
-      .update({ applicant_dating_wish: true, dating_wish_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', matching.id);
     if (!error) setWished(true);
   }
@@ -532,7 +542,7 @@ export default function MatchingPage() {
 
       const { data: rows, error } = await supabase
         .from('matchings')
-        .select('id, status, created_at, expires_at, applicant_id, partner_id, applicant_dating_wish, scheduled_at, zoom_url, meeting_ended_at, postponed_count, payment_intent_id, amount, partner_payment_intent_id, partner_amount, cancel_reported_by, second_cancel_reported_by')
+        .select('id, status, created_at, expires_at, applicant_id, partner_id, applicant_dating_wish, partner_dating_wish, scheduled_at, zoom_url, meeting_ended_at, postponed_count, payment_intent_id, amount, partner_payment_intent_id, partner_amount, cancel_reported_by, second_cancel_reported_by')
         .or(`applicant_id.eq.${user.id},partner_id.eq.${user.id}`)
         .order('created_at', { ascending: false });
 

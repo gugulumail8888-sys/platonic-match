@@ -13,15 +13,6 @@ function isDemoMode(): boolean {
 }
 
 // ============================================================
-// 申請番号生成
-// ============================================================
-
-function generateApplicationId(): string {
-  const num = Math.floor(Math.random() * 900) + 100; // 100-999
-  return `APP-${num}`;
-}
-
-// ============================================================
 // Route Handler
 // ============================================================
 
@@ -51,7 +42,6 @@ export async function POST(req: NextRequest) {
     };
 
     const { applicant, member, amount } = body;
-    const applicationId = generateApplicationId();
     const appliedAt = new Date().toISOString();
 
     // ── matchingsテーブルに申請を保存 ──
@@ -71,19 +61,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'すでにお見合い申請中です' }, { status: 400 });
     }
 
-    const { error: insertError } = await adminSupabase.from('matchings').insert({
-      applicant_id: user.id,
-      partner_id: member.id,
-      status: 'pending',
-      amount,
-      applied_at: appliedAt,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+    const { data: inserted, error: insertError } = await adminSupabase
+      .from('matchings')
+      .insert({
+        applicant_id: user.id,
+        partner_id: member.id,
+        status: 'pending',
+        amount,
+        applied_at: appliedAt,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select('id')
+      .single();
 
-    if (insertError) {
+    if (insertError || !inserted) {
       console.error('Matching insert error:', insertError);
       return NextResponse.json({ error: 'お見合い申請の保存に失敗しました' }, { status: 500 });
     }
+
+    // 申請番号は実際に保存されたmatchings.id(UUID)をそのまま使う。
+    // 以前はAPP-100〜APP-999のランダムな見せかけの番号を生成していたため、
+    // 完了画面からの通報リンクがこの番号ではDB上の申請と一切紐づかず、
+    // 通報が宛先不明のまま保存される不具合があった(タスク#122)。
+    const applicationId = inserted.id as string;
 
     let notifyMessage: string;
     let isDemo: boolean;

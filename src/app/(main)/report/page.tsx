@@ -84,7 +84,7 @@ function ReportContent() {
       <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-4">
         <p className="text-xs text-zinc-500 mb-1">通報対象</p>
         <p className="text-white font-semibold">{nickname} さん</p>
-        {applicationId && <p className="text-xs text-zinc-500 mt-0.5">申請番号: {applicationId}</p>}
+        {applicationId && <p className="text-xs text-zinc-500 mt-0.5">申請番号: {applicationId.slice(0, 8).toUpperCase()}</p>}
       </div>
 
       <div className="bg-zinc-800 rounded-2xl border border-zinc-700 p-5 space-y-3">
