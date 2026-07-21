@@ -20,16 +20,23 @@ export async function GET() {
 
   const { data, error } = await admin
     .from('omiai_surveys')
-    .select('user_id, created_at, omiai_satisfaction, partner_impression, want_to_meet_again, service_satisfaction, comment, is_confirmed, profiles!omiai_surveys_user_id_fkey(nickname)')
+    .select('user_id, created_at, omiai_satisfaction, partner_impression, want_to_meet_again, service_satisfaction, comment, is_confirmed')
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  const surveys = data ?? [];
+  const userIds = [...new Set(surveys.map((s) => s.user_id))];
+  const { data: profiles } = userIds.length > 0
+    ? await admin.from('profiles').select('id, nickname').in('id', userIds)
+    : { data: [] as { id: string; nickname: string }[] };
+  const nicknameMap = new Map((profiles ?? []).map((p) => [p.id, p.nickname ?? '']));
+
   let csv = csvBom() + toCsvRow(CSV_HEADERS);
-  for (const s of data ?? []) {
+  for (const s of surveys) {
     csv += toCsvRow([
       s.user_id,
-      (s.profiles as unknown as { nickname: string } | null)?.nickname ?? '',
+      nicknameMap.get(s.user_id) ?? '',
       formatDateTime(s.created_at),
       s.omiai_satisfaction ?? '',
       IMPRESSION_LABELS[s.partner_impression ?? ''] ?? s.partner_impression ?? '',
