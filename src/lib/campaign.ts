@@ -73,12 +73,16 @@ export async function isCampaignActive(
   return true;
 }
 
-// 日本時間(JST)基準で「◯月」を取得する(サーバーのタイムゾーン設定に左右されないようにするため)
-function getMonthJST(date: Date): number {
-  return Number(date.toLocaleString('en-US', { timeZone: 'Asia/Tokyo', month: 'numeric' }));
+// 日本時間(JST)基準で「◯月◯日」を取得する(サーバーのタイムゾーン設定に左右されないようにするため)
+function getMonthDayJST(date: Date): { month: number; day: number } {
+  const month = Number(date.toLocaleString('en-US', { timeZone: 'Asia/Tokyo', month: 'numeric' }));
+  const day = Number(date.toLocaleString('en-US', { timeZone: 'Asia/Tokyo', day: 'numeric' }));
+  return { month, day };
 }
 
-// バナー等で使う「8月〜10月」のような期間表示文言を、start/endから生成する。
+// バナー等で使う「8月1日〜10月31日」のような期間表示文言を、start/endから生成する。
 export function getCampaignPeriodLabel(start: Date, end: Date): string {
-  return `${getMonthJST(start)}月〜${getMonthJST(end)}月`;
+  const s = getMonthDayJST(start);
+  const e = getMonthDayJST(end);
+  return `${s.month}月${s.day}日〜${e.month}月${e.day}日`;
 }

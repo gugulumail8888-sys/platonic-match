@@ -12,6 +12,7 @@ import {
   Edit3, ShieldOff,
 } from 'lucide-react';
 import UploadArea from '@/components/upload/UploadArea';
+import { CAMPAIGN_SLOT_LIMIT } from '@/lib/campaign';
 
 // ============================================================
 // Dummy Data
@@ -347,6 +348,18 @@ function AIOptionSection() {
   const [remainingDays, setRemainingDays] = useState<number | null>(null);
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [showCampaignBanner, setShowCampaignBanner] = useState(false);
+  const [campaignPeriodLabel, setCampaignPeriodLabel] = useState('');
+
+  useEffect(() => {
+    fetch('/api/campaign-banner')
+      .then((r) => r.json())
+      .then((data: { active?: boolean; periodLabel?: string }) => {
+        setShowCampaignBanner(!!data.active);
+        if (data.periodLabel) setCampaignPeriodLabel(data.periodLabel);
+      })
+      .catch(() => setShowCampaignBanner(false));
+  }, []);
 
   const handleSubscribe = async () => {
     setIsSubscribing(true);
@@ -466,6 +479,11 @@ function AIOptionSection() {
             </span>
             <span className="text-sm text-zinc-400">AIおすすめプランに加入していません</span>
           </div>
+          {showCampaignBanner && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-amber-300 bg-amber-950/40 border border-amber-800">
+              🎉 {campaignPeriodLabel}のお申し込みで3ヶ月無料（先着{CAMPAIGN_SLOT_LIMIT}名まで）
+            </div>
+          )}
           <button
             onClick={handleSubscribe}
             disabled={isSubscribing}

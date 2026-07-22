@@ -8,6 +8,7 @@ import {
   Bot, Sparkles, MapPin, Briefcase, ChevronRight, Loader2, AlertCircle, TriangleAlert, Lock, Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { CAMPAIGN_SLOT_LIMIT } from '@/lib/campaign';
 
 const MUST_CONDITION_OPTIONS = [
   '子供ほしい', '子供ほしくない', '喫煙者NG', '飲酒者NG', '家族と同居NG', '将来的に家族と同居を検討NG', '別居希望', 'すぐに結婚したい', '外部パートナーなし', '家計完全折半希望',
@@ -177,6 +178,8 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
   const [remaining, setRemaining] = useState<number | null>(null);
   const [limitExceeded, setLimitExceeded] = useState(false);
   const [newIds, setNewIds] = useState<Set<string>>(() => new Set(loadLastResult()?.newIds ?? []));
+  const [showCampaignBanner, setShowCampaignBanner] = useState(false);
+  const [campaignPeriodLabel, setCampaignPeriodLabel] = useState('');
 
   const [ageMin, setAgeMin] = useState('');
   const [ageMax, setAgeMax] = useState('');
@@ -233,6 +236,16 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
         setAiOptionEnabled(data.ai_option_enabled !== 'false');
       })
       .catch(() => setAiOptionEnabled(true));
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/campaign-banner')
+      .then((r) => r.json())
+      .then((data: { active?: boolean; periodLabel?: string }) => {
+        setShowCampaignBanner(!!data.active);
+        if (data.periodLabel) setCampaignPeriodLabel(data.periodLabel);
+      })
+      .catch(() => setShowCampaignBanner(false));
   }, []);
 
   useEffect(() => {
@@ -388,6 +401,11 @@ export default function RecommendClient({ hasAiOption }: { hasAiOption?: boolean
           AIおすすめメンバー機能は有料オプションに加入した方のみご利用いただけます。<br />
           AIがあなたのプロフィールを分析し、相性の良いメンバーをご提案します。
         </p>
+        {showCampaignBanner && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-6 rounded-full text-xs font-bold text-amber-300 bg-amber-950/40 border border-amber-800">
+            🎉 {campaignPeriodLabel}のお申し込みで3ヶ月無料（先着{CAMPAIGN_SLOT_LIMIT}名まで）
+          </div>
+        )}
         <Button onClick={() => router.push('/mypage')}>オプションの詳細を見る</Button>
         <p className="mt-4">
           <Link href="/members" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">会員一覧に戻る</Link>
