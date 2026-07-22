@@ -51,7 +51,7 @@ export default async function RootLayout({
   const { offset } = await getBannerOffset();
 
   return (
-    <html lang="ja">
+    <html lang="ja" data-scroll-behavior="smooth">
       <body className="min-h-screen" style={{ '--banner-offset': `${offset}px` } as React.CSSProperties}>
         <BannerOffsetSync>
           <IncidentBanner />
