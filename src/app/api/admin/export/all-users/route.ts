@@ -13,6 +13,7 @@ export async function GET() {
   const { data: profiles, error } = await admin
     .from('profiles')
     .select(EXPORT_PROFILE_COLUMNS)
+    .eq('is_test_account', false)
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

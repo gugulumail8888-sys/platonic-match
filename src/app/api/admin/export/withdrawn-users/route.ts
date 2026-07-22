@@ -14,6 +14,7 @@ export async function GET() {
     .from('profiles')
     .select(EXPORT_PROFILE_COLUMNS)
     .eq('status', 'withdrawn')
+    .eq('is_test_account', false)
     .order('withdrawn_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

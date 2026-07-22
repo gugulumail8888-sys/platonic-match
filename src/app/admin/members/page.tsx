@@ -59,7 +59,7 @@ async function buildEmailMap(admin: AdminClient, ids: string[]): Promise<Map<str
 // ============================================================
 
 const PROFILE_COLUMNS =
-  'id, nickname, gender, birth_date, prefecture, occupation, avatar_url, avatar_color, status, is_suspended, suspended_at, suspended_reason, created_at';
+  'id, nickname, gender, birth_date, prefecture, occupation, avatar_url, avatar_color, status, is_suspended, suspended_at, suspended_reason, created_at, is_test_account';
 
 export default async function AdminMembersPage() {
   const supabase = createAdminClient();

@@ -315,7 +315,8 @@ export async function searchExportProfiles(
 
   let query = admin
     .from('profiles')
-    .select(EXPORT_PROFILE_COLUMNS);
+    .select(EXPORT_PROFILE_COLUMNS)
+    .eq('is_test_account', false);
 
   if (params.target === 'withdrawn') {
     query = query.eq('status', 'withdrawn');

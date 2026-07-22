@@ -144,12 +144,12 @@ export default async function AdminDashboardPage({
     { count: campaignSignupCount },
     { data: premiumMembers, count: premiumCount },
   ] = await Promise.all([
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'male'),
-    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'female'),
-    supabase.from('profiles').select('id', { count: 'exact', head: true })
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_test_account', false),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'male').eq('is_test_account', false),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('gender', 'female').eq('is_test_account', false),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_test_account', false)
       .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
-    supabase.from('profiles').select('id', { count: 'exact', head: true })
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_test_account', false)
       .gte('created_at', prevMonthStartIso).lt('created_at', monthStartIso),
     supabase.from('matchings').select('id, status, created_at')
       .gte('created_at', monthStartIso).lt('created_at', nextMonthStartIso),
@@ -165,16 +165,19 @@ export default async function AdminDashboardPage({
       .limit(5),
     supabase.from('profiles')
       .select('id, nickname, gender, birth_date, prefecture, status, avatar_url, created_at')
+      .eq('is_test_account', false)
       .order('created_at', { ascending: false })
       .limit(5),
     // キャンペーン期間中にAIおすすめオプションを契約開始した人数(先着200名の消化状況確認用)
     supabase.from('profiles').select('id', { count: 'exact', head: true })
+      .eq('is_test_account', false)
       .gte('subscription_started_at', campaignStart.toISOString())
       .lte('subscription_started_at', campaignEnd.toISOString()),
     // AIオプション契約者一覧（ダッシュボード新セクション用）
     supabase.from('profiles')
       .select('id, nickname, subscription_plan, subscription_started_at, current_period_end', { count: 'exact' })
       .eq('is_premium', true)
+      .eq('is_test_account', false)
       .order('subscription_started_at', { ascending: false })
       .range((premiumPage - 1) * PREMIUM_PAGE_SIZE, premiumPage * PREMIUM_PAGE_SIZE - 1),
   ]);

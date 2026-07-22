@@ -21,6 +21,7 @@ export async function GET() {
     .select('id, nickname, gender, birth_date, prefecture, occupation, body_type, marital_history, number_of_children, avatar_url')
     .eq('gender', oppositeGender)
     .in('status', ['approved', 'verified'])
+    .eq('is_test_account', false)
     .neq('id', user.id);
 
   return NextResponse.json({ members: members ?? [] });

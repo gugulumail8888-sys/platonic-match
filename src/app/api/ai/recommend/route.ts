@@ -108,6 +108,7 @@ export async function POST() {
       .select('*')
       .eq('gender', oppositeGender)
       .in('status', ['active', 'approved'])
+      .eq('is_test_account', false)
       .neq('id', user.id);
 
     if (blockedIds.length > 0) {

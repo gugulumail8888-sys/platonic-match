@@ -23,6 +23,7 @@ export interface MemberRow {
   suspended_reason: string | null;
   created_at: string;
   email: string;
+  is_test_account: boolean;
 }
 
 // ── 定数 ──────────────────────────────────────────────────────
@@ -124,7 +125,14 @@ function MemberChip({ row }: { row: MemberRow }) {
         </div>
       )}
       <div>
-        <p className="text-zinc-100 font-medium">{row.nickname}</p>
+        <p className="text-zinc-100 font-medium flex items-center gap-1.5">
+          {row.nickname}
+          {row.is_test_account && (
+            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-900/50 text-purple-300 border border-purple-800">
+              テスト
+            </span>
+          )}
+        </p>
         <p className="text-zinc-500 text-xs">{row.email}</p>
       </div>
     </div>
@@ -147,10 +155,14 @@ export default function AdminMembersClient({
   const [search, setSearch]             = useState('');
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [showTestAccounts, setShowTestAccounts] = useState(false);
   const [blockCounts, setBlockCounts]   = useState<Record<string, number>>({});
   const [sortKey, setSortKey]           = useState<SortKey | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [page, setPage] = useState(1);
+
+  const realMembers = useMemo(() => members.filter((m) => !m.is_test_account), [members]);
+  const testAccountCount = members.length - realMembers.length;
 
   useEffect(() => {
     fetch('/api/blocks/counts')
@@ -160,17 +172,18 @@ export default function AdminMembersClient({
   }, []);
 
   const filtered = useMemo(() => {
-    return members.filter((m) => {
+    const base = showTestAccounts ? members : realMembers;
+    return base.filter((m) => {
       if (search && !m.nickname.includes(search)) return false;
       if (genderFilter !== 'all' && m.gender !== genderFilter) return false;
       if (statusFilter !== 'all' && m.status !== statusFilter) return false;
       return true;
     });
-  }, [members, search, genderFilter, statusFilter]);
+  }, [members, realMembers, showTestAccounts, search, genderFilter, statusFilter]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, genderFilter, statusFilter]);
+  }, [search, genderFilter, statusFilter, showTestAccounts]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -213,7 +226,10 @@ export default function AdminMembersClient({
       <div>
         <h1 className="text-2xl font-bold text-white">会員管理</h1>
         <p className="text-sm text-zinc-400 mt-0.5">
-          全 {members.length} 名（表示 {filtered.length} 名）
+          全 {realMembers.length} 名（表示 {filtered.length} 名）
+          {testAccountCount > 0 && (
+            <span className="text-zinc-600"> ／ テストアカウント {testAccountCount} 名は集計から除外</span>
+          )}
         </p>
       </div>
 
@@ -253,6 +269,15 @@ export default function AdminMembersClient({
             ))}
           </select>
         </div>
+        <label className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showTestAccounts}
+            onChange={(e) => setShowTestAccounts(e.target.checked)}
+            className="rounded border-zinc-700 bg-zinc-800 text-teal-600 focus:ring-teal-600"
+          />
+          テストアカウントも表示{testAccountCount > 0 ? `（${testAccountCount}）` : ''}
+        </label>
         <button
           onClick={handleReset}
           className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-zinc-700 text-zinc-400 text-sm hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
