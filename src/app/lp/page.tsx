@@ -242,6 +242,7 @@ export default function LpPage() {
         .price-amount { font-size: 2.4rem; font-weight: 300; color: var(--white); letter-spacing: -.02em; line-height: 1; }
         .price-amount span { font-size: .85rem; color: rgba(255,255,255,.6); margin-left: 4px; }
         .price-note { font-size: .75rem; color: rgba(255,255,255,.55); margin-top: 6px; margin-bottom: 28px; }
+        .price-tax-note { font-size: .7rem; color: rgba(255,255,255,.4); margin-top: 2px; }
         .price-features { list-style: none; }
         .price-features li { font-size: .82rem; color: rgba(255,255,255,.7); padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; align-items: flex-start; gap: 10px; }
         .price-features li::before { content: "—"; color: var(--teal-light); flex-shrink: 0; }
@@ -540,6 +541,7 @@ export default function LpPage() {
               {showCampaignBanner && <div className="price-campaign-badge">🎉 今なら申込日から3ヶ月無料（先着{CAMPAIGN_SLOT_LIMIT}名まで）</div>}
               <div className="price-name">AIおすすめプラン</div>
               <div className="price-amount">¥1,078<span>〜 / 月（税込）</span></div>
+              <div className="price-tax-note">税別 ¥980〜 / 月</div>
               <div className="price-note">仕事や育児で忙しいあなたへ</div>
               <ul className="price-features">
                 <li>お見合い申請（1件 ¥3,000 税込）</li>

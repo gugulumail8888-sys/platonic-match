@@ -113,7 +113,7 @@ export default function HomePage() {
                 {campaignPeriodLabel}にAIおすすめ機能をお申し込みの方は、申込日から3ヶ月間無料！（先着{CAMPAIGN_SLOT_LIMIT}名まで）
               </p>
             </div>
-            <Link href="/recommend" className="flex-shrink-0">
+            <Link href="/ai-plan" className="flex-shrink-0">
               <button className="bg-white text-orange-600 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-white/90 transition-colors whitespace-nowrap">
                 AIおすすめ機能を見る
               </button>
@@ -361,10 +361,10 @@ export default function HomePage() {
                 {/* キャッチコピー */}
                 <p className="text-xs text-pink-300/80 mb-2">仕事や育児で忙しいあなたへ</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-white">¥980</span>
-                  <span className="text-zinc-400 text-sm mb-1">〜 / 月</span>
+                  <span className="text-4xl font-bold text-white">¥1,078</span>
+                  <span className="text-zinc-400 text-sm mb-1">〜 / 月（税込）</span>
                 </div>
-                <p className="text-zinc-500 text-xs mt-0.5">税込 ¥1,078〜 / 月</p>
+                <p className="text-zinc-500 text-xs mt-0.5">税別 ¥980〜 / 月</p>
               </div>
 
               <ul className="space-y-3 mb-8">
