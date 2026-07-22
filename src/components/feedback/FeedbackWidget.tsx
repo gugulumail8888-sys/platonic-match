@@ -1,9 +1,27 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+// 会員向け(main)ルートグループ配下のパス接頭辞。
+// これらのページ・管理画面(/admin以下)ではサイドバー等と干渉しないよう
+// アイコンのみのコンパクト表示にし、それ以外の公開ページ(トップ・LP・
+// ご利用の流れ・ログイン等)ではテキスト付きの横長表示にする
+// (2026/7/22、ユーザー依頼「会員画面と管理者の画面ではこの小さなアイコンで良いですが、
+// それ以外の画面は横長の表示だったと思います」)。
+const MEMBER_AREA_PREFIXES = [
+  '/dashboard', '/members', '/matching', '/messages', '/recommend',
+  '/mypage', '/profile', '/report', '/cancel-report', '/marriage-report',
+  '/withdraw', '/withdrawal-survey', '/zoom-check', '/omiai-survey',
+  '/schedule', '/option-apply',
+]
+
 export default function FeedbackWidget() {
+  const pathname = usePathname()
+  const isCompact = pathname?.startsWith('/admin')
+    || MEMBER_AREA_PREFIXES.some((prefix) => pathname?.startsWith(prefix))
+
   const [isOpen, setIsOpen] = useState(false)
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
@@ -80,14 +98,22 @@ export default function FeedbackWidget() {
         </div>
       )}
 
-      {/* フローティングボタン */}
+      {/* フローティングボタン(会員・管理画面はアイコンのみ、それ以外は横長のテキスト付き表示) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-label="ご意見・ご要望"
-        className="bg-orange-400 hover:bg-orange-500 text-white rounded-full shadow-lg text-sm font-medium flex items-center gap-2 transition-colors p-3"
+        className={
+          isCompact
+            ? "bg-orange-400 hover:bg-orange-500 text-white rounded-full shadow-lg text-sm font-medium flex items-center gap-2 transition-colors p-3"
+            : "bg-orange-400 hover:bg-orange-500 text-white rounded-full px-4 py-3 shadow-lg text-sm font-medium flex items-center gap-2 transition-colors"
+        }
       >
         <span className="text-lg">💬</span>
-        <span className="sr-only">ご意見・ご要望（一言でもOK）</span>
+        {isCompact ? (
+          <span className="sr-only">ご意見・ご要望（一言でもOK）</span>
+        ) : (
+          <span>ご意見・ご要望（一言でもOK）</span>
+        )}
       </button>
     </div>
   )

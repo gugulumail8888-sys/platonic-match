@@ -83,7 +83,7 @@ export function ResetPasswordForm() {
         {sessionState === "invalid" && (
           <div className="space-y-4">
             <div className="bg-red-950 border border-red-800 rounded-xl p-4 text-sm text-red-400">
-              リンクの有効期限が切れているか、無効なリンクです。もう一度パスワード再設定をお申し込みください。
+              リンクの有効期限が切れているか、無効なリンクです。お使いのメールサービスのセキュリティ機能により、リンクが開く前に無効化されている場合があります。もう一度パスワード再設定をお申し込みください（メールに記載の「認証コード」を入力する方式でも設定できます）。
             </div>
             <Link
               href="/forgot-password"
