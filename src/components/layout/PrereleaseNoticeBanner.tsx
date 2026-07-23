@@ -3,10 +3,14 @@ import { parseJstDateTime } from "@/lib/datetime";
 
 async function getPrereleaseNotice(): Promise<{ show: boolean }> {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("settings")
     .select("key, value")
     .in("key", ["omiai_open", "maintenance_mode", "maintenance_scheduled_start", "maintenance_scheduled_end"]);
+
+  if (error) {
+    console.error("[PrereleaseNoticeBanner] settings取得に失敗:", error.message);
+  }
 
   const settingsMap = Object.fromEntries((data ?? []).map((r) => [r.key, r.value]));
 
