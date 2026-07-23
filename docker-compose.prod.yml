@@ -6,9 +6,9 @@ services:
       target: production
       args:
         - NEXT_PUBLIC_SUPABASE_URL=https://rffnjcajfbduqtutraeo.supabase.co
-        - NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZm5qY2FqZmJkdXF0dXRyYWVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNTc5MzcsImV4cCI6MjA5NTgzMzkzN30.E_UrMQu19rqDJLy7MHAD4iiW9TJl2hZsJCjLNtDbX_U
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_1tVWEyw5RcICyK74cSwkkg_FMxs0JSD
         - NEXT_PUBLIC_APP_URL=https://amista.net
-    container_name: konkatsu_app
+    container_name: amista_app
     ports:
       - "3000:3000"
     env_file:
