@@ -22,6 +22,21 @@ export default function LpPage() {
       .catch(() => setShowCampaignBanner(false));
   }, []);
 
+  // プレオープン前の案内バナー。lpはメンテナンスリダイレクトの対象外だが
+  // 登録ボタン(/signup)自体はメンテナンス対象のため、ここで先にオープン予定を
+  // 案内する(2026/7/23、ユーザー依頼「lpにメンテナンス中等のメッセージがない」への対応)
+  const [prelaunchActive, setPrelaunchActive] = useState(false);
+  const [prelaunchEndLabel, setPrelaunchEndLabel] = useState('');
+  useEffect(() => {
+    fetch('/api/prelaunch-status')
+      .then((res) => res.json())
+      .then((data) => {
+        setPrelaunchActive(!!data.active);
+        if (data.endLabel) setPrelaunchEndLabel(data.endLabel);
+      })
+      .catch(() => setPrelaunchActive(false));
+  }, []);
+
   useEffect(() => {
     if (!mounted) return;
 
@@ -320,6 +335,11 @@ export default function LpPage() {
         .lp-campaign-text { font-size: .85rem; line-height: 1.7; color: rgba(255,255,255,.92); margin-top: 6px; }
         .lp-campaign-cta { flex-shrink: 0; background: #fff; color: #ea580c; font-weight: 600; font-size: .82rem; padding: 10px 20px; border-radius: 10px; text-decoration: none; white-space: nowrap; }
         .price-campaign-badge { display: inline-block; margin-bottom: 12px; font-size: .68rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%); padding: 4px 12px; border-radius: 999px; }
+        .lp-prelaunch-wrap { padding: 16px 24px 0; }
+        .lp-prelaunch-banner { max-width: 900px; margin: 0 auto; border-radius: 16px; padding: 18px 28px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: #fff; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .lp-prelaunch-emoji { font-size: 2rem; flex-shrink: 0; }
+        .lp-prelaunch-text { font-size: .88rem; line-height: 1.7; color: rgba(255,255,255,.95); }
+        .lp-prelaunch-text strong { font-size: .95rem; }
       `}</style>
 
       <nav id="mainNav">
@@ -348,6 +368,16 @@ export default function LpPage() {
       )}
 
       <div className="top-notice-wrap" style={{ paddingTop: 'calc(var(--banner-offset) + 4.5rem)' }}>
+        {prelaunchActive && (
+          <div className="lp-prelaunch-wrap">
+            <div className="lp-prelaunch-banner">
+              <div className="lp-prelaunch-emoji">🚀</div>
+              <p className="lp-prelaunch-text">
+                ただいまプレオープンに向けて準備中です。<strong>会員登録・ご利用開始は{prelaunchEndLabel || '近日'}を予定</strong>しております。今しばらくお待ちください。
+              </p>
+            </div>
+          </div>
+        )}
         {showCampaignBanner && (
           <div className="lp-campaign-wrap">
             <div className="lp-campaign-banner">

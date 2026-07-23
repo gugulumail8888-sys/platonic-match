@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -17,10 +17,27 @@ const MEMBER_AREA_PREFIXES = [
   '/schedule', '/option-apply',
 ]
 
+// help/contact/zoom-guideは未ログインの訪問者にも公開される案内ページのため
+// パスだけでは会員/管理画面かどうか判定できない。ログイン中はこの3ページも
+// 他の会員・管理画面と同じ小さいアイコン表示にする
+// (2026/7/23、ユーザー報告「ログイン状態でこの3画面を開くとご意見・ご要望が
+// 大きく表示される」への対応)
+const LOGGED_IN_COMPACT_PREFIXES = ['/help', '/contact', '/zoom-guide']
+
 export default function FeedbackWidget() {
   const pathname = usePathname()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user)
+    })
+  }, [])
+
   const isCompact = pathname?.startsWith('/admin')
     || MEMBER_AREA_PREFIXES.some((prefix) => pathname?.startsWith(prefix))
+    || (isLoggedIn && LOGGED_IN_COMPACT_PREFIXES.some((prefix) => pathname?.startsWith(prefix)))
 
   const [isOpen, setIsOpen] = useState(false)
   const [content, setContent] = useState('')
