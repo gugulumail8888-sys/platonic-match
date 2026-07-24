@@ -27,7 +27,7 @@ export async function GET() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('nickname, birth_date, prefecture, occupation, hobbies, pr, is_premium, role')
+    .select('nickname, birth_date, prefecture, occupation, hobbies, pr, is_premium, role, is_test_account')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -51,7 +51,13 @@ export async function GET() {
 
   response.cookies.set(
     'auth',
-    JSON.stringify({ role: isAdmin ? 'admin' : 'user', email: user.email, hasAiOption, nickname: profile?.nickname ?? '' }),
+    JSON.stringify({
+      role: isAdmin ? 'admin' : 'user',
+      email: user.email,
+      hasAiOption,
+      nickname: profile?.nickname ?? '',
+      isTestAccount: profile?.is_test_account ?? false,
+    }),
     {
       httpOnly: true,
       path: '/',

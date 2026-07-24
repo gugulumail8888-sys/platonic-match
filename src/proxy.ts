@@ -15,17 +15,21 @@ export async function proxy(request: NextRequest) {
     !pathname.startsWith('/_next')
   ) {
     let isAdmin = false;
+    let isTestAccount = false;
     const authCookie = request.cookies.get('auth')?.value;
     if (authCookie) {
       try {
-        const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string };
+        const auth = JSON.parse(decodeURIComponent(authCookie)) as { role?: string; isTestAccount?: boolean };
         isAdmin = auth.role === 'admin';
+        isTestAccount = auth.isTestAccount === true;
       } catch {
         // 不正な cookie は無視
       }
     }
 
-    if (!isAdmin) {
+    // is_test_account=true の会員は、動作確認のためメンテナンス中でも通過できる
+    // (2026/7/24、ユーザー依頼「特定のテスト会員だけメンテナンスモードを通過するような設定」)
+    if (!isAdmin && !isTestAccount) {
       const admin = createAdminClient();
       const { data: settingsRows } = await admin
         .from('settings')
