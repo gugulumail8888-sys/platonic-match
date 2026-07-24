@@ -76,6 +76,7 @@ export default async function DashboardPage() {
     .select('id, nickname, birth_date, prefecture, occupation')
     .eq('gender', oppositeGender)
     .in('status', ['approved', 'verified'])
+    .eq('is_test_account', false)
     .neq('id', user.id);
 
   if (blockedIds.length > 0) {
