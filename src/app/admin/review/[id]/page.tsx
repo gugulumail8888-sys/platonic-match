@@ -225,7 +225,7 @@ export default async function ProfileReviewDetailPage({
               label="年収"
               value={p.annual_income ? ANNUAL_INCOME_LABELS[p.annual_income as AnnualIncome] ?? p.annual_income : '未回答'}
             />
-            <InfoRow label="喫煙" value={p.smoking ? SMOKING_LABELS[p.smoking as SmokingHabit] ?? p.smoking : '未回答'} />
+            <InfoRow label="喫煙" value={p.smoking ? (p.smoking === 'true' ? '吸う' : p.smoking === 'false' ? '吸わない' : SMOKING_LABELS[p.smoking as SmokingHabit] ?? p.smoking) : '未回答'} />
             <InfoRow label="飲酒" value={p.alcohol ? DRINKING_LABELS[p.alcohol as DrinkingHabit] ?? p.alcohol : '未回答'} />
             <InfoRow
               label="結婚の意向"

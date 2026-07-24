@@ -211,7 +211,15 @@ export default async function ProfilePage() {
               value: BODY_TYPE_LABELS[profile.body_type as keyof typeof BODY_TYPE_LABELS],
             },
             { label: "飲酒", value: DRINKING_LABELS[profile.alcohol as keyof typeof DRINKING_LABELS] },
-            { label: "喫煙", value: SMOKING_LABELS[profile.smoking as keyof typeof SMOKING_LABELS] },
+            {
+              label: "喫煙",
+              value:
+                (profile.smoking as unknown as string) === "true"
+                  ? "吸う"
+                  : (profile.smoking as unknown as string) === "false"
+                    ? "吸わない"
+                    : SMOKING_LABELS[profile.smoking as keyof typeof SMOKING_LABELS],
+            },
           ]
             .filter(Boolean)
             .map((item) => (
