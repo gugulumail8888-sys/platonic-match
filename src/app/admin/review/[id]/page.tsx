@@ -31,7 +31,7 @@ type Profile = {
   alcohol: string | null;
   marriage_intention: string | null;
   about_me: string | null;
-  hobbies: string[] | null;
+  hobbies: string | null;
   siblings_exist: string | null;
   siblings_detail: string | null;
   siblings_position: string | null;
@@ -244,8 +244,8 @@ export default async function ProfileReviewDetailPage({
           </div>
           <div>
             <p className="text-xs text-zinc-500 mb-1.5">趣味</p>
-            <p className="text-zinc-300 text-sm leading-relaxed">
-              {p.hobbies && p.hobbies.length > 0 ? p.hobbies.join('、') : '未記入'}
+            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
+              {p.hobbies || '未記入'}
             </p>
           </div>
         </div>

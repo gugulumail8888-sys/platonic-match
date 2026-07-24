@@ -20,7 +20,7 @@ export type Profile = {
   smoking: SmokingHabit;
   marriage_intention: MarriageIntention;
   about_me?: string;
-  hobbies?: string[];
+  hobbies?: string;
   avatar_url?: string;
   is_premium: boolean;
   is_verified: boolean;
@@ -148,7 +148,7 @@ export type ProfileFormData = {
   smoking: SmokingHabit;
   marriage_intention: MarriageIntention;
   about_me?: string;
-  hobbies?: string[];
+  hobbies?: string;
 };
 
 // ==========================================
