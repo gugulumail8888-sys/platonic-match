@@ -6,7 +6,11 @@ import { getBannerOffset } from "@/lib/bannerOffset";
 import { MaintenanceNoticeBanner } from "@/components/layout/MaintenanceNoticeBanner";
 import { IncidentBanner } from "@/components/layout/IncidentBanner";
 import { PrereleaseNoticeBanner } from "@/components/layout/PrereleaseNoticeBanner";
-import { AiOptionPausedBanner } from "@/components/layout/AiOptionPausedBanner";
+// AiOptionPausedBannerは「システム障害により利用いただけません」という文言固定のお知らせバナーで、
+// 2026/7/24〜8/17は障害ではなく意図的にAIおすすめオプションを停止しているため、
+// プレオープン中の訪問者に誤解を与えないよう一時的に非表示にしている(2026/7/24、ユーザー指摘)。
+// 8/17にAIおすすめオプションをONへ戻すタイミングで、このコメントアウトも解除すること(#145参照)。
+// import { AiOptionPausedBanner } from "@/components/layout/AiOptionPausedBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -59,7 +63,7 @@ export default async function RootLayout({
         <BannerOffsetSync>
           <IncidentBanner />
           <MaintenanceNoticeBanner />
-          <AiOptionPausedBanner />
+          {/* <AiOptionPausedBanner /> 2026/7/24〜8/17は一時非表示。上記import文コメントを参照 */}
           <PrereleaseNoticeBanner />
           <BetaBanner />
         </BannerOffsetSync>
