@@ -49,8 +49,8 @@ const ALCOHOL_OPTIONS = [
 const profileSchema = z.object({
   last_name: z.string().min(1, "姓を入力してください"),
   first_name: z.string().min(1, "名を入力してください"),
-  furigana_last: z.string().min(1, "フリガナ（姓）を入力してください"),
-  furigana_first: z.string().min(1, "フリガナ（名）を入力してください"),
+  last_name_kana: z.string().min(1, "フリガナ（姓）を入力してください"),
+  first_name_kana: z.string().min(1, "フリガナ（名）を入力してください"),
   phone: z.string().min(1, "電話番号を入力してください"),
   address_detail: z.string().min(1, "住所（詳細）を入力してください"),
   alcohol: z.string().min(1, "飲酒を選択してください"),
@@ -103,8 +103,8 @@ export interface ProfileEditData {
   id: string;
   last_name: string | null;
   first_name: string | null;
-  furigana_last: string | null;
-  furigana_first: string | null;
+  last_name_kana: string | null;
+  first_name_kana: string | null;
   phone: string | null;
   address_detail: string | null;
   alcohol: string | null;
@@ -323,8 +323,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
     defaultValues: {
       last_name: initialData?.last_name ?? "",
       first_name: initialData?.first_name ?? "",
-      furigana_last: initialData?.furigana_last ?? "",
-      furigana_first: initialData?.furigana_first ?? "",
+      last_name_kana: initialData?.last_name_kana ?? "",
+      first_name_kana: initialData?.first_name_kana ?? "",
       phone: initialData?.phone ?? "",
       address_detail: initialData?.address_detail ?? "",
       alcohol: initialData?.alcohol ?? "",
@@ -393,8 +393,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
     const profileData = {
       last_name: data.last_name || null,
       first_name: data.first_name || null,
-      furigana_last: data.furigana_last || null,
-      furigana_first: data.furigana_first || null,
+      last_name_kana: data.last_name_kana || null,
+      first_name_kana: data.first_name_kana || null,
       phone: data.phone || null,
       address_detail: data.address_detail || null,
       alcohol: data.alcohol || "never",
@@ -488,8 +488,8 @@ export function ProfileForm({ initialData, isNew = false }: ProfileFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Input label="お名前（姓）" placeholder="例：山田" error={errors.last_name?.message} required {...register("last_name")} />
           <Input label="お名前（名）" placeholder="例：太郎" error={errors.first_name?.message} required {...register("first_name")} />
-          <Input label="フリガナ（姓）※カタカナまたはローマ字" placeholder="例：ヤマダ" error={errors.furigana_last?.message} required {...register("furigana_last")} />
-          <Input label="フリガナ（名）※カタカナまたはローマ字" placeholder="例：タロウ" error={errors.furigana_first?.message} required {...register("furigana_first")} />
+          <Input label="フリガナ（姓）※カタカナまたはローマ字" placeholder="例：ヤマダ" error={errors.last_name_kana?.message} required {...register("last_name_kana")} />
+          <Input label="フリガナ（名）※カタカナまたはローマ字" placeholder="例：タロウ" error={errors.first_name_kana?.message} required {...register("first_name_kana")} />
           <Input label="電話番号" type="tel" placeholder="例：090-1234-5678" error={errors.phone?.message} required {...phoneRegister} onChange={handlePhoneChange} />
           <Select label="飲酒" options={ALCOHOL_OPTIONS} placeholder="選択してください" error={errors.alcohol?.message} required {...register("alcohol")} />
           <Input label="ニックネーム" placeholder="例：さくら" error={errors.nickname?.message} required {...register("nickname")} />
