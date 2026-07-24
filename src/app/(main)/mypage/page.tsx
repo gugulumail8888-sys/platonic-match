@@ -115,8 +115,8 @@ function externalPartnerLabel(v: string | boolean | null | undefined): string | 
 
 function childrenDesireLabel(v: string | null | undefined): string | null {
   if (v === 'undecided') return '未定';
-  if (v === 'yes') return 'ほしい';
-  if (v === 'no') return 'ほしくない';
+  if (v === 'want') return 'ほしい';
+  if (v === 'notwant') return 'ほしくない';
   return v ?? null;
 }
 

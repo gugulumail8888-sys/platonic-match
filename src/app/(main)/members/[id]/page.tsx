@@ -456,7 +456,7 @@ export default function MemberProfilePage({ params }: { params: Promise<{ id: st
         {/* 結婚観 */}
         <SectionCard title="結婚観">
           <InfoRow icon={Calendar} label="結婚時期" value={member.marriage_timing} />
-          <InfoRow icon={Baby} label="子どもへの希望" value={member.children_desire} />
+          <InfoRow icon={Baby} label="子どもへの希望" value={member.children_desire === 'want' ? 'ほしい' : member.children_desire === 'notwant' ? 'ほしくない' : member.children_desire === 'undecided' ? '未定' : member.children_desire} />
           <InfoRow icon={Wallet} label="家計管理" value={member.finance_management} />
           <InfoRow icon={Sparkles} label="セクシュアリティ" value={member.sexuality} />
           <InfoRow icon={HeartHandshake} label="婚外パートナー" value={member.external_partner} />
